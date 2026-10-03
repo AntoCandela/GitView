@@ -6,6 +6,7 @@ use std::{path::Path, sync::{atomic::{AtomicBool, AtomicU64, AtomicU8, Ordering}
 use uuid::Uuid;
 
 const QUEUE_CAPACITY: usize = 1024;
+const MAX_BATCH_RECORDS: usize = 64;
 const MAX_EVENTS: i64 = 20000;
 const MAX_AGE_MS: i64 = 7 * 24 * 60 * 60 * 1000;
 
@@ -221,12 +222,17 @@ fn initialize(path: &Path) -> Result<(Connection, i64), Code> {
 fn writer_loop(mut connection: Connection, mut stored_count: i64, receiver: Receiver<Message>, shared: Arc<Shared>) {
     let mut session_buffer = Uuid::encode_buffer();
     let session: &str = Uuid::new_v4().hyphenated().encode_lower(&mut session_buffer);
+    let mut records = Vec::with_capacity(MAX_BATCH_RECORDS);
+    let mut pending_control = None;
     loop {
         shared.health.notify();
-        let message = match receiver.recv_timeout(Duration::from_millis(20)) {
-            Ok(message) => message,
-            Err(mpsc::RecvTimeoutError::Timeout) if !shared.stop.load(Ordering::Acquire) => continue,
-            Err(_) => break,
+        let message = match pending_control.take() {
+            Some(message) => message,
+            None => match receiver.recv_timeout(Duration::from_millis(20)) {
+                Ok(message) => message,
+                Err(mpsc::RecvTimeoutError::Timeout) if !shared.stop.load(Ordering::Acquire) => continue,
+                Err(_) => break,
+            },
         };
         match message {
             Message::Record { record, timestamp_ms } => {
@@ -234,11 +240,22 @@ fn writer_loop(mut connection: Connection, mut stored_count: i64, receiver: Rece
                     shared.health.dropped.fetch_add(1, Ordering::Relaxed);
                     continue;
                 }
-                match write_record(&mut connection, &session, &mut stored_count, timestamp_ms, record) {
-                    Ok(()) => { shared.health.written.fetch_add(1, Ordering::Release); },
+                records.clear();
+                records.push((record, timestamp_ms));
+                while records.len() < MAX_BATCH_RECORDS {
+                    match receiver.try_recv() {
+                        Ok(Message::Record { record, timestamp_ms }) => records.push((record, timestamp_ms)),
+                        Ok(control) => { pending_control = Some(control); break; },
+                        Err(_) => break,
+                    }
+                }
+                let record_count = records.len() as u64;
+                match write_records(&mut connection, session, &mut stored_count, &records) {
+                    Ok(()) => { shared.health.written.fetch_add(record_count, Ordering::Release); },
                     Err(code) => {
                         shared.health.storage_failed.store(true, Ordering::Release);
-                        shared.health.drop_record(code);
+                        shared.health.dropped.fetch_add(record_count, Ordering::Relaxed);
+                        shared.health.degrade(code);
                     },
                 }
             },
@@ -259,30 +276,47 @@ fn commit_status(shared: &Shared) -> Result<(), Code> {
     if shared.health.storage_failed.load(Ordering::Acquire) { Err(Code::Storage) } else { Ok(()) }
 }
 
-fn write_record(connection: &mut Connection, session: &str, stored_count: &mut i64, timestamp: i64, record: DiagnosticRecord) -> Result<(), Code> {
+fn write_records(connection: &mut Connection, session: &str, stored_count: &mut i64, records: &[(DiagnosticRecord, i64)]) -> Result<(), Code> {
     let transaction = connection.transaction().map_err(|_| Code::Storage)?;
-    let expired = transaction.execute("DELETE FROM events WHERE timestamp_ms < ?1", [timestamp.saturating_sub(MAX_AGE_MS)]).map_err(|_| Code::Storage)? as i64;
-    let remaining = stored_count.saturating_sub(expired);
-    let excess = (remaining + 1 - MAX_EVENTS).max(0);
-    if excess > 0 {
-        transaction.execute("DELETE FROM events WHERE id IN (SELECT id FROM events ORDER BY id LIMIT ?1)", [excess]).map_err(|_| Code::Storage)?;
+    let mut pending_count = *stored_count;
+    {
+        let mut delete_expired = transaction.prepare_cached("DELETE FROM events WHERE timestamp_ms < ?1").map_err(|_| Code::Storage)?;
+        let mut delete_excess = None;
+        let mut insert = transaction.prepare_cached("INSERT INTO events(timestamp_ms,session_id,operation_id,parent_operation_id,operation_kind,level,component,event,code,duration_ms,exit_code,stdout_bytes,stderr_bytes,cleanup_failed) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14)").map_err(|_| Code::Storage)?;
+        for (record, timestamp) in records {
+            // Preserve write-time retention order even when the wall clock moves backwards.
+            let expired = delete_expired.execute([timestamp.saturating_sub(MAX_AGE_MS)]).map_err(|_| Code::Storage)? as i64;
+            let remaining = pending_count.saturating_sub(expired);
+            let excess = (remaining + 1 - MAX_EVENTS).max(0);
+            if excess > 0 {
+                if delete_excess.is_none() {
+                    delete_excess = Some(transaction.prepare_cached("DELETE FROM events WHERE id IN (SELECT id FROM events ORDER BY id LIMIT ?1)").map_err(|_| Code::Storage)?);
+                }
+                delete_excess.as_mut().unwrap().execute([excess]).map_err(|_| Code::Storage)?;
+            }
+            let details = record.details;
+            let mut operation_buffer = Uuid::encode_buffer();
+            let operation: &str = record.operation_id.hyphenated().encode_lower(&mut operation_buffer);
+            let mut parent_buffer = Uuid::encode_buffer();
+            let parent: Option<&str> = match record.parent_operation_id.as_ref() {
+                Some(id) => Some(id.hyphenated().encode_lower(&mut parent_buffer)),
+                None => None,
+            };
+            insert.execute(params![
+                timestamp, session, operation, parent, record.operation_kind.as_str(), record.level.as_str(), record.component.as_str(), record.event.as_str(), record.code.map(Code::as_str), details.duration_ms.map(|v| v as i64), details.exit_code, details.stdout_bytes.map(|v| v as i64), details.stderr_bytes.map(|v| v as i64), details.cleanup_failed,
+            ]).map_err(|_| Code::Storage)?;
+            pending_count = remaining + 1 - excess;
+        }
     }
-    let details = record.details;
-    let mut operation_buffer = Uuid::encode_buffer();
-    let operation: &str = record.operation_id.hyphenated().encode_lower(&mut operation_buffer);
-    let mut parent_buffer = Uuid::encode_buffer();
-    let parent: Option<&str> = match record.parent_operation_id.as_ref() {
-        Some(id) => Some(id.hyphenated().encode_lower(&mut parent_buffer)),
-        None => None,
-    };
-    transaction.execute("INSERT INTO events(timestamp_ms,session_id,operation_id,parent_operation_id,operation_kind,level,component,event,code,duration_ms,exit_code,stdout_bytes,stderr_bytes,cleanup_failed) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14)", params![
-        timestamp, session, operation, parent, record.operation_kind.as_str(), record.level.as_str(), record.component.as_str(), record.event.as_str(), record.code.map(Code::as_str), details.duration_ms.map(|v| v as i64), details.exit_code, details.stdout_bytes.map(|v| v as i64), details.stderr_bytes.map(|v| v as i64), details.cleanup_failed,
-    ]).map_err(|_| Code::Storage)?;
     transaction.commit().map_err(|_| Code::Storage)?;
-    *stored_count = remaining + 1 - excess;
+    *stored_count = pending_count;
     Ok(())
 }
 
 fn timestamp_ms() -> i64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|duration| duration.as_millis().min(i64::MAX as u128) as i64).unwrap_or(0)
 }
+
+#[cfg(test)]
+#[path = "../../tests/integration/diagnostics_store.rs"]
+mod integration_tests;

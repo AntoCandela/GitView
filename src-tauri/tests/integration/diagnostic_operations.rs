@@ -3,16 +3,56 @@
 #[path = "../support/mod.rs"]
 mod support;
 
-use gitview_lib::{application::RepositoryService, diagnostics::{Code, Component, DiagnosticStore, Event, HealthState, OperationContext, OperationKind, Query, ReadOnlyDiagnostics}, workspace::OpenOutcome};
-use std::{collections::HashSet, path::PathBuf, time::Duration};
+use gitview_lib::{application::RepositoryService, diagnostics::{Code, Component, DiagnosticStore, Event, HealthState, OperationContext, OperationKind, Query, ReadOnlyDiagnostics}, observation::ObservationSnapshot, workspace::OpenOutcome};
+use std::{collections::HashSet, path::PathBuf, sync::Arc, time::Duration};
 use tempfile::TempDir;
 
-fn diagnostic_store() -> (TempDir, PathBuf, DiagnosticStore) {
+fn diagnostic_store() -> (TempDir, PathBuf, Arc<DiagnosticStore>) {
     let directory = tempfile::tempdir().unwrap();
     let database = directory.path().canonicalize().unwrap().join("diagnostics.sqlite");
-    let store = DiagnosticStore::open(&database);
+    let store = Arc::new(DiagnosticStore::open(&database));
     assert!(matches!(store.health().state, HealthState::Healthy));
     (directory, database, store)
+}
+
+async fn flush_diagnostics(store: &Arc<DiagnosticStore>) {
+    let store = Arc::clone(store);
+    // A blocking FIFO acknowledgement must not stall current-thread observation tasks.
+    tokio::task::spawn_blocking(move || {
+        let before = store.health();
+        let result = store.flush(Duration::from_secs(2));
+        assert_diagnostic_control(&store, before.accepted, before.written, result);
+    }).await.unwrap();
+}
+
+async fn shutdown_diagnostics(store: &Arc<DiagnosticStore>) {
+    let store = Arc::clone(store);
+    tokio::task::spawn_blocking(move || {
+        let before = store.health();
+        let result = store.shutdown(Duration::from_secs(2));
+        assert_diagnostic_control(&store, before.accepted, before.written, result);
+    }).await.unwrap();
+}
+
+fn assert_diagnostic_control(store: &DiagnosticStore, accepted: u64, written: u64, result: Result<(), Code>) {
+    match result {
+        Ok(()) => assert!(store.health().written >= accepted, "diagnostic control must commit its accepted watermark"),
+        Err(Code::Timeout) => {
+            let health = store.health();
+            if health.written < accepted {
+                if health.written > written {
+                    panic!("diagnostic control timed out while accepted records were still committing");
+                }
+                panic!("diagnostic control timed out with no progress toward its accepted watermark");
+            }
+            if health.written < health.accepted {
+                panic!("diagnostic control timed out after its initial watermark committed; later accepted records remain");
+            }
+            panic!("diagnostic control timed out after its accepted watermark committed; acknowledgement or writer exit pending");
+        },
+        Err(Code::Storage) => panic!("diagnostic control storage failure"),
+        Err(_) => panic!("diagnostic control failed with another fixed code"),
+    }
 }
 
 #[tokio::test]
@@ -29,7 +69,9 @@ async fn concurrent_real_opens_keep_failure_classification_and_process_facts_sep
     );
     assert!(matches!(opened, OpenOutcome::Opened { .. }));
     assert!(matches!(rejected, OpenOutcome::Rejected { code: "not_repository", .. }));
-    store.flush(Duration::from_secs(2)).unwrap();
+    service.shutdown().await;
+    flush_diagnostics(&store).await;
+    shutdown_diagnostics(&store).await;
     let reader = ReadOnlyDiagnostics::open(&database).unwrap();
     let good = reader.events(&Query { operation_id: Some(success.id()), limit: 200, ..Default::default() }).unwrap().events;
     let bad = reader.events(&Query { operation_id: Some(failure.id()), limit: 200, ..Default::default() }).unwrap().events;
@@ -44,8 +86,6 @@ async fn concurrent_real_opens_keep_failure_classification_and_process_facts_sep
     assert!(bad.iter().any(|row| row.component == Component::Git && row.code == Some(Code::NotRepository)));
     assert!(good.iter().all(|row| row.operation_id == success.id() && row.operation_kind == OperationKind::OpenRepository));
     assert!(bad.iter().all(|row| row.operation_id == failure.id() && row.operation_kind == OperationKind::OpenRepository));
-    service.shutdown().await;
-    store.shutdown(Duration::from_secs(2)).unwrap();
 }
 
 #[tokio::test]
@@ -58,17 +98,35 @@ async fn each_completed_scan_has_its_own_identity_under_selection_not_cached_pol
     selection.scope(service.select(&entry_id)).await;
     let polling = OperationContext::new(store.sink(), None, None).with_kind(OperationKind::ObserveContext);
     tokio::time::timeout(Duration::from_secs(8), async {
+        let mut first_revision = None;
         loop {
-            let _ = polling.scope(service.observe_selected_context(&entry_id)).await;
-            store.flush(Duration::from_secs(2)).unwrap();
-            let rows = ReadOnlyDiagnostics::open(&database).unwrap()
-                .events(&Query { component: Some(Component::Observation), limit: 200, ..Default::default() }).unwrap().events;
-            if rows.iter().filter(|row| row.event == Event::Completed).count() >= 2 { break; }
+            // Pace traced snapshot polls without taking the writer's control/admission lock.
+            let accepted = store.health().accepted;
+            loop {
+                let health = store.health();
+                assert!(matches!(health.last_error_code, None | Some(Code::Overflow)));
+                if health.written >= accepted { break; }
+                tokio::time::sleep(Duration::from_millis(20)).await;
+            }
+            match polling.scope(service.observe_selected_context(&entry_id)).await {
+                ObservationSnapshot::Ready { observation_revision, .. } => match first_revision {
+                    Some(previous) if observation_revision > previous => break,
+                    None => {
+                        // A changed snapshot proves the next real scan completed, not just a cached poll.
+                        std::fs::write(root.join("next-scan"), b"scan readiness\n").unwrap();
+                        first_revision = Some(observation_revision);
+                    },
+                    _ => {},
+                },
+                ObservationSnapshot::Unavailable { .. } => panic!("real scan must remain available"),
+                _ => {},
+            }
             tokio::time::sleep(Duration::from_millis(20)).await;
         }
     }).await.expect("two real scans must complete");
     service.shutdown().await;
-    store.flush(Duration::from_secs(2)).unwrap();
+    flush_diagnostics(&store).await;
+    shutdown_diagnostics(&store).await;
     let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { component: Some(Component::Observation), limit: 200, ..Default::default() }).unwrap().events;
     let completed: Vec<_> = rows.iter().filter(|row| row.event == Event::Completed).collect();
     let identities: HashSet<_> = completed.iter().map(|row| row.operation_id).collect();
@@ -79,7 +137,6 @@ async fn each_completed_scan_has_its_own_identity_under_selection_not_cached_pol
         assert_ne!(row.operation_id, polling.id());
         assert!(rows.iter().any(|start| start.operation_id == row.operation_id && start.event == Event::Started));
     }
-    store.shutdown(Duration::from_secs(2)).unwrap();
 }
 
 #[tokio::test]
@@ -93,11 +150,11 @@ async fn corrupt_workspace_preserves_bytes_and_records_safe_persistence_failure(
     assert_eq!(service.snapshot().await.persistence_error.unwrap().code, gitview_lib::workspace::persistence::PersistenceErrorCode::LoadFailed);
     assert_eq!(std::fs::read(&workspace_file).unwrap(), private_payload);
     service.shutdown().await;
-    store.flush(Duration::from_secs(2)).unwrap();
+    flush_diagnostics(&store).await;
+    shutdown_diagnostics(&store).await;
     let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { component: Some(Component::Persistence), limit: 200, ..Default::default() }).unwrap().events;
     assert!(rows.iter().any(|row| row.event == Event::Failed && row.code == Some(Code::LoadFailed)));
     assert!(!serde_json::to_string(&rows).unwrap().contains("private-path-and-secret-token"));
-    store.shutdown(Duration::from_secs(2)).unwrap();
 }
 
 #[tokio::test]

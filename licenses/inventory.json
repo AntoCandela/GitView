@@ -5,26 +5,26 @@
   "gplSha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
   "sourceHashes": {
     ".agents/skills/gitview-agent-evaluation/SKILL.md": "3fe1a28a71cda01e5899859bc983ede7cbe9e85988bac8265b5e1c74f4851648",
-    ".agents/skills/gitview-doc-maintenance/SKILL.md": "7a70bda6031eefc105c5eeb07b00232e63949bf8042c027f40f17ecdd83798ad",
+    ".agents/skills/gitview-doc-maintenance/SKILL.md": "3361205e83040632dfdc657b0def6e52b73aee854553a2fb2eb27cca362e1478",
     ".agents/skills/gitview-independent-review/SKILL.md": "e6fb3ae55cea19dc4b05af8986843d4c139d9c287ee39b238f5f035a0f0d151e",
     ".agents/skills/gitview-session-coordination/SKILL.md": "f16de76c7d343e7ff783c915637c4c95d53ea5adba0d30e91c6da4f8fbf77a17",
-    ".agents/skills/gitview-sql-diagnostics/SKILL.md": "24124de9787382623d02cae60a56ec7b7aa1cbf28d672a7fbc5097e3cd69301c",
+    ".agents/skills/gitview-sql-diagnostics/SKILL.md": "fdc10a4e6305454244d806337b80cb172f44af64ab17670908b3d7c6b5e3be9b",
     ".agents/skills/gitview-task-delegation/SKILL.md": "4b4007695a0fd0115b69cabe95666886b8fc5933638bfb8f219054648e6f33b3",
-    ".agents/skills/gitview-verification/SKILL.md": "94b82819a6b6166066e73b454e14afc90adbdf421b89eebedeff7970287e2023",
+    ".agents/skills/gitview-verification/SKILL.md": "0f1a3fe20f4e401940e57b42825ac87a6bf70f13fe4ce8c25cf4e10ca7ff87c1",
     ".agents/skills/gitview-worker-isolation/SKILL.md": "951b3673b5aa6aaa73ac6bf5c5d640214db36cbd8f2ea5db51ca7e23b72b4e4c",
     "CODE_OF_CONDUCT.md": "5d955fd2bed345f78cc377f046b293f7a88686bbaef9bed26908692c31b9e064",
-    "THIRD_PARTY_NOTICES.md": "c55d8fc5220916fbae807aa4830cbf2d3082c362b4ea9e979a77e04ab527b8fd",
+    "THIRD_PARTY_NOTICES.md": "20a4f89633d3e3740fd26e3df0b74ca0126f4970f9d13e9241b0f7aeced16c1c",
     "licenses/supplemental-sources.json": "7ba1f5022e3cef2afa7db1918e7653f6e9b04e44263021ff3d9cb71aee5a422e",
     "package-lock.json": "3b10145f9071f340c78e4ab4a6e1406b580f113e6ec896ef3f1b4ff372f54c3b",
     "package.json": "4302fed793a7240fb8928986799adabd9b3e5551acd1b1ca50b5d0d2b50e70a6",
     "public/favicon.svg": "8a3a2a8cf0c6358aeee5edd83559bab768088b9a9f3522a292e8fa23ed55f99e",
-    "scripts/check-licenses.mjs": "e08d6845f3b81c5f4fd02447830f774c4dc5918b461124817bbebe8a71ad0642",
+    "scripts/check-licenses.mjs": "38d97b2a449aa43a7f73eb5c6db3e5d0946886b94c92ef95085003bec679ed0a",
     "scripts/fileIconThemes.ts": "612d6aa80b52a846f3002abbe9cc1ab35dc8f77c6b436b433407d5af252e8e45",
     "scripts/generate-brand.mjs": "add0f7fe15f8da3c5c83c7c477121757ec3c4df0bff78d5301a861637cf1bfc5",
     "scripts/glslGrammar.ts": "87f30b5fe59c7c2438b8f49b391cc302856d136e4155152419c067f29977b1ad",
-    "scripts/vendor-patches.mjs": "aa4ced39028ee7e7a450822442b82a6e11916effb8531c815644c7e909ce8372",
-    "src-tauri/Cargo.lock": "ce19bf141b511da0b9b6f20a2a242600c75eba3fa53addeae42b8c7804e639fb",
-    "src-tauri/Cargo.toml": "33c217b693ec53b61b97193f56d4a6bac0c6f406604d8cb2247c28bde2b223e9",
+    "scripts/vendor-patches.mjs": "8d852741549a75a37279b25a18400343260be2b6ae8602e16995878def2184bc",
+    "src-tauri/Cargo.lock": "6b5233e84feac9649fc24c7a33a43cde7c6b49bc94e8fce90ae9691b30df825d",
+    "src-tauri/Cargo.toml": "50637cd33d170f1d0572c29a16ee87934f0ab4e75d04b7f7b4f49ccb6cd6a09d",
     "src-tauri/icons/128x128.png": "4d8c641a76d8063f4da7335cc5731df82eda72c5004d94d5dacd03e0eafd1236",
     "src-tauri/icons/128x128@2x.png": "13cfc1a072d7f46d46599b61ca6936de1694b4cca30b64a64d07264757fe6b5d",
     "src-tauri/icons/32x32.png": "8dde255cf77be6e706057d87fcbb636115133e6e016a82c62224667d659735ca",
@@ -1099,8 +1099,8 @@
     "licenses/texts/cargo/hashbrown/0.16.1/LICENSE-MIT": "ff8f68cb076caf8cefe7a6430d4ac086ce6af2ca8ce2c4e5a2004d4552ef52a2",
     "licenses/texts/cargo/hashbrown/0.17.1/LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
     "licenses/texts/cargo/hashbrown/0.17.1/LICENSE-MIT": "ff8f68cb076caf8cefe7a6430d4ac086ce6af2ca8ce2c4e5a2004d4552ef52a2",
-    "licenses/texts/cargo/hashlink/0.11.1/LICENSE-APACHE": "c144680885b29e4719e2a51f0aab5439a1e02d980692b5aaf086cae12727f28b",
-    "licenses/texts/cargo/hashlink/0.11.1/LICENSE-MIT": "e915669a595b11a200873df8286561881b0e04932f6412a585db6297ba0bc97c",
+    "licenses/texts/cargo/hashlink/0.12.2/LICENSE-APACHE": "c144680885b29e4719e2a51f0aab5439a1e02d980692b5aaf086cae12727f28b",
+    "licenses/texts/cargo/hashlink/0.12.2/LICENSE-MIT": "e915669a595b11a200873df8286561881b0e04932f6412a585db6297ba0bc97c",
     "licenses/texts/cargo/heck/0.4.1/LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
     "licenses/texts/cargo/heck/0.4.1/LICENSE-MIT": "7b63ecd5f1902af1b63729947373683c32745c16a10e8e6292e2e2dcd7e90ae0",
     "licenses/texts/cargo/heck/0.5.0/LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
@@ -1182,10 +1182,10 @@
     "licenses/texts/cargo/libdbus-sys/0.2.7/vendor/dbus/cmake/modules/COPYING-CMAKE-SCRIPTS": "c666ec2313dba24523ccad88f4c04ea4b24fad6545263a35b1d4ab2b08efe50a",
     "licenses/texts/cargo/libloading/0.7.4/LICENSE": "b29f8b01452350c20dd1af16ef83b598fea3053578ccc1c7a0ef40e57be2620f",
     "licenses/texts/cargo/libredox/0.1.25/LICENSE": "8d073a6a80d1ef2d2fc2bc6c809aa221161bf1906c76d4aeef55fd2b999d9413",
-    "licenses/texts/cargo/libsqlite3-sys/0.36.0/LICENSE": "c10c1f27337546471e5f7e4e97fdd398b35b9d4e126115dcd22de8d8e65abf6f",
-    "licenses/texts/cargo/libsqlite3-sys/0.36.0/sqlcipher/LICENSE": "ea4fcb309f14a22065e1ea45362d494d320012249ed865fe9c7c0946db754131",
-    "licenses/texts/cargo/libsqlite3-sys/0.36.0/sqlcipher/sqlite3.c.public-domain-header.txt": "39fc4986b224f2f5575dec58ae66c7c9ee2d5d3884ba4971c932f1fd5b40b033",
-    "licenses/texts/cargo/libsqlite3-sys/0.36.0/sqlite3/sqlite3.c.public-domain-header.txt": "39fc4986b224f2f5575dec58ae66c7c9ee2d5d3884ba4971c932f1fd5b40b033",
+    "licenses/texts/cargo/libsqlite3-sys/0.38.2/LICENSE": "c10c1f27337546471e5f7e4e97fdd398b35b9d4e126115dcd22de8d8e65abf6f",
+    "licenses/texts/cargo/libsqlite3-sys/0.38.2/sqlcipher/LICENSE": "ea4fcb309f14a22065e1ea45362d494d320012249ed865fe9c7c0946db754131",
+    "licenses/texts/cargo/libsqlite3-sys/0.38.2/sqlcipher/sqlite3.c.public-domain-header.txt": "39fc4986b224f2f5575dec58ae66c7c9ee2d5d3884ba4971c932f1fd5b40b033",
+    "licenses/texts/cargo/libsqlite3-sys/0.38.2/sqlite3/sqlite3.c.public-domain-header.txt": "39fc4986b224f2f5575dec58ae66c7c9ee2d5d3884ba4971c932f1fd5b40b033",
     "licenses/texts/cargo/linux-raw-sys/0.12.1/COPYRIGHT": "3290ae0fbc9ddb77d2239121d710f0bb9d31b3b4744e6d97fe01e652b4c1870b",
     "licenses/texts/cargo/linux-raw-sys/0.12.1/LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
     "licenses/texts/cargo/linux-raw-sys/0.12.1/LICENSE-Apache-2.0_WITH_LLVM-exception": "268872b9816f90fd8e85db5a28d33f8150ebb8dd016653fb39ef1f94f2686bc5",
@@ -1316,7 +1316,7 @@
     "licenses/texts/cargo/reqwest/0.13.5/LICENSE-MIT": "dd87e27dfbaa888cb77ea34592648a7743636b8dce07e49543bddda0fcfc73bc",
     "licenses/texts/cargo/rfd/0.16.0/LICENSE": "65fc947f4bac882a2cd104ef73c246b1b037059df9f2b3a58b7f77f0b9e56071",
     "licenses/texts/cargo/rsqlite-vfs/0.1.1/upstream/LICENSE": "e1c1975c3474cce31722836f101a40ffaf1cc784e4d2f38ce3e77b9712934e78",
-    "licenses/texts/cargo/rusqlite/0.38.0/LICENSE": "c10c1f27337546471e5f7e4e97fdd398b35b9d4e126115dcd22de8d8e65abf6f",
+    "licenses/texts/cargo/rusqlite/0.40.2/LICENSE": "c10c1f27337546471e5f7e4e97fdd398b35b9d4e126115dcd22de8d8e65abf6f",
     "licenses/texts/cargo/rustc-hash/2.1.3/LICENSE-APACHE": "95bd3988beee069fa2848f648dab43cc6e0b2add2ad6bcb17360caf749802bcc",
     "licenses/texts/cargo/rustc-hash/2.1.3/LICENSE-MIT": "30fefc3a7d6a0041541858293bcbea2dde4caa4c0a5802f996a7f7e8c0085652",
     "licenses/texts/cargo/rustc_version/0.4.1/LICENSE-APACHE": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2",
@@ -1787,8 +1787,6 @@
     "licenses/texts/npm/jsdom/26.1.0/LICENSE.txt": "242d37e7cab25cbafc36cc973ee88f9345fddf066afe4f72b7ac3d9ad4e24cce",
     "licenses/texts/npm/lru-cache/10.4.3/LICENSE": "451ec07eeb9c4e1b86de9abdaa426462a8be48f887ec7421cf0bbb9c769555ab",
     "licenses/texts/npm/lucide-react/1.49.0/LICENSE": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
-    "licenses/texts/npm/lucide-react/1.49.0/dist/esm/icons/copyright.mjs": "9142a087ed6e09cda86417dfe45f9245d3b2f8a4f383de2e8e6e88ce82c21342",
-    "licenses/texts/npm/lucide-react/1.49.0/dist/esm/icons/copyright.mjs.map": "e76a3007f3232ceab27c936e80a40031141d8969b53e3db1da647f8fb2ecd436",
     "licenses/texts/npm/lz-string/1.5.0/LICENSE": "433fc9dfe659dbfb1e91eed8351f13651e97bfa3ac6d03394c3d63f61d4bbc80",
     "licenses/texts/npm/lz-string/1.5.0/tests/lib/jasmine-1.3.1/MIT.LICENSE": "4980fbf7a066767fb0fe963464cbb1b8c566fb46c55848fcf940143fdca68046",
     "licenses/texts/npm/magic-string/0.30.21/LICENSE": "1cbe51b907662f6cb1492b16c359384a595180bf0e4d101603ed525e75c4e484",
@@ -6569,18 +6567,6 @@
           "sourcePath": "LICENSE",
           "sourceUrl": "https://registry.npmjs.org/lucide-react/-/lucide-react-1.49.0.tgz#package/LICENSE",
           "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57"
-        },
-        {
-          "path": "licenses/texts/npm/lucide-react/1.49.0/dist/esm/icons/copyright.mjs.map",
-          "sourcePath": "dist/esm/icons/copyright.mjs.map",
-          "sourceUrl": "https://registry.npmjs.org/lucide-react/-/lucide-react-1.49.0.tgz#package/dist/esm/icons/copyright.mjs.map",
-          "sha256": "e76a3007f3232ceab27c936e80a40031141d8969b53e3db1da647f8fb2ecd436"
-        },
-        {
-          "path": "licenses/texts/npm/lucide-react/1.49.0/dist/esm/icons/copyright.mjs",
-          "sourcePath": "dist/esm/icons/copyright.mjs",
-          "sourceUrl": "https://registry.npmjs.org/lucide-react/-/lucide-react-1.49.0.tgz#package/dist/esm/icons/copyright.mjs",
-          "sha256": "9142a087ed6e09cda86417dfe45f9245d3b2f8a4f383de2e8e6e88ce82c21342"
         }
       ]
     },
@@ -13954,7 +13940,9 @@
         "development/test",
         "runtime"
       ],
-      "resolvedFeatures": [],
+      "resolvedFeatures": [
+        "default-hasher"
+      ],
       "targetConditions": [],
       "declaredLicense": "MIT OR Apache-2.0",
       "selectedLicense": "MIT",
@@ -13977,9 +13965,9 @@
     {
       "ecosystem": "cargo",
       "name": "hashlink",
-      "version": "0.11.1",
-      "source": "https://static.crates.io/crates/hashlink/hashlink-0.11.1.crate",
-      "checksum": "824e001ac4f3012dd16a264bec811403a67ca9deb6c102fc5049b32c4574b35f",
+      "version": "0.12.2",
+      "source": "https://static.crates.io/crates/hashlink/hashlink-0.12.2.crate",
+      "checksum": "a596f1b20ed2cc5ecac41a164aaebc7258057060f06c0cf7a2ba3991ee7990fb",
       "repository": "https://github.com/djc/hashlink",
       "scope": [
         "runtime"
@@ -13991,15 +13979,15 @@
       "incompatibleSecondaryLicense": false,
       "notices": [
         {
-          "path": "licenses/texts/cargo/hashlink/0.11.1/LICENSE-APACHE",
+          "path": "licenses/texts/cargo/hashlink/0.12.2/LICENSE-APACHE",
           "sourcePath": "LICENSE-APACHE",
-          "sourceUrl": "https://static.crates.io/crates/hashlink/hashlink-0.11.1.crate#hashlink-0.11.1/LICENSE-APACHE",
+          "sourceUrl": "https://static.crates.io/crates/hashlink/hashlink-0.12.2.crate#hashlink-0.12.2/LICENSE-APACHE",
           "sha256": "c144680885b29e4719e2a51f0aab5439a1e02d980692b5aaf086cae12727f28b"
         },
         {
-          "path": "licenses/texts/cargo/hashlink/0.11.1/LICENSE-MIT",
+          "path": "licenses/texts/cargo/hashlink/0.12.2/LICENSE-MIT",
           "sourcePath": "LICENSE-MIT",
-          "sourceUrl": "https://static.crates.io/crates/hashlink/hashlink-0.11.1.crate#hashlink-0.11.1/LICENSE-MIT",
+          "sourceUrl": "https://static.crates.io/crates/hashlink/hashlink-0.12.2.crate#hashlink-0.12.2/LICENSE-MIT",
           "sha256": "e915669a595b11a200873df8286561881b0e04932f6412a585db6297ba0bc97c"
         }
       ]
@@ -15642,9 +15630,9 @@
     {
       "ecosystem": "cargo",
       "name": "libsqlite3-sys",
-      "version": "0.36.0",
-      "source": "https://static.crates.io/crates/libsqlite3-sys/libsqlite3-sys-0.36.0.crate",
-      "checksum": "95b4103cffefa72eb8428cb6b47d6627161e51c2739fc5e3b734584157bc642a",
+      "version": "0.38.2",
+      "source": "https://static.crates.io/crates/libsqlite3-sys/libsqlite3-sys-0.38.2.crate",
+      "checksum": "f1d20bef17f513b9b3004532233187769cd072d790971f4e4da0e346eb6401e8",
       "repository": "https://github.com/rusqlite/rusqlite",
       "scope": [
         "runtime"
@@ -15659,6 +15647,7 @@
         "vcpkg"
       ],
       "targetConditions": [
+        "cfg(all(target_family = \"wasm\", target_os = \"unknown\"))",
         "cfg(not(all(target_family = \"wasm\", target_os = \"unknown\")))"
       ],
       "declaredLicense": "MIT",
@@ -15666,27 +15655,27 @@
       "incompatibleSecondaryLicense": false,
       "notices": [
         {
-          "path": "licenses/texts/cargo/libsqlite3-sys/0.36.0/LICENSE",
+          "path": "licenses/texts/cargo/libsqlite3-sys/0.38.2/LICENSE",
           "sourcePath": "LICENSE",
-          "sourceUrl": "https://static.crates.io/crates/libsqlite3-sys/libsqlite3-sys-0.36.0.crate#libsqlite3-sys-0.36.0/LICENSE",
+          "sourceUrl": "https://static.crates.io/crates/libsqlite3-sys/libsqlite3-sys-0.38.2.crate#libsqlite3-sys-0.38.2/LICENSE",
           "sha256": "c10c1f27337546471e5f7e4e97fdd398b35b9d4e126115dcd22de8d8e65abf6f"
         },
         {
-          "path": "licenses/texts/cargo/libsqlite3-sys/0.36.0/sqlcipher/LICENSE",
+          "path": "licenses/texts/cargo/libsqlite3-sys/0.38.2/sqlcipher/LICENSE",
           "sourcePath": "sqlcipher/LICENSE",
-          "sourceUrl": "https://static.crates.io/crates/libsqlite3-sys/libsqlite3-sys-0.36.0.crate#libsqlite3-sys-0.36.0/sqlcipher/LICENSE",
+          "sourceUrl": "https://static.crates.io/crates/libsqlite3-sys/libsqlite3-sys-0.38.2.crate#libsqlite3-sys-0.38.2/sqlcipher/LICENSE",
           "sha256": "ea4fcb309f14a22065e1ea45362d494d320012249ed865fe9c7c0946db754131"
         },
         {
-          "path": "licenses/texts/cargo/libsqlite3-sys/0.36.0/sqlcipher/sqlite3.c.public-domain-header.txt",
+          "path": "licenses/texts/cargo/libsqlite3-sys/0.38.2/sqlcipher/sqlite3.c.public-domain-header.txt",
           "sourcePath": "sqlcipher/sqlite3.c.public-domain-header.txt",
-          "sourceUrl": "https://static.crates.io/crates/libsqlite3-sys/libsqlite3-sys-0.36.0.crate#sqlcipher/sqlite3.c",
+          "sourceUrl": "https://static.crates.io/crates/libsqlite3-sys/libsqlite3-sys-0.38.2.crate#sqlcipher/sqlite3.c",
           "sha256": "39fc4986b224f2f5575dec58ae66c7c9ee2d5d3884ba4971c932f1fd5b40b033"
         },
         {
-          "path": "licenses/texts/cargo/libsqlite3-sys/0.36.0/sqlite3/sqlite3.c.public-domain-header.txt",
+          "path": "licenses/texts/cargo/libsqlite3-sys/0.38.2/sqlite3/sqlite3.c.public-domain-header.txt",
           "sourcePath": "sqlite3/sqlite3.c.public-domain-header.txt",
-          "sourceUrl": "https://static.crates.io/crates/libsqlite3-sys/libsqlite3-sys-0.36.0.crate#sqlite3/sqlite3.c",
+          "sourceUrl": "https://static.crates.io/crates/libsqlite3-sys/libsqlite3-sys-0.38.2.crate#sqlite3/sqlite3.c",
           "sha256": "39fc4986b224f2f5575dec58ae66c7c9ee2d5d3884ba4971c932f1fd5b40b033"
         }
       ]
@@ -19040,9 +19029,9 @@
     {
       "ecosystem": "cargo",
       "name": "rusqlite",
-      "version": "0.38.0",
-      "source": "https://static.crates.io/crates/rusqlite/rusqlite-0.38.0.crate",
-      "checksum": "f1c93dd1c9683b438c392c492109cb702b8090b2bfc8fed6f6e4eb4523f17af3",
+      "version": "0.40.2",
+      "source": "https://static.crates.io/crates/rusqlite/rusqlite-0.40.2.crate",
+      "checksum": "23f2a97da3e3873c73cb2a2e71b35c40ff95e0b1eefa8d72d8499a6928c3b5b3",
       "repository": "https://github.com/rusqlite/rusqlite",
       "scope": [
         "runtime"
@@ -19051,6 +19040,7 @@
         "bundled",
         "cache",
         "default",
+        "ffi-sqlite-wasm-rs",
         "hashlink",
         "modern_sqlite"
       ],
@@ -19060,9 +19050,9 @@
       "incompatibleSecondaryLicense": false,
       "notices": [
         {
-          "path": "licenses/texts/cargo/rusqlite/0.38.0/LICENSE",
+          "path": "licenses/texts/cargo/rusqlite/0.40.2/LICENSE",
           "sourcePath": "LICENSE",
-          "sourceUrl": "https://static.crates.io/crates/rusqlite/rusqlite-0.38.0.crate#rusqlite-0.38.0/LICENSE",
+          "sourceUrl": "https://static.crates.io/crates/rusqlite/rusqlite-0.40.2.crate#rusqlite-0.40.2/LICENSE",
           "sha256": "c10c1f27337546471e5f7e4e97fdd398b35b9d4e126115dcd22de8d8e65abf6f"
         }
       ]

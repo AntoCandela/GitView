@@ -110,7 +110,7 @@ export async function verifyVendorPatch({ packageRecord, archiveBytes, root }) {
   }
   const prefix = `${name}-${version}/`;
   // Archive bytes are independently pinned above; tar never extracts them onto the filesystem.
-  const entries = archiveCommand(archiveBytes, ['-tzf', '-']).toString('utf8').trim().split('\n')
+  const entries = archiveCommand(archiveBytes, ['-tzf', '-']).toString('utf8').trim().split(/\r?\n/)
     .filter(entry => !entry.endsWith('/'));
   const originalPaths = entries.map(entry => {
     if (!entry.startsWith(prefix)) throw new Error('vendor_archive_path');

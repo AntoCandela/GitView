@@ -330,7 +330,14 @@ async fn unsafe_repository_and_git_failure_never_return_clean() {
     let (temp, root) = working_tree();
     let unsafe_git = executable(temp.path(), "printf '%s' 'fatal: detected dubious ownership' >&2\nexit 128");
     let reader = GitStatusReader { process: GitProcess::with_executable(&unsafe_git) };
-    assert_eq!(reader.read(&root).await, Err(StatusError::UnsafeRepository));
+    match reader.read(&root).await {
+        Err(StatusError::UnsafeRepository) => {},
+        Err(StatusError::GitUnavailable) => panic!("ownership fixture Git was unavailable"),
+        Err(StatusError::Inaccessible) => panic!("ownership fixture was inaccessible"),
+        Err(StatusError::Timeout) => panic!("ownership fixture timed out"),
+        Err(_) => panic!("ownership fixture returned another classified failure"),
+        Ok(_) => panic!("unsafe ownership must never publish a status snapshot"),
+    }
     let failed_git = executable(temp.path(), "printf '%s' 'fatal: permission denied' >&2\nexit 128");
     let reader = GitStatusReader::with_executable(&failed_git);
     assert_eq!(reader.read(&root).await, Err(StatusError::Inaccessible));

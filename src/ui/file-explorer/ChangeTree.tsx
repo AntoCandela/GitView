@@ -1,6 +1,6 @@
 /** Windows native-segment file rows while retaining logical keyboard order and sticky ancestry. */
 
-import { useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type RefObject } from "react";
+import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type RefObject } from "react";
 import { defaultRangeExtractor, observeElementRect, useVirtualizer, type Range } from "@tanstack/react-virtual";
 import { buildChangeHierarchy, flattenChangeRows, summarizeDirectoryChanges, type ChangeTreeDirectory, type ChangeTreeFile, type ChangeTreeRow, type ChangeTreeSummaryProps } from "./changeTreeRows";
 import { ChevronDownIcon, ChevronRightIcon } from "../icons";
@@ -44,15 +44,13 @@ export function ChangeTree({ files, directories = NO_DIRECTORIES, summaryFiles =
     visit(hierarchy);
     return ids;
   }, [hierarchy, expanded, directoryExpansion?.collapsed]);
-  const expansion = directoryExpansion ?? {
-    collapsed,
-    onToggle: (id: string) => setExpanded((current) => {
-      const next = new Set(current);
-      if (!next.delete(id)) next.add(id);
-      return next;
-    }),
-  };
-  const rows = useMemo(() => flattenChangeRows(hierarchy, files, view, expansion.collapsed), [hierarchy, files, view, expansion.collapsed]);
+  const toggleDirectory = useCallback((id: string) => setExpanded((current) => {
+    const next = new Set(current);
+    if (!next.delete(id)) next.add(id);
+    return next;
+  }), []);
+  const onToggle = directoryExpansion?.onToggle ?? toggleDirectory;
+  const rows = useMemo(() => flattenChangeRows(hierarchy, files, view, collapsed), [hierarchy, files, view, collapsed]);
   const rowIndices = useMemo(() => new Map(rows.map((row, index) => [row.key, index])), [rows]);
   const selectable = onSelect !== undefined;
   const interactiveBoundaries = useMemo(() => {
@@ -181,7 +179,7 @@ export function ChangeTree({ files, directories = NO_DIRECTORIES, summaryFiles =
     }
   }, [rows, rowIndices, focusedKey, margin, virtualizer, virtualScrollRef, onSelect]);
 
-  function revealRow(index: number) {
+  const revealRow = useCallback((index: number) => {
     const scroller = virtualScrollRef?.current ?? containerRef.current;
     if (!scroller || scroller.clientHeight === 0) return;
     const row = rows[index];
@@ -192,7 +190,12 @@ export function ChangeTree({ files, directories = NO_DIRECTORIES, summaryFiles =
     const inset = sticky ? row.depth * ROW_HEIGHT : 0;
     if (top < scroller.scrollTop + inset) virtualizer.scrollToOffset(Math.max(0, top - inset));
     else if (top + ROW_HEIGHT > scroller.scrollTop + scroller.clientHeight) virtualizer.scrollToOffset(top + ROW_HEIGHT - scroller.clientHeight);
-  }
+  }, [virtualScrollRef, rows, margin, sticky, virtualizer]);
+
+  const focusRow = useCallback((index: number) => {
+    setFocusedKey(rows[index].key);
+    revealRow(index);
+  }, [rows, revealRow]);
 
   useLayoutEffect(() => {
     if (pendingFocus.current === null) return;
@@ -227,31 +230,51 @@ export function ChangeTree({ files, directories = NO_DIRECTORIES, summaryFiles =
     <ul ref={contentRef} className="changes-tree-content" aria-label={label} style={{ height: virtualizer.getTotalSize() }}>
       {visibleRows.map((virtualRow) => {
         const row = rows[virtualRow.index];
-        const name = row.item.segments[row.item.segments.length - 1];
         const naturalTop = virtualRow.start - margin;
         const top = sticky && !row.file && row.expanded
           ? Math.max(naturalTop, Math.min(scrollOffset + row.depth * ROW_HEIGHT, (row.end - 1) * ROW_HEIGHT)) : naturalTop;
-        const style = { top, "--row-depth": row.depth, zIndex: sticky && !row.file ? 1000 - row.depth : undefined } as CSSProperties;
-        const content = row.file ? <>
-          <TreeEntryIcon kind="file" name={name} /><span>{name}</span>
-          <span className={`change-marker${row.file.unsupported ? " unsupported" : ""}`} aria-label={row.file.status}>{row.file.marker}</span>
-        </> : null;
-        return <li key={row.key} data-tree-index={virtualRow.index} className={`change-virtual-row ${row.file ? "change-file" : "change-directory"}`}
-          aria-posinset={virtualRow.index + 1} aria-setsize={rows.length} style={style}
-          onFocus={() => { setFocusedKey(row.key); revealRow(virtualRow.index); }}>
-          <Tooltip content={<><div>{row.item.displayPath}</div><div>{row.file ? row.file.status || "Status unavailable"
-            : directorySummaries === null ? "Status unavailable" : directorySummaries.get(row.item.id) ?? "No known changes"}</div></>}
-            trigger={row.file ? onSelect ? <button type="button" className="change-file-name" aria-label={`Review ${row.file.displayPath}`}
-              aria-pressed={selectedId === row.file.id} onClick={() => onSelect(row.file!)}>{content}</button>
-              : <div className="change-file-name">{content}</div>
-              : <button type="button" className="directory-toggle" aria-expanded={row.expanded}
-                aria-label={`${row.expanded ? "Collapse" : "Expand"} ${row.item.displayPath}`}
-                onClick={() => expansion.onToggle(row.item.id)}>
-                {row.expanded ? <ChevronDownIcon aria-hidden="true" /> : <ChevronRightIcon aria-hidden="true" />}
-                <TreeEntryIcon kind="folder" name={name} expanded={row.expanded} /><span>{name}</span>
-              </button>} />
-        </li>;
+        const status = row.file ? row.file.status || "Status unavailable"
+          : directorySummaries === null ? "Status unavailable" : directorySummaries.get(row.item.id) ?? "No known changes";
+        return <MountedChangeRow key={row.key} row={row} index={virtualRow.index} count={rows.length}
+          top={top} sticky={sticky} selected={row.file !== undefined && selectedId === row.file.id}
+          status={status} onSelect={onSelect} onToggle={onToggle} onFocus={focusRow} />;
       })}
     </ul>
   </div>;
 }
+
+interface MountedChangeRowProps {
+  row: ChangeTreeRow;
+  index: number;
+  count: number;
+  top: number;
+  sticky: boolean;
+  selected: boolean;
+  status: string;
+  onSelect?: (file: ChangeTreeFile) => void;
+  onToggle: (id: string) => void;
+  onFocus: (index: number) => void;
+}
+
+const MountedChangeRow = memo(function MountedChangeRow({ row, index, count, top, sticky, selected, status, onSelect, onToggle, onFocus }: MountedChangeRowProps) {
+  const name = row.item.segments[row.item.segments.length - 1];
+  const style = { top, "--row-depth": row.depth, zIndex: sticky && !row.file ? 1000 - row.depth : undefined } as CSSProperties;
+  const content = row.file ? <>
+    <TreeEntryIcon kind="file" name={name} /><span>{name}</span>
+    <span className={`change-marker${row.file.unsupported ? " unsupported" : ""}`} aria-label={row.file.status}>{row.file.marker}</span>
+  </> : null;
+  return <li data-tree-index={index} className={`change-virtual-row ${row.file ? "change-file" : "change-directory"}`}
+    aria-posinset={index + 1} aria-setsize={count} style={style}
+    onFocus={() => onFocus(index)}>
+    <Tooltip content={<><div>{row.item.displayPath}</div><div>{status}</div></>}
+      trigger={row.file ? onSelect ? <button type="button" className="change-file-name" aria-label={`Review ${row.file.displayPath}`}
+        aria-pressed={selected} onClick={() => onSelect(row.file!)}>{content}</button>
+        : <div className="change-file-name">{content}</div>
+        : <button type="button" className="directory-toggle" aria-expanded={row.expanded}
+          aria-label={`${row.expanded ? "Collapse" : "Expand"} ${row.item.displayPath}`}
+          onClick={() => onToggle(row.item.id)}>
+          {row.expanded ? <ChevronDownIcon aria-hidden="true" /> : <ChevronRightIcon aria-hidden="true" />}
+          <TreeEntryIcon kind="folder" name={name} expanded={row.expanded} /><span>{name}</span>
+        </button>} />
+  </li>;
+});

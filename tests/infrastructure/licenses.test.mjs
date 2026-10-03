@@ -38,6 +38,8 @@ test('archive collector retains third-party notices and bundled JS license sidec
     'package/lib/NOTICE.md': 'Nested notice\n',
     'package/lib/bundle.js': 'ordinary program',
     'package/NOTICE.svg': '<svg/>',
+    'package/lib/copyright.mjs': 'ordinary icon source',
+    'package/lib/copyright.mjs.map': '{"sources":["copyright.ts"]}',
   });
 
   const notices = await collectArchiveNotices(archive, options);
