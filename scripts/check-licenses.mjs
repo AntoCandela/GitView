@@ -12,7 +12,7 @@ import { verifyVendorPatch } from './vendor-patches.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const inventoryPath = join(root, 'licenses/inventory.json');
 const canonicalGplSha256 = '3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986';
-const legalName = /^(?!.*\.(?:svg|png|jpe?g|ico|icns|woff2?|ttf|otf)$)(?:(?:licen[cs]es?|copying|copyright|notices?|authors|third[._ -]?party[._ -]?(?:notices?|licen[cs]es?))(?:[._-].*)?|.+\.licen[cs]e(?:[._-].*)?)$/i;
+const legalName = /^(?!.*\.(?:svg|png|jpe?g|ico|icns|woff2?|ttf|otf|[cm]?js|map)$)(?:(?:licen[cs]es?|copying|copyright|notices?|authors|third[._ -]?party[._ -]?(?:notices?|licen[cs]es?))(?:[._-].*)?|.+\.licen[cs]e(?:[._-].*)?)$/i;
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const json = path => readFile(join(root, path), 'utf8').then(JSON.parse);
 const trees = new Map();
@@ -45,7 +45,7 @@ async function retain(component, sourcePath, bytes, sourceUrl, outputRoot = root
   return { path, sourcePath: name, sourceUrl, sha256: sha256(bytes) };
 }
 export async function collectArchiveNotices(archive, { component, sourceUrl, outputRoot = root }) {
-  const entries = command('tar', ['-tzf', archive]).toString().trim().split('\n');
+  const entries = command('tar', ['-tzf', archive]).toString().trim().split(/\r?\n/);
   const notices = [];
   for (const entry of entries.filter(entry => !entry.endsWith('/') && legalName.test(basename(entry)))) {
     const sourcePath = entry.split('/').slice(1).join('/');
@@ -86,7 +86,7 @@ async function upstreamTexts(pkg, directory, component, providedVcs) {
   if (!trees.has(key)) {
     const archivePath = join(sourceArchivesDirectory, `${sha256(key)}.tgz`);
     await writeFile(archivePath, download(`https://codeload.github.com/${repository}/tar.gz/${commit}`));
-    const entries = command('tar', ['-tzf', archivePath]).toString().trim().split('\n').filter(entry => !entry.endsWith('/'));
+    const entries = command('tar', ['-tzf', archivePath]).toString().trim().split(/\r?\n/).filter(entry => !entry.endsWith('/'));
     trees.set(key, { archivePath, entries: entries.map(entry => ({ path: entry.split('/').slice(1).join('/'), archiveEntry: entry })) });
   }
   const tree = trees.get(key);
@@ -130,7 +130,7 @@ async function verifyNpmVendor(rule) {
   const archive = download(source);
   if (sha256(archive) !== checksum) throw new Error('vendor_origin_integrity');
   const tar = args => execFileSync('tar', args, { input: archive, maxBuffer: 16 * 1024 * 1024 });
-  const entries = tar(['-tzf', '-']).toString().trim().split('\n').filter(entry => !entry.endsWith('/'));
+  const entries = tar(['-tzf', '-']).toString().trim().split(/\r?\n/).filter(entry => !entry.endsWith('/'));
   const expected = new Map(entries.map(entry => [entry.replace(/^package\//, ''), tar(['-xzOf', '-', entry])]));
   const manifest = JSON.parse(expected.get('package.json').toString());
   manifest.exports['.'] = { types: './index.d.ts', require: './index.cjs', default: './index.js' };
@@ -179,7 +179,7 @@ async function npmInventory(lock, temporary) {
     if (!algorithm || createHash(algorithm).update(bytes).digest('base64') !== expected) throw new Error('npm_archive_integrity');
     const archive = join(temporary, 'package.tgz');
     await writeFile(archive, bytes);
-    const entries = command('tar', ['-tzf', archive]).toString().trim().split('\n');
+    const entries = command('tar', ['-tzf', archive]).toString().trim().split(/\r?\n/);
     const manifestEntry = entries.find(entry => entry === 'package/package.json') ?? entries.find(entry => /^[^/]+\/package.json$/.test(entry));
     if (!manifestEntry) throw new Error('npm_manifest_missing');
     const manifest = JSON.parse(command('tar', ['-xzOf', archive, manifestEntry]).toString());
@@ -295,7 +295,7 @@ async function cargoInventory() {
     if (lockEntry?.checksum !== checksum) throw new Error('cargo_archive_integrity');
     const component = `cargo/${pkg.name}/${pkg.version}`;
     const source = `https://static.crates.io/crates/${pkg.name}/${pkg.name}-${pkg.version}.crate`;
-    const entries = command('tar', ['-tzf', archivePath]).toString().trim().split('\n');
+    const entries = command('tar', ['-tzf', archivePath]).toString().trim().split(/\r?\n/);
     const notices = await collectArchiveNotices(archivePath, { component, sourceUrl: source });
     if (!notices.length) {
       try { notices.push(...await upstreamTexts(pkg, directory, component)); } catch { /* Missing upstream evidence remains a blocker in the inventory. */ }
@@ -361,7 +361,9 @@ async function supplementalNotices(packages) {
   }
 }
 async function legalTextHashes() {
-  return Object.fromEntries(await Promise.all((await files(join(root, 'licenses/texts'))).map(async path => [relative(root, path).replaceAll('\\', '/'), sha256(await readFile(path))])));
+  // Sort portable keys, not native paths: Windows otherwise orders gtk3-macros before gtk.
+  const paths = (await files(join(root, 'licenses/texts'))).map(path => relative(root, path).replaceAll('\\', '/')).sort();
+  return Object.fromEntries(await Promise.all(paths.map(async path => [path, sha256(await readFile(join(root, path)))])));
 }
 async function sourceHashes() {
   const paths = ['package.json', 'package-lock.json', 'src-tauri/Cargo.toml', 'src-tauri/Cargo.lock', 'scripts/check-licenses.mjs', 'scripts/fileIconThemes.ts', 'licenses/supplemental-sources.json', 'CODE_OF_CONDUCT.md', 'THIRD_PARTY_NOTICES.md'];

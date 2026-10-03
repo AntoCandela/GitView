@@ -249,8 +249,10 @@ async fn cancelled_history_reaps_git_and_correlates_sqlite_without_subjects_or_r
 async fn malformed_batch_overflow_and_deadline_never_publish_an_empty_clean_graph() {
     let clock = ManualClock::new();
     let (temp, root) = test_support::working_tree();
+    // Consume the batch request before closing stdin; otherwise a BrokenPipe can
+    // win the process race and hide the output error this scenario exercises.
     let malformed = test_support::executable(temp.path(), r#"
-case "$*" in *" cat-file --batch"*) printf '%s\n' 'not a batch'; exit 0 ;; esac
+case "$*" in *" cat-file --batch"*) cat >/dev/null; printf '%s\n' 'not a batch'; exit 0 ;; esac
 exec git "$@"
 "#);
     let service = RepositoryService::new().with_inspection_executable(&malformed);
@@ -258,7 +260,7 @@ exec git "$@"
     assert!(matches!(clock.finish(service.history_page(&entry, None, None)).await, HistoryPageResult::Error { code: HistoryErrorCode::InvalidOutput, .. }));
     service.shutdown().await;
     let overflow = test_support::executable(temp.path(), r#"
-case "$*" in *" cat-file --batch"*) dd if=/dev/zero bs=1048577 count=1 2>/dev/null; exit 0 ;; esac
+case "$*" in *" cat-file --batch"*) cat >/dev/null; dd if=/dev/zero bs=1048577 count=1 2>/dev/null; exit 0 ;; esac
 exec git "$@"
 "#);
     let service = RepositoryService::new().with_inspection_executable(&overflow);

@@ -54,7 +54,8 @@ async fn restart_restores_order_selected_linked_context_and_fresh_facts() {
     git(&root, &["worktree", "add", "-b", "feature", linked.to_str().unwrap()]);
     let linked = fs::canonicalize(linked).unwrap();
     let bare = temp.path().join("archive.git");
-    git(temp.path(), &["clone", "--bare", root.to_str().unwrap(), bare.to_str().unwrap()]);
+    // Git's repository operands are CLI paths, not Windows verbatim filesystem paths.
+    git(temp.path(), &["clone", "--bare", "main", "archive.git"]);
     let bare = fs::canonicalize(bare).unwrap();
     let file = temp.path().join("private").join("workspace.json");
     let service = RepositoryService::with_workspace_file(file.clone()).await;
@@ -137,6 +138,7 @@ async fn selected_missing_location_is_retained_and_recovers_without_renderer_ref
     let service = RepositoryService::with_workspace_file(file.clone()).await;
     let (id, _) = opened(service.open_chosen(&root).await);
     service.select(&id).await;
+    service.shutdown().await;
     drop(service);
     let parked = temp.path().join("parked");
     fs::rename(&root, &parked).unwrap();

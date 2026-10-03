@@ -1,10 +1,12 @@
 /** Exercises run outcomes and privacy using isolated child processes. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { access, mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
+import { pathToFileURL } from 'node:url';
+import { execute } from '../../scripts/evidence.mjs';
 import { runVerification, parseArguments } from '../../scripts/verify.mjs';
 
 const metadata = { revision: 'a'.repeat(40), dirty: false, rust: '1.90.0', git: '2.50.0', available: true };
@@ -28,6 +30,82 @@ test('named failure remains actionable without leaking private stdout or environ
   assert.deepEqual(result.manifest.checks[0].rerun, ['node', 'fixture.mjs']);
   assert.equal(result.manifest.checks[0].details, 'omitted_private_payloads');
   assert.doesNotMatch(persisted, /SECRET_TOKEN|private\/customer|<html>|console\.log/);
+});
+
+test('parameterized failures retain only source-owned locations and bounded timing facts', async t => {
+  const root = await fixture(t);
+  await mkdir(join(root, 'tests/unit'), { recursive: true });
+  const source = join(root, 'tests/unit/Scenario.test.ts');
+  await writeFile(source, "test.each(['one', 'two'])('keeps %s isolated', () => {\n  throw new Error('fixture');\n});\n");
+  const report = { numPassedTests: 0, numFailedTests: 2, numPendingTests: 0, numTotalTests: 2, testResults: [{
+    name: source,
+    assertionResults: [
+      { title: 'keeps private_customer isolated', status: 'failed', location: { line: 2 }, duration: 5001.6,
+        failureMessages: [`AssertionError: SECRET_TOKEN\n    at scenario (${pathToFileURL(source).href}:2:5)\n    at outside (/private/customer.ts:1:1)\n    at invalid (${source}:99999:1)`, 'Error: Test timed out in 5000ms.\nprivate DOM bytes'] },
+      { title: 'private_variant', status: 'failed', location: { line: 0 }, duration: Number.MAX_SAFE_INTEGER },
+    ],
+  }] };
+  const result = await runVerification({ root, checks: [child('frontend', `console.log(JSON.stringify(${JSON.stringify(report)})); process.exitCode = 1`, 'vitest')], metadata });
+  const failures = result.manifest.checks[0].failures;
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.manifest.checks[0].omittedFailures, true);
+  assert.deepEqual(failures, ['reported_assertion_failure', 'reported_test_timeout', 'source:tests:unit:Scenario.test.ts', 'source:tests:unit:Scenario.test.ts:2', 'source:tests:unit:Scenario.test.ts:duration_ms:5002']);
+  const persisted = await readFile(join(root, '.verification/manifest.json'), 'utf8');
+  assert.doesNotMatch(persisted, /SECRET_TOKEN|private_customer|private_variant|private DOM|99999|9007199254740991/);
+  assert.equal(persisted.includes(JSON.stringify(root).slice(1, -1)), false);
+});
+
+test('Rust failure locations resolve through module paths without retaining outside paths or payloads', async t => {
+  const root = await fixture(t);
+  await mkdir(join(root, 'src-tauri/tests/integration'), { recursive: true });
+  await writeFile(join(root, 'src-tauri/tests/integration/scenario.rs'), 'fn retains_authority() {\n    panic!("fixture");\n}\n');
+  const output = "test module::retains_authority ... FAILED\nthread 'case' panicked at src/domain/../../tests/integration/scenario.rs:2:5:\nSECRET_TOKEN\nthread 'private' panicked at /private/customer.rs:2:1:\nprivate payload\ntest result: FAILED. 0 passed; 1 failed; 0 ignored;\n";
+  const result = await runVerification({ root, checks: [child('native', `console.log(${JSON.stringify(output)}); process.exitCode = 1`, 'rust')], metadata });
+  assert.deepEqual(result.manifest.checks[0].failures, ['retains_authority', 'source:src-tauri:tests:integration:scenario.rs:2']);
+  assert.doesNotMatch(await readFile(join(root, '.verification/manifest.json'), 'utf8'), /SECRET_TOKEN|customer\.rs|private payload/);
+});
+
+test('a nested Rust harness cannot hide ignored tests in its enclosing harness', async t => {
+  const root = await fixture(t);
+  const source = join(root, 'nested.rs');
+  const executable = join(root, process.platform === 'win32' ? 'nested.exe' : 'nested');
+  await writeFile(source, `
+    #[test]
+    fn parent() {
+        let child = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "nested_child", "--ignored", "--nocapture"]).output().unwrap();
+        assert!(child.status.success());
+        print!("{}", String::from_utf8(child.stdout).unwrap());
+    }
+    #[test]
+    #[ignore]
+    fn nested_child() { println!("private-nested-payload"); }
+  `);
+  const compiled = await execute('rustc', ['--test', source, '-o', executable], { cwd: root });
+  assert.equal(compiled.exitCode, 0);
+  const checks = [{ id: 'nested', boundary: 'unit', executable, args: ['--nocapture'], invocation: ['owned-rust-fixture'], reporter: 'rust' }];
+  const result = await runVerification({ root, checks, metadata, allowedIdentifiers: ['parent', 'nested_child'] });
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.manifest.checks[0].code, 'required_tests_skipped');
+  assert.deepEqual(result.manifest.checks[0].summary, { passed: 1, failed: 0, ignored: 1 });
+  assert.doesNotMatch(await readFile(join(root, '.verification/manifest.json'), 'utf8'), /private-nested-payload/);
+});
+
+test('documentation failure evidence cannot certify success or publish unknown process data', async t => {
+  const root = await fixture(t);
+  const failure = { error: 'doc_examples_failed', stage: 'driver_run', processCode: 'check_failed', exitCode: 3221225785, compilerCodes: [] };
+  const privateFailure = { ...failure, stage: 'private_customer', output: 'SECRET_TOKEN' };
+  const success = { status: 'passed', documents: 1, links: 1, skills: 1, examples: { rust: 2, sql: 3, reader: 'passed', cli: 'passed', privacy: 'passed' } };
+  const checks = [child('startup', `console.log(JSON.stringify(${JSON.stringify(failure)}))`, 'documentation'), child('private', `console.log(JSON.stringify(${JSON.stringify(privateFailure)}))`, 'documentation')];
+  checks.push(child('contradictory', `console.log(JSON.stringify(${JSON.stringify({ ...success, ...failure })}))`, 'documentation'));
+  checks.push(child('complete', `console.log(JSON.stringify(${JSON.stringify(success)}))`, 'documentation'));
+  const result = await runVerification({ root, checks, metadata, allowedIdentifiers: [] });
+  assert.equal(result.manifest.checks[0].code, 'check_failed');
+  assert.deepEqual(result.manifest.checks[0].failures, ['doc_examples_failed', 'documentation:driver_run', 'process:check_failed', 'process_exit:3221225785']);
+  assert.equal(result.manifest.checks[1].code, 'missing_required_evidence');
+  assert.equal(result.manifest.checks[2].code, 'missing_required_evidence');
+  assert.equal(result.manifest.checks[3].status, 'passed');
+  assert.doesNotMatch(await readFile(join(root, '.verification/manifest.json'), 'utf8'), /private_customer|SECRET_TOKEN/);
 });
 
 test('start failure is failed and does not prevent other required checks', async t => {
@@ -111,6 +189,51 @@ test('real Node TODO scenarios cannot certify required infrastructure behavior',
   assert.equal(result.exitCode, 1);
   assert.equal(result.manifest.checks[0].code, 'required_tests_skipped');
   assert.equal(result.manifest.checks[0].summary.todo, 1);
+});
+
+test('verification fixtures ignore ambient Git filters without changing the invoking environment', async t => {
+  const root = await fixture(t);
+  const marker = join(root, 'filter-ran');
+  const filter = join(root, 'filter.cjs');
+  await writeFile(filter, `require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'ran'); process.stdout.write('altered contents');`);
+  const command = `"${process.execPath.replaceAll('\\', '/')}" "${filter.replaceAll('\\', '/')}"`;
+  const config = join(root, 'global.gitconfig');
+  const configuration = `[filter "fixture"]\nclean = ${JSON.stringify(command)}\n`;
+  await writeFile(config, configuration);
+  const probe = join(root, 'probe.cjs');
+  await writeFile(probe, `
+    const {execFileSync} = require('node:child_process');
+    const {writeFileSync} = require('node:fs');
+    execFileSync('git', ['init', '--quiet']);
+    writeFileSync('.gitattributes', '*.txt filter=fixture\\n');
+    const options = {input: 'original contents', encoding: 'utf8'};
+    const expected = execFileSync('git', ['hash-object', '--no-filters', '--stdin'], options);
+    const actual = execFileSync('git', ['hash-object', '--path=example.txt', '--stdin'], options);
+    if (actual !== expected) process.exit(1);
+  `);
+  const driver = join(root, 'driver.mjs');
+  await writeFile(driver, `
+    import {execFileSync} from 'node:child_process';
+    import {runVerification} from ${JSON.stringify(pathToFileURL(resolve('scripts/verify.mjs')).href)};
+    const checks = [{id:'git_fixture', boundary:'integration', executable:process.execPath,
+      args:[${JSON.stringify(probe)}], invocation:['node','probe.cjs'], reporter:'none'}];
+    const result = await runVerification({root:process.cwd(), checks, metadata:${JSON.stringify(metadata)}, allowedIdentifiers:[]});
+    const inherited = execFileSync('git', ['config', '--global', '--get', 'filter.fixture.clean'], {encoding:'utf8'}).trim();
+    if (inherited !== ${JSON.stringify(command)}) process.exit(2);
+    process.exitCode = result.exitCode;
+  `);
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) if (key.toUpperCase().startsWith('GIT_')) delete env[key];
+  env.GIT_CONFIG_NOSYSTEM = '1';
+  env.GIT_CONFIG_GLOBAL = config;
+  // Git also accepts these mixed-case command-scope overrides on Windows.
+  env.git_config_count = '1';
+  env.git_config_key_0 = 'filter.fixture.clean';
+  env.Git_Config_Value_0 = command;
+  const result = await execute(process.execPath, [driver], { cwd: root, env });
+  assert.equal(result.exitCode, 0);
+  await assert.rejects(access(marker), { code: 'ENOENT' });
+  assert.equal(await readFile(config, 'utf8'), configuration);
 });
 
 
