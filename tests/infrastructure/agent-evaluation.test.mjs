@@ -54,7 +54,7 @@ async function isolatedBindingFixture(context) {
   await writeFile(join(fixtureRoot, 'baseline'), 'isolated binding');
   git(['add', 'baseline']);
   git(['commit', '--quiet', '-m', 'isolated baseline']);
-  for (const path of ['scripts', '.agents', 'src-tauri/src', 'src-tauri/vendor', 'src-tauri/capabilities', 'src-tauri/icons', 'src-tauri/permissions', 'src-tauri/Cargo.toml', 'src-tauri/Cargo.lock', 'src-tauri/build.rs', 'src-tauri/tauri.conf.json']) {
+  for (const path of ['scripts', 'package.json', 'package-lock.json', '.agents', 'src-tauri/src', 'src-tauri/vendor', 'src-tauri/capabilities', 'src-tauri/icons', 'src-tauri/permissions', 'src-tauri/Cargo.toml', 'src-tauri/Cargo.lock', 'src-tauri/build.rs', 'src-tauri/tauri.conf.json']) {
     await mkdir(join(fixtureRoot, path, '..'), { recursive: true });
     await cp(join(root, path), join(fixtureRoot, path), { recursive: true });
   }
@@ -140,5 +140,14 @@ test('changing vendored native code invalidates prepared evidence before candida
   assert.deepEqual(baseline.scenarios.map(scenario => scenario.code), ['invalid_answer', 'invalid_answer', 'invalid_answer']);
   const source = join(fixtureRoot, 'src-tauri/vendor/glib/src/variant_iter.rs');
   await writeFile(source, `${await readFile(source, 'utf8')}\n// Changed isolated dependency input.\n`);
+  await assert.rejects(gradeWorkflow({ root: fixtureRoot, run: fixtureRun }), { message: 'stale_run' });
+});
+
+test('changing the evidence parser invalidates a prepared challenge before grading', async context => {
+  const { fixtureRoot, fixtureRun } = await isolatedBindingFixture(context);
+  const baseline = await gradeWorkflow({ root: fixtureRoot, run: fixtureRun });
+  assert.deepEqual(baseline.scenarios.map(scenario => scenario.code), ['invalid_answer', 'invalid_answer', 'invalid_answer']);
+  const parser = join(fixtureRoot, 'scripts/source-ast.mjs');
+  await writeFile(parser, `${await readFile(parser, 'utf8')}\nthrow new Error('changed parser');\n`);
   await assert.rejects(gradeWorkflow({ root: fixtureRoot, run: fixtureRun }), { message: 'stale_run' });
 });

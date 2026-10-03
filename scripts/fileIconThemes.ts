@@ -4,7 +4,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { generateManifest, type Manifest } from "material-icon-theme";
 import type { Plugin } from "vite";
-import catppuccinManifest from "../src/assets/icon-themes/catppuccin-latte/theme.json";
+import catppuccinManifest from "../src/assets/icon-themes/catppuccin-latte/theme.json" with { type: "json" };
 
 const moduleId = "virtual:file-icon-themes";
 const resolvedId = `\0${moduleId}`;

@@ -17,10 +17,11 @@ async function fixture(t, files) {
 }
 
 test('misplaced tests and tracked private artifacts block policy', async t => {
-  const result = await checkPolicy(await fixture(t, { 'src/view.test.ts': 'export {};', '.verification/manifest.json': '{}', 'data/diagnostics.sqlite-wal': '' }));
+  const result = await checkPolicy(await fixture(t, { 'src/view.test.ts': 'export {};', '.verification/manifest.json': '{}', '.vitest/json/output.json': '{}', 'data/diagnostics.sqlite-wal': '' }));
   assert.equal(result.passed, false);
   assert.ok(result.violations.some(item => item.rule === 'test_placement'));
   assert.ok(result.violations.some(item => item.rule === 'private_artifact'));
+  assert.ok(result.violations.some(item => item.rule === 'private_artifact' && item.file === '.vitest/json/output.json'));
 });
 
 test('valid non-allowlisted filenames are checked without becoming private artifacts', async t => {
@@ -129,6 +130,40 @@ test('inline import types obey feature and shared-layer boundaries', async t => 
     'src/ui/Button.tsx': "type Screen = typeof import('../app');",
   }));
   assert.deepEqual(result.violations.map(item => item.rule), ['feature_dependency', 'ui_dependency']);
+});
+
+test('static module forms and nested TSX imports retain architecture enforcement', async t => {
+  const result = await checkPolicy(await fixture(t, {
+    'src/contracts/model.ts': [
+      "import 'react';", "export * from 'react';", "export * as UI from 'react';",
+      "import type { ReactNode } from 'react';", "export type { ReactNode as Node } from 'react';",
+      "type Nested = import('react').JSX.Element;", "type Module = typeof import('react');",
+      "require(`react`);", "require?.('re\\u0061ct');", "import(`react`, { with: { type: 'json' } });",
+    ].join('\n'),
+    'src/ui/Control.jsx': "const view = <button onClick={() => import('../app')}>require('react')</button>;",
+  }));
+  assert.deepEqual(result.violations.map(item => item.rule), [
+    'contract_dependency', 'contract_dependency', 'contract_dependency', 'contract_dependency',
+    'contract_dependency', 'contract_dependency', 'contract_dependency', 'contract_dependency',
+    'contract_dependency', 'contract_dependency', 'ui_dependency',
+  ]);
+});
+
+test('dynamic dependency expressions remain unavailable rather than becoming literal authority', async t => {
+  const result = await checkPolicy(await fixture(t, {
+    'src/contracts/model.ts': [
+      'require(name);', 'require();', 'require(`react/${name}`);', "require('re' + 'act');",
+      "require(('react'));", 'import(name);', 'import(`react/${name}`);', "import('re' + 'act');",
+    ].join('\n'),
+  }));
+  assert.deepEqual(result.violations.map(item => item.rule), Array(8).fill('dynamic_dependency'));
+});
+
+test('malformed source fails closed without exposing parser diagnostics or private filenames', async t => {
+  const result = await checkPolicy(await fixture(t, { 'src/contracts/Überblick.ts': "export const private_customer = ('SECRET_TOKEN';" }));
+  assert.equal(result.passed, false);
+  assert.deepEqual(result.violations, [{ rule: 'source_unavailable', file: 'omitted_private_filename' }]);
+  assert.doesNotMatch(JSON.stringify(result), /private_customer|SECRET_TOKEN|Überblick/);
 });
 
 test('aliased native crates remain restricted to host', async t => {

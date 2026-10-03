@@ -15,7 +15,7 @@ function manifest(suite = 'unit') {
     revision: 'a'.repeat(40), dirty: true,
     checks: selectChecks(suite).map(spec => ({ id: spec.id, required: true, status: 'passed', code: 'ok',
       summary: spec.reporter === 'rust' ? { passed: 1, failed: 0, ignored: 0 }
-        : spec.reporter === 'vitest' ? { numPassedTests: 1, numFailedTests: 0, numPendingTests: 0, numTotalTests: 1 }
+        : spec.reporter === 'vitest' ? { numPassedTests: 1, numFailedTests: 0, numPendingTests: 0, numTodoTests: 0, numTotalTests: 1 }
         : spec.reporter === 'tap' ? { total: 1, passed: 1, failed: 0, skipped: 0, todo: 0 } : null })),
   };
 }
@@ -75,4 +75,13 @@ test('TODO evidence cannot accompany a passing required check', async context =>
   const result = await invoke(context, report);
   assert.equal(result.status, 2);
   assert.equal(result.stdout, '');
+});
+
+test('Vitest TODO counts cannot be omitted or accompany a recorded pass', async context => {
+  const pending = manifest();
+  pending.checks[0].summary.numTodoTests = 1;
+  assert.equal((await invoke(context, pending)).status, 2);
+  const missing = manifest();
+  delete missing.checks[0].summary.numTodoTests;
+  assert.equal((await invoke(context, missing)).status, 2);
 });

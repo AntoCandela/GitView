@@ -1,9 +1,10 @@
 /** Runs fixed local/CI checks and persists only revision facts and allowlisted behavior evidence. */
-import { readFile } from 'node:fs/promises';
-import { relative, resolve } from 'node:path';
+import { constants } from 'node:fs';
+import { lstat, mkdtemp, open, readFile, rm } from 'node:fs/promises';
+import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { platform, arch, release } from 'node:os';
-import { execute, isEntryPoint, parseOptions, sourceFiles, safeIdentifier, writeEvidence } from './evidence.mjs';
+import { platform, arch, release, tmpdir } from 'node:os';
+import { execute, isEntryPoint, OUTPUT_LIMIT, parseOptions, sourceFiles, safeIdentifier, writeEvidence } from './evidence.mjs';
 import { documentationFailureEvidence, documentationSucceeded } from '../.agents/scripts/check-docs.mjs';
 
 // Keep verification artifacts separate from native development/profile builds.
@@ -59,7 +60,7 @@ async function revisionMetadata(root, signal) {
 async function behaviorIdentifiers(root) {
   const identifiers = new Set();
   const sources = new Map();
-  const ts = await import('typescript');
+  const { staticString, visitSource } = await import('./source-ast.mjs');
   const files = [...await sourceFiles(root, 'tests'), ...await sourceFiles(root, 'src-tauri/tests')];
   for (const path of files) {
     if (!/\.(?:tsx?|mjs|rs)$/.test(path)) continue;
@@ -69,17 +70,14 @@ async function behaviorIdentifiers(root) {
       for (const match of source.matchAll(/\bfn\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g)) if (safeIdentifier(match[1])) identifiers.add(match[1]);
       continue;
     }
-    const tree = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
-    function visit(node) {
-      if (ts.isCallExpression(node)) {
-        const expression = node.expression;
-        const name = ts.isIdentifier(expression) ? expression.text : ts.isPropertyAccessExpression(expression) && ts.isIdentifier(expression.expression) ? expression.expression.text : null;
-        const title = node.arguments[0];
-        if (['test', 'it'].includes(name) && title && ts.isStringLiteralLike(title) && safeIdentifier(title.text)) identifiers.add(title.text);
-      }
-      ts.forEachChild(node, visit);
-    }
-    visit(tree);
+    visitSource(path, source, node => {
+      if (node.type !== 'CallExpression') return;
+      const expression = node.callee;
+      const name = expression.type === 'Identifier' ? expression.name
+        : expression.type === 'MemberExpression' && !expression.computed && expression.object.type === 'Identifier' ? expression.object.name : null;
+      const title = staticString(node.arguments[0]);
+      if (['test', 'it'].includes(name) && safeIdentifier(title)) identifiers.add(title);
+    });
   }
   return { identifiers, sources };
 }
@@ -105,6 +103,7 @@ function extractEvidence(output, reporter, allowed, root, sources) {
   let summary = null;
   let omittedFailures = false;
   let reporterValid = reporter === 'none';
+  let reporterFailed = false;
   const retain = name => {
     if (allowed.has(name) && safeIdentifier(name)) failures.add(name);
     else omittedFailures = true;
@@ -116,9 +115,8 @@ function extractEvidence(output, reporter, allowed, root, sources) {
   };
   if (['vitest', 'policy', 'documentation'].includes(reporter)) {
     try {
-      const data = JSON.parse(output.slice(output.indexOf('{'), output.lastIndexOf('}') + 1));
+      const data = JSON.parse(reporter === 'vitest' ? output : output.slice(output.indexOf('{'), output.lastIndexOf('}') + 1));
       if (reporter === 'vitest' && Array.isArray(data.testResults)) {
-        reporterValid = true;
         for (const result of data.testResults) for (const assertion of result.assertionResults ?? []) if (assertion.status === 'failed') {
           retain(assertion.title);
           const source = retainSource(result.name);
@@ -134,7 +132,16 @@ function extractEvidence(output, reporter, allowed, root, sources) {
             for (const match of message.matchAll(/(?:\(|\bat\s+)([^()\r\n]+):(\d+):\d+\)?/g)) retainSource(match[1], match[2]);
           }
         }
-        summary = Object.fromEntries(['numPassedTests', 'numFailedTests', 'numPendingTests', 'numTotalTests'].filter(key => Number.isSafeInteger(data[key]) && data[key] >= 0).map(key => [key, data[key]]));
+        const keys = ['numPassedTests', 'numFailedTests', 'numPendingTests', 'numTodoTests', 'numTotalTests'];
+        if (keys.every(key => Number.isSafeInteger(data[key]) && data[key] >= 0)
+            && typeof data.success === 'boolean'
+            && data.testResults.every(result => Array.isArray(result.assertionResults))
+            && data.testResults.reduce((count, result) => count + result.assertionResults.length, 0) === data.numTotalTests
+            && data.numPassedTests + data.numFailedTests + data.numPendingTests + data.numTodoTests === data.numTotalTests) {
+          summary = Object.fromEntries(keys.map(key => [key, data[key]]));
+          reporterValid = true;
+          reporterFailed = !data.success || data.numFailedTests > 0;
+        }
       }
       if (reporter === 'documentation') {
         const failure = documentationFailureEvidence(data);
@@ -169,7 +176,7 @@ function extractEvidence(output, reporter, allowed, root, sources) {
     const counts = output.match(/^# tests (\d+)[\s\S]*?^# pass (\d+)[\s\S]*?^# fail (\d+)/m);
     if (counts) summary = { total: Number(counts[1]), passed: Number(counts[2]), failed: Number(counts[3]), skipped: Number(output.match(/^# skipped (\d+)$/m)?.[1] ?? 0), todo: Number(output.match(/^# todo (\d+)$/m)?.[1] ?? 0) };
   }
-  return { failures: [...failures].sort(), summary, omittedFailures, reporterValid };
+  return { failures: [...failures].sort(), summary, omittedFailures, reporterValid, reporterFailed };
 }
 
 function testEnvironment() {
@@ -177,6 +184,49 @@ function testEnvironment() {
   for (const key of Object.keys(env)) if (key.toUpperCase().startsWith('GIT_')) delete env[key];
   const empty = platform() === 'win32' ? 'NUL' : '/dev/null';
   return { ...env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_SYSTEM: empty, GIT_CONFIG_GLOBAL: empty };
+}
+
+async function readVitestReport(path, limit) {
+  // The child has exited; reject links/non-files before opening and never read an unbounded report.
+  if (!(await lstat(path)).isFile()) throw new Error('invalid_report_file');
+  const file = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+  try {
+    const stat = await file.stat();
+    if (!stat.isFile()) throw new Error('invalid_report_file');
+    if (stat.size > limit) return { output: '', code: 'output_limit' };
+    const bytes = Buffer.alloc(stat.size + 1);
+    let length = 0;
+    while (length < bytes.length) {
+      const result = await file.read(bytes, length, bytes.length - length);
+      if (!result.bytesRead) break;
+      length += result.bytesRead;
+    }
+    if (length > limit) return { output: '', code: 'output_limit' };
+    if (length !== stat.size) throw new Error('changed_report_file');
+    return { output: bytes.subarray(0, length).toString('utf8'), code: 'ok' };
+  } finally {
+    await file.close();
+  }
+}
+
+async function executeReportedCheck(executable, args, reporter, options) {
+  if (reporter !== 'vitest') {
+    const result = await execute(executable, args, options);
+    return { ...result, reportOutput: result.output };
+  }
+  const directory = await mkdtemp(join(tmpdir(), 'gitview-vitest-'));
+  try {
+    const path = join(directory, 'report.json');
+    const result = await execute(executable, [...args, `--outputFile=${path}`], options);
+    let report = { output: '', code: 'missing_required_evidence' };
+    try {
+      report = await readVitestReport(path, options.outputLimit ?? OUTPUT_LIMIT);
+    } catch { /* Missing, replaced or unreadable private evidence cannot certify a pass. */ }
+    return { ...result, reportOutput: report.output, code: result.code === 'ok' ? report.code : result.code };
+  } finally {
+    // This directory is never an artifact path; cleanup also covers failed/cancelled children.
+    await rm(directory, { recursive: true, force: true });
+  }
 }
 
 /** Injection is a test-only module seam; the CLI never accepts executable specifications. */
@@ -217,12 +267,12 @@ export async function runVerification({ root = process.cwd(), suite = 'all', out
       args = [npmPath, ...args];
     }
     const env = ['unit', 'integration'].includes(spec.boundary) ? isolatedTests : undefined;
-    const result = await execute(executable, args, { cwd: root, env, signal, outputLimit });
-    const evidence = extractEvidence(result.output, spec.reporter, allowed, root, sources);
+    const result = await executeReportedCheck(executable, args, spec.reporter, { cwd: root, env, signal, outputLimit });
+    const evidence = extractEvidence(result.reportOutput, spec.reporter, allowed, root, sources);
     const emptySuite = spec.reporter === 'rust' ? evidence.summary?.passed + evidence.summary?.failed === 0 : spec.reporter === 'vitest' ? evidence.summary?.numTotalTests === 0 : spec.reporter === 'tap' ? evidence.summary?.total === 0 : false;
     // TODO scenarios are missing proof too, even when the framework exits successfully.
-    const skippedTests = (evidence.summary?.numPendingTests ?? evidence.summary?.ignored ?? evidence.summary?.skipped ?? 0) > 0 || (evidence.summary?.todo ?? 0) > 0;
-    const code = result.code !== 'ok' ? result.code : spec.reporter === 'documentation' && evidence.failures.length ? 'check_failed' : !evidence.reporterValid || emptySuite ? 'missing_required_evidence' : skippedTests ? 'required_tests_skipped' : 'ok';
+    const skippedTests = (evidence.summary?.numPendingTests ?? evidence.summary?.ignored ?? evidence.summary?.skipped ?? 0) > 0 || (evidence.summary?.numTodoTests ?? evidence.summary?.todo ?? 0) > 0;
+    const code = result.code !== 'ok' ? result.code : evidence.reporterFailed || spec.reporter === 'documentation' && evidence.failures.length ? 'check_failed' : !evidence.reporterValid || emptySuite ? 'missing_required_evidence' : skippedTests ? 'required_tests_skipped' : 'ok';
     outcomes.push({ ...base, status: code === 'ok' ? 'passed' : code === 'cancelled' ? 'cancelled' : 'failed', code, startedAt: checkStart, finishedAt: new Date().toISOString(), exitCode: result.exitCode, signal: ['SIGTERM', 'SIGKILL', 'SIGINT', 'SIGHUP', 'SIGABRT', 'SIGSEGV'].includes(result.signal) ? result.signal : result.signal ? 'other' : null, ...evidence });
   }
   const passed = revision.available && inventoryAvailable && outcomes.length > 0 && outcomes.every(item => item.status === 'passed');

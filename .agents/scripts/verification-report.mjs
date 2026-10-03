@@ -7,7 +7,7 @@ import { selectChecks } from '../../scripts/verify.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const statuses = new Set(['passed', 'failed', 'cancelled', 'not_run']);
 const codes = new Set(['ok', 'cancelled', 'start_failed', 'signal_termination', 'output_limit', 'check_failed', 'missing_required_evidence', 'required_tests_skipped']);
-const countKeys = ['total', 'passed', 'failed', 'skipped', 'todo', 'ignored', 'numPassedTests', 'numFailedTests', 'numPendingTests', 'numTotalTests'];
+const countKeys = ['total', 'passed', 'failed', 'skipped', 'todo', 'ignored', 'numPassedTests', 'numFailedTests', 'numPendingTests', 'numTodoTests', 'numTotalTests'];
 const object = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 const date = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value) && Number.isFinite(Date.parse(value));
 const available = value => value === 'available' || value === 'unavailable';
@@ -45,11 +45,11 @@ export async function summarizeVerification(manifest) {
     }
     if (check.status === 'passed' && spec.reporter !== 'none' && spec.reporter !== 'policy' && spec.reporter !== 'documentation') {
       const required = spec.reporter === 'rust' ? ['passed', 'failed', 'ignored']
-        : spec.reporter === 'vitest' ? ['numPassedTests', 'numFailedTests', 'numPendingTests', 'numTotalTests']
+        : spec.reporter === 'vitest' ? ['numPassedTests', 'numFailedTests', 'numPendingTests', 'numTodoTests', 'numTotalTests']
         : ['total', 'passed', 'failed', 'skipped', 'todo'];
       if (!summary || required.some(key => !Object.hasOwn(summary, key))
           || !(spec.reporter === 'rust' ? summary.passed > 0 : spec.reporter === 'vitest' ? summary.numTotalTests > 0 : summary.total > 0)
-          || ['failed', 'skipped', 'todo', 'ignored', 'numFailedTests', 'numPendingTests'].some(key => (summary[key] ?? 0) > 0)) {
+          || ['failed', 'skipped', 'todo', 'ignored', 'numFailedTests', 'numPendingTests', 'numTodoTests'].some(key => (summary[key] ?? 0) > 0)) {
         throw new Error('invalid_verification_report');
       }
     }

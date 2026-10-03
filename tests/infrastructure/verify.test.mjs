@@ -11,8 +11,16 @@ import { runVerification, parseArguments } from '../../scripts/verify.mjs';
 
 const metadata = { revision: 'a'.repeat(40), dirty: false, rust: '1.90.0', git: '2.50.0', available: true };
 function child(id, code, reporter = 'none') {
-  return { id, boundary: 'unit', executable: process.execPath, args: ['-e', code], invocation: ['node', 'fixture.mjs'], reporter };
+  const reportPath = reporter === 'vitest' ? "const reportPath = process.argv.find(value => value.startsWith('--outputFile=')).slice('--outputFile='.length); " : '';
+  return { id, boundary: 'unit', executable: process.execPath, args: ['-e', reportPath + code, '--'], invocation: ['node', 'fixture.mjs'], reporter };
 }
+function reportChild(id, report, extra = '') {
+  return child(id, `require('node:fs').writeFileSync(reportPath, ${JSON.stringify(JSON.stringify(report))}); ${extra}`, 'vitest');
+}
+const completeReport = {
+  success: true, numPassedTests: 1, numFailedTests: 0, numPendingTests: 0, numTodoTests: 0, numTotalTests: 1,
+  testResults: [{ name: 'synthetic.test.ts', assertionResults: [{ title: 'completed scenario', status: 'passed' }] }],
+};
 async function fixture(t) {
   const root = await mkdtemp(join(tmpdir(), 'gitview-verification-'));
   t.after(() => rm(root, { recursive: true, force: true }));
@@ -37,7 +45,7 @@ test('parameterized failures retain only source-owned locations and bounded timi
   await mkdir(join(root, 'tests/unit'), { recursive: true });
   const source = join(root, 'tests/unit/Scenario.test.ts');
   await writeFile(source, "test.each(['one', 'two'])('keeps %s isolated', () => {\n  throw new Error('fixture');\n});\n");
-  const report = { numPassedTests: 0, numFailedTests: 2, numPendingTests: 0, numTotalTests: 2, testResults: [{
+  const report = { success: false, numPassedTests: 0, numFailedTests: 2, numPendingTests: 0, numTodoTests: 0, numTotalTests: 2, testResults: [{
     name: source,
     assertionResults: [
       { title: 'keeps private_customer isolated', status: 'failed', location: { line: 2 }, duration: 5001.6,
@@ -45,7 +53,7 @@ test('parameterized failures retain only source-owned locations and bounded timi
       { title: 'private_variant', status: 'failed', location: { line: 0 }, duration: Number.MAX_SAFE_INTEGER },
     ],
   }] };
-  const result = await runVerification({ root, checks: [child('frontend', `console.log(JSON.stringify(${JSON.stringify(report)})); process.exitCode = 1`, 'vitest')], metadata });
+  const result = await runVerification({ root, checks: [reportChild('frontend', report, 'process.exitCode = 1')], metadata });
   const failures = result.manifest.checks[0].failures;
   assert.equal(result.exitCode, 1);
   assert.equal(result.manifest.checks[0].omittedFailures, true);
@@ -123,8 +131,8 @@ test('cancellation stops the running child and leaves remaining required checks 
   const controller = new AbortController();
   t.after(() => controller.abort());
   const marker = join(root, 'started');
-  const startChild = `require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'started'); setTimeout(() => {}, 60000)`;
-  const running = runVerification({ root, output: join(root, 'out'), checks: [child('slow', startChild), child('next', 'process.exit(0)')], metadata, allowedIdentifiers: [], signal: controller.signal });
+  const startChild = `require('node:fs').writeFileSync(${JSON.stringify(marker)}, reportPath); setTimeout(() => {}, 60000)`;
+  const running = runVerification({ root, output: join(root, 'out'), checks: [child('slow', startChild, 'vitest'), child('next', 'process.exit(0)')], metadata, allowedIdentifiers: [], signal: controller.signal });
   const deadline = Date.now() + 5000;
   while (true) {
     try { await access(marker); break; }
@@ -138,6 +146,7 @@ test('cancellation stops the running child and leaves remaining required checks 
   assert.equal(result.exitCode, 1);
   assert.equal(result.manifest.checks[0].status, 'cancelled');
   assert.equal(result.manifest.checks[1].status, 'not_run');
+  await assert.rejects(access(resolve(await readFile(marker, 'utf8'), '..')), { code: 'ENOENT' });
 });
 
 test('bounded output cannot hide incomplete evidence behind a passing exit', async t => {
@@ -177,6 +186,69 @@ test('framework skipped tests cannot claim required behavior coverage', async t 
   const result = await runVerification({ root, output: join(root, 'out'), checks: [child('ignored', "console.log('test result: ok. 1 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out;')", 'rust')], metadata, allowedIdentifiers: [] });
   assert.equal(result.exitCode, 1);
   assert.equal(result.manifest.checks[0].code, 'required_tests_skipped');
+});
+
+test('private Vitest reports survive diagnostic braces and are removed without leaking paths or payloads', async t => {
+  const root = await fixture(t);
+  const marker = join(root, 'report-location');
+  const check = reportChild('frontend', completeReport,
+    `console.error("warning { private_customer }"); require('node:fs').writeFileSync(${JSON.stringify(marker)}, reportPath);`);
+  const result = await runVerification({ root, checks: [check], metadata, allowedIdentifiers: [] });
+  assert.equal(result.exitCode, 0);
+  assert.deepEqual(result.manifest.checks[0].summary, { numPassedTests: 1, numFailedTests: 0, numPendingTests: 0, numTodoTests: 0, numTotalTests: 1 });
+  const reportPath = await readFile(marker, 'utf8');
+  await assert.rejects(access(resolve(reportPath, '..')), { code: 'ENOENT' });
+  const persisted = await readFile(join(root, '.verification/manifest.json'), 'utf8');
+  assert.doesNotMatch(persisted, /private_customer|gitview-vitest-|report-location|completed scenario/);
+});
+
+test('missing and truncated reports cannot reuse stale evidence or stdout JSON', async t => {
+  const root = await fixture(t);
+  await mkdir(join(root, '.vitest/json'), { recursive: true });
+  await writeFile(join(root, '.vitest/json/output.json'), JSON.stringify(completeReport));
+  const checks = [
+    child('missing', `console.log(${JSON.stringify(JSON.stringify(completeReport))})`, 'vitest'),
+    child('truncated', "require('node:fs').writeFileSync(reportPath, '{\"success\":true')", 'vitest'),
+    child('not_file', "require('node:fs').mkdirSync(reportPath)", 'vitest'),
+  ];
+  const result = await runVerification({ root, checks, metadata, allowedIdentifiers: [] });
+  assert.equal(result.exitCode, 1);
+  assert.deepEqual(result.manifest.checks.map(check => check.code), ['missing_required_evidence', 'missing_required_evidence', 'missing_required_evidence']);
+});
+
+test('oversized private reports fail closed and are cleaned up', async t => {
+  const root = await fixture(t);
+  const marker = join(root, 'report-location');
+  const check = child('oversized', `require('node:fs').writeFileSync(reportPath, 'x'.repeat(4096)); require('node:fs').writeFileSync(${JSON.stringify(marker)}, reportPath);`, 'vitest');
+  const result = await runVerification({ root, checks: [check], metadata, allowedIdentifiers: [], outputLimit: 1024 });
+  assert.equal(result.manifest.checks[0].code, 'output_limit');
+  await assert.rejects(access(resolve(await readFile(marker, 'utf8'), '..')), { code: 'ENOENT' });
+});
+
+test('empty, incomplete, skipped and TODO Vitest counts cannot certify required coverage', async t => {
+  const root = await fixture(t);
+  const checks = [
+    reportChild('empty', { ...completeReport, numPassedTests: 0, numTotalTests: 0, testResults: [] }),
+    reportChild('incomplete', { success: true, testResults: [] }),
+    reportChild('skipped', { ...completeReport, numPassedTests: 0, numPendingTests: 1 }),
+    reportChild('todo', { ...completeReport, numPassedTests: 0, numTodoTests: 1 }),
+    reportChild('contradictory', { ...completeReport, numTotalTests: 2 }),
+    reportChild('failed', { ...completeReport, success: false }),
+  ];
+  const result = await runVerification({ root, checks, metadata, allowedIdentifiers: [] });
+  assert.equal(result.exitCode, 1);
+  assert.deepEqual(result.manifest.checks.map(check => check.code), [
+    'missing_required_evidence', 'missing_required_evidence', 'required_tests_skipped',
+    'required_tests_skipped', 'missing_required_evidence', 'check_failed',
+  ]);
+});
+
+test('process failure takes precedence over a successful or absent private report', async t => {
+  const root = await fixture(t);
+  const checks = [reportChild('reported', completeReport, 'process.exitCode = 7'), child('absent', 'process.exitCode = 8', 'vitest')];
+  const result = await runVerification({ root, checks, metadata, allowedIdentifiers: [] });
+  assert.deepEqual(result.manifest.checks.map(check => check.code), ['check_failed', 'check_failed']);
+  assert.deepEqual(result.manifest.checks.map(check => check.exitCode), [7, 8]);
 });
 
 test('real Node TODO scenarios cannot certify required infrastructure behavior', async t => {
@@ -243,4 +315,56 @@ test('CLI rejects unknown, duplicate, missing and invalid options', () => {
   assert.throws(() => parseArguments(['--suite', 'unit', '--suite', 'all']));
   assert.throws(() => parseArguments(['--command', 'unsafe']));
   assert.deepEqual(parseArguments(['--suite', 'integration', '--output', 'evidence']), { suite: 'integration', output: 'evidence' });
+});
+
+test('only source-owned literal test titles enter the failure allowlist after parser migration', async t => {
+  const root = await fixture(t);
+  await mkdir(join(root, 'tests/unit'), { recursive: true });
+  const source = join(root, 'tests/unit/Authority.test.tsx');
+  const moduleSource = join(root, 'tests/unit/Module.test.mjs');
+  const unsafe = 'x'.repeat(161);
+  await writeFile(source, [
+    "test('direct_case', () => {});", 'it(`template_case`, () => {});',
+    "test.skip('modified_case', () => {});", "it('escaped\\u005fcase', () => {});",
+    "test?.('optional_case', () => {});",
+    "const View = () => <span onClick={() => test('tsx_case', () => {})}/>;",
+    "test['skip']('computed_case', () => {});", "test.concurrent.only('deep_case', () => {});",
+    "obj.test('other_case', () => {});", "(test)('wrapped_case', () => {});",
+    "const title = 'variable_case'; test(title, () => {});",
+    "test(`interpolated_${'case'}`, () => {});", "test('concat_' + 'case', () => {});",
+    "test.each([])('curried_case', () => {});", "// test('comment_case', () => {});",
+    'const example = "test(\'string_case\', () => {})";',
+    "test('private/customer', () => {});", `test('${unsafe}', () => {});`,
+  ].join('\n'));
+  await writeFile(moduleSource, "it('module_case', () => {});\n");
+  const owned = ['direct_case', 'template_case', 'modified_case', 'escaped_case', 'optional_case', 'tsx_case'];
+  const unowned = ['computed_case', 'deep_case', 'other_case', 'wrapped_case', 'variable_case',
+    'interpolated_case', 'concat_case', 'curried_case', 'comment_case', 'string_case', 'private/customer', unsafe];
+  const report = {
+    success: false, numPassedTests: 0, numFailedTests: owned.length + unowned.length + 1,
+    numPendingTests: 0, numTodoTests: 0, numTotalTests: owned.length + unowned.length + 1,
+    testResults: [
+      { name: source, assertionResults: [...owned, ...unowned].map(title => ({ title, status: 'failed' })) },
+      { name: moduleSource, assertionResults: [{ title: 'module_case', status: 'failed' }] },
+    ],
+  };
+  const result = await runVerification({ root, checks: [reportChild('frontend', report, 'process.exitCode = 1')], metadata });
+  assert.equal(result.manifest.identifierInventory, 'available');
+  assert.equal(result.manifest.checks[0].omittedFailures, true);
+  assert.deepEqual(result.manifest.checks[0].failures, [
+    'direct_case', 'escaped_case', 'modified_case', 'module_case', 'optional_case',
+    'source:tests:unit:Authority.test.tsx', 'source:tests:unit:Module.test.mjs', 'template_case', 'tsx_case',
+  ]);
+  const persisted = await readFile(join(root, '.verification/manifest.json'), 'utf8');
+  assert.doesNotMatch(persisted, /computed_case|deep_case|other_case|wrapped_case|variable_case|interpolated_case|concat_case|curried_case|comment_case|string_case|private\/customer|x{161}/);
+});
+
+test('a parser failure makes identifier evidence unavailable without publishing its source', async t => {
+  const root = await fixture(t);
+  await mkdir(join(root, 'tests/unit'), { recursive: true });
+  await writeFile(join(root, 'tests/unit/Broken.test.ts'), "test('SECRET_TOKEN', () => {");
+  const result = await runVerification({ root, checks: [child('success', 'process.exit(0)')], metadata });
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.manifest.identifierInventory, 'unavailable');
+  assert.doesNotMatch(await readFile(join(root, '.verification/manifest.json'), 'utf8'), /SECRET_TOKEN|Broken\.test|source_parse_failed/);
 });
