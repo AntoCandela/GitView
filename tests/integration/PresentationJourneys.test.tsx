@@ -218,7 +218,7 @@ test("keyboard layout navigation and nested repository menus return focus withou
 
 // Eight full-workspace transitions need scheduling headroom in the shared parallel run.
 test("repeated layout and reading-mode transitions keep a late source line reachable with bounded mounted rows", async () => {
-  const user = userEvent.setup();
+  const user = userEvent.setup({ delay: null });
   const lines = Array.from({ length: 10_000 }, (_, index) => `presentation source ${index}`);
   const review = textReview("");
   review.fromContent = review.toContent = `${lines.join("\n")}\n`;

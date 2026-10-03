@@ -65,7 +65,8 @@ test("switching icon packs updates both real trees and closed folders, and the c
   localStorage.setItem("gitview.app-theme", "cream");
   localStorage.setItem("gitview.icon-theme", "classic");
   localStorage.setItem("gitview.code-review", JSON.stringify({ mode: "changes", theme: "match", lineMode: "scroll" }));
-  const user = userEvent.setup();
+  // Exercise real application timers without synthetic inter-action scheduling.
+  const user = userEvent.setup({ delay: null });
   const client = treeClient();
   const first = render(<IconWorkbench client={client} />);
   await user.click(await screen.findByRole("button", { name: `Initial commit, Commit ${historyOids.root}` }));
