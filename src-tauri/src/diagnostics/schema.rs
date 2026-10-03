@@ -341,6 +341,8 @@ pub(super) fn reject_symlinks(path: &Path) -> Result<(), Code> {
     for component in path.components() {
         if component == Component::ParentDir { return Err(Code::StorageUnavailable); }
         current.push(component);
+        // A Windows namespace/drive prefix is not a filesystem object until its root is joined.
+        if matches!(component, Component::Prefix(_)) { continue; }
         match fs::symlink_metadata(&current) {
             Ok(metadata) if metadata.file_type().is_symlink() => return Err(Code::StorageUnavailable),
             Ok(_) => {},

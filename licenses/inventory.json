@@ -18,11 +18,11 @@
     "package-lock.json": "3b10145f9071f340c78e4ab4a6e1406b580f113e6ec896ef3f1b4ff372f54c3b",
     "package.json": "4302fed793a7240fb8928986799adabd9b3e5551acd1b1ca50b5d0d2b50e70a6",
     "public/favicon.svg": "8a3a2a8cf0c6358aeee5edd83559bab768088b9a9f3522a292e8fa23ed55f99e",
-    "scripts/check-licenses.mjs": "e08d6845f3b81c5f4fd02447830f774c4dc5918b461124817bbebe8a71ad0642",
+    "scripts/check-licenses.mjs": "83c494c5edbc022afd1a7e465acc6a342334c788a50358e7bb5afd9ee3a54b61",
     "scripts/fileIconThemes.ts": "612d6aa80b52a846f3002abbe9cc1ab35dc8f77c6b436b433407d5af252e8e45",
     "scripts/generate-brand.mjs": "add0f7fe15f8da3c5c83c7c477121757ec3c4df0bff78d5301a861637cf1bfc5",
     "scripts/glslGrammar.ts": "87f30b5fe59c7c2438b8f49b391cc302856d136e4155152419c067f29977b1ad",
-    "scripts/vendor-patches.mjs": "aa4ced39028ee7e7a450822442b82a6e11916effb8531c815644c7e909ce8372",
+    "scripts/vendor-patches.mjs": "8d852741549a75a37279b25a18400343260be2b6ae8602e16995878def2184bc",
     "src-tauri/Cargo.lock": "ce19bf141b511da0b9b6f20a2a242600c75eba3fa53addeae42b8c7804e639fb",
     "src-tauri/Cargo.toml": "33c217b693ec53b61b97193f56d4a6bac0c6f406604d8cb2247c28bde2b223e9",
     "src-tauri/icons/128x128.png": "4d8c641a76d8063f4da7335cc5731df82eda72c5004d94d5dacd03e0eafd1236",
@@ -1787,8 +1787,6 @@
     "licenses/texts/npm/jsdom/26.1.0/LICENSE.txt": "242d37e7cab25cbafc36cc973ee88f9345fddf066afe4f72b7ac3d9ad4e24cce",
     "licenses/texts/npm/lru-cache/10.4.3/LICENSE": "451ec07eeb9c4e1b86de9abdaa426462a8be48f887ec7421cf0bbb9c769555ab",
     "licenses/texts/npm/lucide-react/1.49.0/LICENSE": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
-    "licenses/texts/npm/lucide-react/1.49.0/dist/esm/icons/copyright.mjs": "9142a087ed6e09cda86417dfe45f9245d3b2f8a4f383de2e8e6e88ce82c21342",
-    "licenses/texts/npm/lucide-react/1.49.0/dist/esm/icons/copyright.mjs.map": "e76a3007f3232ceab27c936e80a40031141d8969b53e3db1da647f8fb2ecd436",
     "licenses/texts/npm/lz-string/1.5.0/LICENSE": "433fc9dfe659dbfb1e91eed8351f13651e97bfa3ac6d03394c3d63f61d4bbc80",
     "licenses/texts/npm/lz-string/1.5.0/tests/lib/jasmine-1.3.1/MIT.LICENSE": "4980fbf7a066767fb0fe963464cbb1b8c566fb46c55848fcf940143fdca68046",
     "licenses/texts/npm/magic-string/0.30.21/LICENSE": "1cbe51b907662f6cb1492b16c359384a595180bf0e4d101603ed525e75c4e484",
@@ -6569,18 +6567,6 @@
           "sourcePath": "LICENSE",
           "sourceUrl": "https://registry.npmjs.org/lucide-react/-/lucide-react-1.49.0.tgz#package/LICENSE",
           "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57"
-        },
-        {
-          "path": "licenses/texts/npm/lucide-react/1.49.0/dist/esm/icons/copyright.mjs.map",
-          "sourcePath": "dist/esm/icons/copyright.mjs.map",
-          "sourceUrl": "https://registry.npmjs.org/lucide-react/-/lucide-react-1.49.0.tgz#package/dist/esm/icons/copyright.mjs.map",
-          "sha256": "e76a3007f3232ceab27c936e80a40031141d8969b53e3db1da647f8fb2ecd436"
-        },
-        {
-          "path": "licenses/texts/npm/lucide-react/1.49.0/dist/esm/icons/copyright.mjs",
-          "sourcePath": "dist/esm/icons/copyright.mjs",
-          "sourceUrl": "https://registry.npmjs.org/lucide-react/-/lucide-react-1.49.0.tgz#package/dist/esm/icons/copyright.mjs",
-          "sha256": "9142a087ed6e09cda86417dfe45f9245d3b2f8a4f383de2e8e6e88ce82c21342"
         }
       ]
     },

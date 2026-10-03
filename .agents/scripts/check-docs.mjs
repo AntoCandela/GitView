@@ -195,7 +195,13 @@ export async function exerciseDiagnostics({ root = repositoryRoot, output = '.ve
   try {
     await mkdir(join(scaffold, 'src'));
     const native = await ownedPath(root, 'src-tauri');
-    const manifest = `[package]\nname = ${JSON.stringify(packageName)}\nversion = "0.0.0"\nedition = "2021"\n\n[dependencies]\ngitview_lib = { package = "gitview", path = ${JSON.stringify(native)} }\ntokio = { version = "1", features = ["macros", "rt", "time"] }\nrusqlite = { version = "0.38", features = ["bundled"] }\nuuid = { version = "1", features = ["v4", "serde"] }\nserde_json = "1"\n`;
+    const metadata = JSON.parse(await run('cargo', ['metadata', '--offline', '--locked', '--no-deps', '--format-version', '1', '--manifest-path', join(native, 'Cargo.toml')], root));
+    const sqlite = metadata.packages.find(pkg => pkg.name === 'gitview').dependencies.find(dependency => dependency.name === 'rusqlite');
+    const vendors = JSON.parse(await boundedText(await ownedPath(root, 'src-tauri/vendor/patches.json')));
+    // Cargo ignores dependency-level patches; the standalone root must select the same audited sources.
+    const patches = await Promise.all(vendors.packages.map(async pkg =>
+      `${JSON.stringify(pkg.name)} = { path = ${JSON.stringify(await ownedPath(root, pkg.path))} }`));
+    const manifest = `[package]\nname = ${JSON.stringify(packageName)}\nversion = "0.0.0"\nedition = "2021"\n\n[dependencies]\ngitview_lib = { package = "gitview", path = ${JSON.stringify(native)} }\ntokio = { version = "1", features = ["macros", "rt", "time"] }\nrusqlite = { version = ${JSON.stringify(sqlite.req)}, features = ["bundled"] }\nuuid = { version = "1", features = ["v4", "serde"] }\nserde_json = "1"\n\n[patch.crates-io]\n${patches.join('\n')}\n`;
     await writeFile(join(scaffold, 'Cargo.toml'), manifest);
     await writeFile(join(scaffold, 'src/main.rs'), diagnosticSource(snippets, examples.queries));
     await copyFile(await ownedPath(root, 'src-tauri/Cargo.lock'), join(scaffold, 'Cargo.lock'));

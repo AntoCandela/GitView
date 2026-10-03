@@ -49,7 +49,7 @@ export async function readJsonBounded(path) {
 }
 
 /** Start errors, signals and output overflow are facts independent of process exit. */
-export function execute(executable, args, { cwd, signal, outputLimit = OUTPUT_LIMIT } = {}) {
+export function execute(executable, args, { cwd, env, signal, outputLimit = OUTPUT_LIMIT } = {}) {
   return new Promise(resolveResult => {
     let child;
     let output = '';
@@ -59,7 +59,7 @@ export function execute(executable, args, { cwd, signal, outputLimit = OUTPUT_LI
     let cancelled = Boolean(signal?.aborted);
     let killTimer;
     if (cancelled) return resolveResult({ output, exitCode: null, signal: null, code: 'cancelled' });
-    try { child = spawn(executable, args, { cwd, shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }); }
+    try { child = spawn(executable, args, { cwd, env, shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] }); }
     catch { return resolveResult({ output, exitCode: null, signal: null, code: 'start_failed' }); }
     const cancel = () => {
       cancelled = true;

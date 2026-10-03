@@ -2,7 +2,7 @@
 
 ## Scope and owner decisions — 2026-10-03
 
-This report covers **preparation of the selected source for publication on `main`**, not an installer release or permission to push. Source preparation did not publish public refs or configure a hosted public repository.
+This report records **preparation of the selected source for publication on `main`**, not an installer release. The preparation evidence below predates the separately authorized upload; hosted follow-up is recorded at the end.
 
 The owner selected a **clean, parentless initial `main` commit**, using their approved GitHub noreply identity. The cutover preserved prior history and four hooked remediation commits on the private backup branch `local/pre-publication-history`. The resulting `main` has one real commit and zero parents; its author and committer use the approved noreply identity. Publish only the reviewed `main` ref to public destinations: never the backup, unrelated branches, automation refs, reflogs, dangling objects or `.git`. The old history retains personal metadata, private-service bindings and earlier artwork whose rights were not established; replacing current files does not clear those historical objects for public disclosure.
 
@@ -61,6 +61,14 @@ The outgoing source excludes ignored connector/account configuration, environmen
 
 ## Remaining hosted and release boundaries
 
-The local source selection does not identify or configure a GitHub destination. After separately authorizing upload, the owner must follow [GitHub setup](GITHUB-SETUP.md): confirm the intended target, publish only `main`, set its hosted default branch, inspect all three platform jobs, apply effective protections and enable available security controls. No target was guessed and no broader account access was requested.
+The separately authorized source upload published the parentless baseline to [AntoCandela/GitView](https://github.com/AntoCandela/GitView). `main` is the hosted default branch and is protected by pull requests and all three required platform checks, without a bypass actor. [GitHub setup](GITHUB-SETUP.md) remains the setup reference; protection configuration is not evidence that those checks pass.
 
 GitHub private vulnerability reporting remains optional and unconfigured here; the approved LinkedIn route is not evidence that GitHub reporting is enabled. Installer signing/notarization, native picker/window authorization, packaged resource inspection, target-specific runtime licenses and binary corresponding-source obligations remain outside this source-publication evidence. Do not describe this preparation as a certified public binary release.
+
+## Hosted verification follow-up
+
+The [first hosted baseline run](https://github.com/AntoCandela/GitView/actions/runs/37120918867) failed on all three platforms. The pre-publication local pass did not establish fresh-checkout or cross-platform readiness. Comparing the six initial Dependabot pull requests against that baseline separates inherited failures from additional TypeScript, Vite and Vitest failures; none of those dependency updates is cleared by this report.
+
+Local reproductions established three environment/source gaps: two ignored Lucide icon implementation files had been incorrectly inventoried as legal texts; standalone documentation drivers lost the workspace's Cargo path patches; and native fixtures inherited unsupported global Git filters. A CRLF tar-listing probe also reproduced dropped notice entries. Corrections preserve actual license sidecars, reapply the audited patches and owning SQLite requirement, bind workflow evidence to vendored sources, isolate only test-child Git configuration and accept both line endings. The corrected documentation CLI passed with a fresh Cargo home, and the shared integration CLI passed under a synthetic hostile global filter.
+
+Windows also exposed canonical-path diagnostics failures and a library-test loader exit of `0xC0000139`. The repair skips filesystem queries on syntactic drive prefixes and supplies the Common Controls v6 activation dependency to the library test executable, following [Tauri's documented workaround](https://github.com/orgs/tauri-apps/discussions/11179). Source inspection supports these changes; only the hosted Windows run can establish their platform result. All required checks, test assertions, deadlines, concurrency and production filter rejection remain intact.

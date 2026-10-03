@@ -118,6 +118,13 @@ function extractEvidence(output, reporter, allowed) {
   return { failures: [...failures].sort(), summary, omittedFailures, reporterValid };
 }
 
+function testEnvironment() {
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) if (key.toUpperCase().startsWith('GIT_')) delete env[key];
+  const empty = platform() === 'win32' ? 'NUL' : '/dev/null';
+  return { ...env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_SYSTEM: empty, GIT_CONFIG_GLOBAL: empty };
+}
+
 /** Injection is a test-only module seam; the CLI never accepts executable specifications. */
 export async function runVerification({ root = process.cwd(), suite = 'all', output = '.verification', checks, metadata, allowedIdentifiers, signal, outputLimit } = {}) {
   const startedAt = new Date().toISOString();
@@ -128,6 +135,8 @@ export async function runVerification({ root = process.cwd(), suite = 'all', out
   catch { allowed = new Set(); inventoryAvailable = false; }
   const infrastructureFiles = (await sourceFiles(root, 'tests/infrastructure')).filter(path => path.endsWith('.test.mjs'));
   const requiredChecks = checks ?? selectChecks(suite, infrastructureFiles);
+  // Fixture subprocesses must not inherit runner/user filters, hooks or repository redirects.
+  const isolatedTests = testEnvironment();
   const outcomes = [];
   for (const spec of requiredChecks) {
     const base = { id: spec.id, boundary: spec.boundary, required: true, invocation: spec.invocation, rerun: spec.invocation, details: 'omitted_private_payloads' };
@@ -145,7 +154,8 @@ export async function runVerification({ root = process.cwd(), suite = 'all', out
       const npmPath = npmCli ?? resolve(process.execPath, '..', 'node_modules/npm/bin/npm-cli.js');
       args = [npmPath, ...args];
     }
-    const result = await execute(executable, args, { cwd: root, signal, outputLimit });
+    const env = ['unit', 'integration'].includes(spec.boundary) ? isolatedTests : undefined;
+    const result = await execute(executable, args, { cwd: root, env, signal, outputLimit });
     const evidence = extractEvidence(result.output, spec.reporter, allowed);
     const emptySuite = spec.reporter === 'rust' ? evidence.summary?.passed + evidence.summary?.failed === 0 : spec.reporter === 'vitest' ? evidence.summary?.numTotalTests === 0 : spec.reporter === 'tap' ? evidence.summary?.total === 0 : false;
     // TODO scenarios are missing proof too, even when the framework exits successfully.

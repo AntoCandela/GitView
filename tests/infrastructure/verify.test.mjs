@@ -3,8 +3,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { access, mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
+import { pathToFileURL } from 'node:url';
+import { execute } from '../../scripts/evidence.mjs';
 import { runVerification, parseArguments } from '../../scripts/verify.mjs';
 
 const metadata = { revision: 'a'.repeat(40), dirty: false, rust: '1.90.0', git: '2.50.0', available: true };
@@ -111,6 +113,51 @@ test('real Node TODO scenarios cannot certify required infrastructure behavior',
   assert.equal(result.exitCode, 1);
   assert.equal(result.manifest.checks[0].code, 'required_tests_skipped');
   assert.equal(result.manifest.checks[0].summary.todo, 1);
+});
+
+test('verification fixtures ignore ambient Git filters without changing the invoking environment', async t => {
+  const root = await fixture(t);
+  const marker = join(root, 'filter-ran');
+  const filter = join(root, 'filter.cjs');
+  await writeFile(filter, `require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'ran'); process.stdout.write('altered contents');`);
+  const command = `"${process.execPath.replaceAll('\\', '/')}" "${filter.replaceAll('\\', '/')}"`;
+  const config = join(root, 'global.gitconfig');
+  const configuration = `[filter "fixture"]\nclean = ${JSON.stringify(command)}\n`;
+  await writeFile(config, configuration);
+  const probe = join(root, 'probe.cjs');
+  await writeFile(probe, `
+    const {execFileSync} = require('node:child_process');
+    const {writeFileSync} = require('node:fs');
+    execFileSync('git', ['init', '--quiet']);
+    writeFileSync('.gitattributes', '*.txt filter=fixture\\n');
+    const options = {input: 'original contents', encoding: 'utf8'};
+    const expected = execFileSync('git', ['hash-object', '--no-filters', '--stdin'], options);
+    const actual = execFileSync('git', ['hash-object', '--path=example.txt', '--stdin'], options);
+    if (actual !== expected) process.exit(1);
+  `);
+  const driver = join(root, 'driver.mjs');
+  await writeFile(driver, `
+    import {execFileSync} from 'node:child_process';
+    import {runVerification} from ${JSON.stringify(pathToFileURL(resolve('scripts/verify.mjs')).href)};
+    const checks = [{id:'git_fixture', boundary:'integration', executable:process.execPath,
+      args:[${JSON.stringify(probe)}], invocation:['node','probe.cjs'], reporter:'none'}];
+    const result = await runVerification({root:process.cwd(), checks, metadata:${JSON.stringify(metadata)}, allowedIdentifiers:[]});
+    const inherited = execFileSync('git', ['config', '--global', '--get', 'filter.fixture.clean'], {encoding:'utf8'}).trim();
+    if (inherited !== ${JSON.stringify(command)}) process.exit(2);
+    process.exitCode = result.exitCode;
+  `);
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) if (key.toUpperCase().startsWith('GIT_')) delete env[key];
+  env.GIT_CONFIG_NOSYSTEM = '1';
+  env.GIT_CONFIG_GLOBAL = config;
+  // Git also accepts these mixed-case command-scope overrides on Windows.
+  env.git_config_count = '1';
+  env.git_config_key_0 = 'filter.fixture.clean';
+  env.Git_Config_Value_0 = command;
+  const result = await execute(process.execPath, [driver], { cwd: root, env });
+  assert.equal(result.exitCode, 0);
+  await assert.rejects(access(marker), { code: 'ENOENT' });
+  assert.equal(await readFile(config, 'utf8'), configuration);
 });
 
 
