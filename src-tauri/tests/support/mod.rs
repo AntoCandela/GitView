@@ -14,6 +14,7 @@ use std::time::Duration;
 use tempfile::TempDir;
 
 /// Runs fixture mutations with per-command config isolation, never global environment changes.
+#[track_caller]
 pub(crate) fn git(at: &Path, arguments: &[&str]) {
     let output = git_output(at, arguments);
     assert!(output.status.success(), "fixture Git {arguments:?} failed: {}", String::from_utf8_lossy(&output.stderr));

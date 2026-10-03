@@ -7,16 +7,16 @@ import { join, resolve } from 'node:path';
 import test from 'node:test';
 import { selectChecks } from '../../scripts/verify.mjs';
 
-function manifest() {
+function manifest(suite = 'unit') {
   return {
-    schemaVersion: 1, boundary: 'repository-verification-not-native-preview', suite: 'unit',
+    schemaVersion: 1, boundary: 'repository-verification-not-native-preview', suite,
     status: 'passed', metadataStatus: 'available', identifierInventory: 'available',
     startedAt: '2026-01-01T00:00:00.000Z', finishedAt: '2026-01-01T00:00:01.000Z',
     revision: 'a'.repeat(40), dirty: true,
-    checks: selectChecks('unit').map(spec => ({ id: spec.id, required: true, status: 'passed', code: 'ok',
+    checks: selectChecks(suite).map(spec => ({ id: spec.id, required: true, status: 'passed', code: 'ok',
       summary: spec.reporter === 'rust' ? { passed: 1, failed: 0, ignored: 0 }
         : spec.reporter === 'vitest' ? { numPassedTests: 1, numFailedTests: 0, numPendingTests: 0, numTotalTests: 1 }
-        : { total: 1, passed: 1, failed: 0, skipped: 0, todo: 0 } })),
+        : spec.reporter === 'tap' ? { total: 1, passed: 1, failed: 0, skipped: 0, todo: 0 } : null })),
   };
 }
 async function invoke(context, report) {
@@ -26,6 +26,14 @@ async function invoke(context, report) {
   await writeFile(path, JSON.stringify(report));
   return spawnSync(process.execPath, [resolve('.agents/scripts/verification-report.mjs'), '--manifest', path], { encoding: 'utf8' });
 }
+
+test('a complete all-suite report preserves documentation success without inventing test counts', async context => {
+  const result = await invoke(context, manifest('all'));
+  assert.equal(result.status, 0);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.recordedStatus, 'passed');
+  assert.equal(output.checks.find(check => check.id === 'agent_documentation').summary, null);
+});
 
 test('recorded failures stay nonzero without leaking supplied commands or private payloads', async context => {
   const report = manifest();

@@ -83,7 +83,8 @@ test.each([
   { context: "working", path: "src/example.ts", source: "working presentation source", other: "committed presentation source" },
   { context: "committed", path: "archive/version.ts", source: "committed presentation source", other: "working presentation source" },
 ])("the selected $context comparison survives layout and appearance changes", async ({ context, path, source, other }) => {
-  const user = userEvent.setup();
+  // Keep application timers real without adding artificial timer ticks between interactions.
+  const user = userEvent.setup({ delay: null });
   mountWorkspace();
   // Keep accessible-name scans local to the active surface, not every mounted workbench control.
   const layout = screen.getByRole("button", { name: "Workbench layout" });
@@ -120,41 +121,56 @@ test.each([
 });
 
 test("saved reading and palette choices restore after remount while the session layout resets", async () => {
-  const user = userEvent.setup();
+  // Keep real application timers, but do not add artificial typing/pointer delays to this persistence journey.
+  const user = userEvent.setup({ delay: null });
   const client = presentationClient();
   const first = mountWorkspace(client);
-  await user.click(await screen.findByRole("button", { name: "Expand src" }));
-  await user.click(await screen.findByRole("button", { name: "Review src/example.ts" }));
-  await screen.findByText("working presentation source");
+  // Query each active surface locally so unrelated workbench controls do not dominate the journey.
+  const workingFiles = within(await screen.findByRole("list", { name: "Changed file hierarchy" }));
+  await user.click(await workingFiles.findByRole("button", { name: "Expand src" }));
+  await user.click(await workingFiles.findByRole("button", { name: "Review src/example.ts" }));
+  const selectedReview = within(await screen.findByRole("region", { name: "Selected file review" }));
+  await selectedReview.findByText("working presentation source");
   const layout = screen.getByRole("button", { name: "Workbench layout" });
+  const toolbar = within(layout.closest("header")!);
   await user.click(layout);
-  const initialLayout = within(screen.getByRole("radiogroup", { name: "Panel arrangement" }))
-    .getByRole("radio", { checked: true }).getAttribute("aria-label")!;
+  const initialDialog = await screen.findByRole("dialog", { name: "Workbench layout" });
+  const initialLayouts = within(within(initialDialog).getByRole("radiogroup", { name: "Panel arrangement" }));
+  const initialLayout = initialLayouts.getByRole("radio", { checked: true }).getAttribute("aria-label")!;
+  // Change the layout in the already-open menu; a second close/open adds no persistence coverage.
+  const changedLayout = initialLayouts.getByRole("radio", { name: historyAbove });
+  await user.click(changedLayout);
+  expect(changedLayout).toBeChecked();
   await user.keyboard("{Escape}");
-  await chooseLayout(user, layout, historyAbove);
-  await user.click(screen.getByRole("radio", { name: "Full file" }));
-  await user.click(screen.getByRole("radio", { name: "Wrap" }));
-  await user.click(screen.getByRole("button", { name: "Appearance" }));
-  await user.click(screen.getByRole("button", { name: "Midnight" }));
-  await user.click(screen.getByText("Syntax"));
-  await user.click(within(screen.getByRole("radiogroup", { name: "Syntax palette" })).getByRole("radio", { name: "GitHub Light" }));
+  await waitFor(() => expect(initialDialog).not.toBeInTheDocument());
+  await user.click(within(selectedReview.getByRole("radiogroup", { name: "Code view" })).getByRole("radio", { name: "Full file" }));
+  await user.click(within(selectedReview.getByRole("radiogroup", { name: "Long lines" })).getByRole("radio", { name: "Wrap" }));
+  await user.click(toolbar.getByRole("button", { name: "Appearance" }));
+  const appearance = within(await screen.findByRole("dialog", { name: "Appearance" }));
+  await user.click(appearance.getByRole("button", { name: "Midnight" }));
+  await user.click(appearance.getByText("Syntax"));
+  await user.click(within(appearance.getByRole("radiogroup", { name: "Syntax palette" })).getByRole("radio", { name: "GitHub Light" }));
   expect(JSON.parse(localStorage.getItem("gitview.code-review")!))
     .toEqual({ mode: "full", theme: "github-light", lineMode: "wrap" });
   expect(localStorage.getItem("gitview.app-theme")).toBe("midnight");
 
   first.unmount();
   mountWorkspace(client);
-  await user.click(await screen.findByRole("button", { name: "Expand src" }));
-  await user.click(await screen.findByRole("button", { name: "Review src/example.ts" }));
-  expect(await screen.findByText("working presentation source")).toBeVisible();
-  expect(screen.getByRole("radio", { name: "Full file" })).toBeChecked();
-  expect(screen.getByRole("radio", { name: "Wrap" })).toBeChecked();
+  const restoredFiles = within(await screen.findByRole("list", { name: "Changed file hierarchy" }));
+  await user.click(await restoredFiles.findByRole("button", { name: "Expand src" }));
+  await user.click(await restoredFiles.findByRole("button", { name: "Review src/example.ts" }));
+  const restoredReview = within(await screen.findByRole("region", { name: "Selected file review" }));
+  expect(await restoredReview.findByText("working presentation source")).toBeVisible();
+  expect(within(restoredReview.getByRole("radiogroup", { name: "Code view" })).getByRole("radio", { name: "Full file" })).toBeChecked();
+  expect(within(restoredReview.getByRole("radiogroup", { name: "Long lines" })).getByRole("radio", { name: "Wrap" })).toBeChecked();
   expect(document.documentElement).toHaveAttribute("data-appearance", "midnight");
-  expect(screen.getByRole("region", { name: "Read-only file comparison" }))
+  expect(restoredReview.getByRole("region", { name: "Read-only file comparison" }))
     .toHaveStyle({ "--code-bg": "#fff", "--code-ink": "#24292e" });
   await user.click(screen.getByRole("button", { name: "Workbench layout" }));
-  expect(screen.getByRole("radio", { name: initialLayout })).toBeChecked();
-  expect(screen.getByRole("radio", { name: historyAbove })).not.toBeChecked();
+  const restoredDialog = await screen.findByRole("dialog", { name: "Workbench layout" });
+  const restoredLayouts = within(within(restoredDialog).getByRole("radiogroup", { name: "Panel arrangement" }));
+  expect(restoredLayouts.getByRole("radio", { name: initialLayout })).toBeChecked();
+  expect(restoredLayouts.getByRole("radio", { name: historyAbove })).not.toBeChecked();
 });
 
 test("keyboard layout navigation and nested repository menus return focus without losing the comparison", async () => {

@@ -5,24 +5,24 @@
   "gplSha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986",
   "sourceHashes": {
     ".agents/skills/gitview-agent-evaluation/SKILL.md": "3fe1a28a71cda01e5899859bc983ede7cbe9e85988bac8265b5e1c74f4851648",
-    ".agents/skills/gitview-doc-maintenance/SKILL.md": "7a70bda6031eefc105c5eeb07b00232e63949bf8042c027f40f17ecdd83798ad",
+    ".agents/skills/gitview-doc-maintenance/SKILL.md": "3361205e83040632dfdc657b0def6e52b73aee854553a2fb2eb27cca362e1478",
     ".agents/skills/gitview-independent-review/SKILL.md": "e6fb3ae55cea19dc4b05af8986843d4c139d9c287ee39b238f5f035a0f0d151e",
     ".agents/skills/gitview-session-coordination/SKILL.md": "f16de76c7d343e7ff783c915637c4c95d53ea5adba0d30e91c6da4f8fbf77a17",
-    ".agents/skills/gitview-sql-diagnostics/SKILL.md": "24124de9787382623d02cae60a56ec7b7aa1cbf28d672a7fbc5097e3cd69301c",
+    ".agents/skills/gitview-sql-diagnostics/SKILL.md": "fdc10a4e6305454244d806337b80cb172f44af64ab17670908b3d7c6b5e3be9b",
     ".agents/skills/gitview-task-delegation/SKILL.md": "4b4007695a0fd0115b69cabe95666886b8fc5933638bfb8f219054648e6f33b3",
-    ".agents/skills/gitview-verification/SKILL.md": "94b82819a6b6166066e73b454e14afc90adbdf421b89eebedeff7970287e2023",
+    ".agents/skills/gitview-verification/SKILL.md": "0f1a3fe20f4e401940e57b42825ac87a6bf70f13fe4ce8c25cf4e10ca7ff87c1",
     ".agents/skills/gitview-worker-isolation/SKILL.md": "951b3673b5aa6aaa73ac6bf5c5d640214db36cbd8f2ea5db51ca7e23b72b4e4c",
     "CODE_OF_CONDUCT.md": "5d955fd2bed345f78cc377f046b293f7a88686bbaef9bed26908692c31b9e064",
-    "THIRD_PARTY_NOTICES.md": "c55d8fc5220916fbae807aa4830cbf2d3082c362b4ea9e979a77e04ab527b8fd",
-    "licenses/supplemental-sources.json": "7ba1f5022e3cef2afa7db1918e7653f6e9b04e44263021ff3d9cb71aee5a422e",
-    "package-lock.json": "3b10145f9071f340c78e4ab4a6e1406b580f113e6ec896ef3f1b4ff372f54c3b",
-    "package.json": "4302fed793a7240fb8928986799adabd9b3e5551acd1b1ca50b5d0d2b50e70a6",
+    "THIRD_PARTY_NOTICES.md": "1866d27eb25ad594d2f22c3d27d07ac188eee4c94487866578bb859d33b1285f",
+    "licenses/supplemental-sources.json": "64545a5f85549db6f46b8821055e17c3354d9132288dafe11547c37c06254037",
+    "package-lock.json": "3c014c39d68ca5f0eb6474445b3f958b627334ffb3fd523eeeecaca6e954aca5",
+    "package.json": "9dc965da9af8116b78e05815d801e086d8b536e1d03cd603a2f5a34d00e92eea",
     "public/favicon.svg": "8a3a2a8cf0c6358aeee5edd83559bab768088b9a9f3522a292e8fa23ed55f99e",
-    "scripts/check-licenses.mjs": "e08d6845f3b81c5f4fd02447830f774c4dc5918b461124817bbebe8a71ad0642",
+    "scripts/check-licenses.mjs": "b66e6a04431c497b6e4d3cc17e888577d10c851f3a5bc02ab7d2b65f185d2bfd",
     "scripts/fileIconThemes.ts": "612d6aa80b52a846f3002abbe9cc1ab35dc8f77c6b436b433407d5af252e8e45",
     "scripts/generate-brand.mjs": "add0f7fe15f8da3c5c83c7c477121757ec3c4df0bff78d5301a861637cf1bfc5",
     "scripts/glslGrammar.ts": "87f30b5fe59c7c2438b8f49b391cc302856d136e4155152419c067f29977b1ad",
-    "scripts/vendor-patches.mjs": "aa4ced39028ee7e7a450822442b82a6e11916effb8531c815644c7e909ce8372",
+    "scripts/vendor-patches.mjs": "8d852741549a75a37279b25a18400343260be2b6ae8602e16995878def2184bc",
     "src-tauri/Cargo.lock": "ce19bf141b511da0b9b6f20a2a242600c75eba3fa53addeae42b8c7804e639fb",
     "src-tauri/Cargo.toml": "33c217b693ec53b61b97193f56d4a6bac0c6f406604d8cb2247c28bde2b223e9",
     "src-tauri/icons/128x128.png": "4d8c641a76d8063f4da7335cc5731df82eda72c5004d94d5dacd03e0eafd1236",
@@ -872,11 +872,11 @@
   },
   "legalTextHashes": {
     "licenses/texts/assets/catppuccin-latte/LICENSE.txt": "dab37945e3097e43c74c08437196152a50f8d5d5e1d0335f469b203e183e21b8",
-    "licenses/texts/assets/code-highlighting/grammars-NOTICE.txt": "b8e325ab8b5cfc9170794a8c0cf52bf13b43baba459aa4365182f337db68882c",
+    "licenses/texts/assets/code-highlighting/grammars-NOTICE.txt": "891a322f68bde2f18f5ce84592c03cf7cda3197f648df71b5a31d647f5892586",
     "licenses/texts/assets/code-highlighting/oniguruma-LICENSE.txt": "ddde8aba8fe72b4830e27901fc78733eb6db7b6c653161075de213a6adeda3fd",
     "licenses/texts/assets/code-highlighting/oniguruma-NOTICES.txt": "615d94d89eacc046241518c247f6650a5df80d1adf4b284a756f500867620b35",
     "licenses/texts/assets/code-highlighting/shiki-LICENSE.txt": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
-    "licenses/texts/assets/code-highlighting/themes-NOTICE.txt": "dcfef6e3b5642d22523c2559df627fbaf26d08bf7814fa49d1f30fdc08dd71be",
+    "licenses/texts/assets/code-highlighting/themes-NOTICE.txt": "5562622d13daf3f745bca7ccdc2bf3f77d6720cf5d41f1ee34e3e46cf4e226f9",
     "licenses/texts/assets/code-highlighting/toml-LICENSE.txt": "7ab0693a63bc1f61b54ba4fff7b04d17a6926899dfee40e3b6c9b9885e927dc7",
     "licenses/texts/assets/code-highlighting/yaml-LICENSE.txt": "7ab0693a63bc1f61b54ba4fff7b04d17a6926899dfee40e3b6c9b9885e927dc7",
     "licenses/texts/assets/contributor-covenant-2.1/LICENSE.txt": "030cdb4fdfb7a9dfdbb87112fee428c835ae9f0757347ea8b5619434b8c2d331",
@@ -1697,17 +1697,17 @@
     "licenses/texts/npm/@parcel/watcher/2.6.0/LICENSE": "5cfba9d5711264d45a2431a53c79f597cef12720cc7c764db2602daa92d0bd2a",
     "licenses/texts/npm/@playwright/test/1.63.0/LICENSE": "45873d00a0dd243596deb4aa23b2493b3d1f0671921bf2538ea431d7380220eb",
     "licenses/texts/npm/@playwright/test/1.63.0/NOTICE": "6d602191187b35b9b01d2cffa01c8469c2c8d9de8a96f1bf868e0f264f51c81d",
-    "licenses/texts/npm/@shikijs/core/4.0.2/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
-    "licenses/texts/npm/@shikijs/engine-javascript/4.0.2/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
-    "licenses/texts/npm/@shikijs/engine-oniguruma/4.0.2/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
-    "licenses/texts/npm/@shikijs/engine-oniguruma/4.0.2/upstream/Oniguruma-NOTICES.txt": "615d94d89eacc046241518c247f6650a5df80d1adf4b284a756f500867620b35",
-    "licenses/texts/npm/@shikijs/engine-oniguruma/4.0.2/upstream/vscode-oniguruma-LICENSE.txt": "ddde8aba8fe72b4830e27901fc78733eb6db7b6c653161075de213a6adeda3fd",
-    "licenses/texts/npm/@shikijs/langs/4.0.2/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
-    "licenses/texts/npm/@shikijs/langs/4.0.2/upstream/TextMate-NOTICE.txt": "b8e325ab8b5cfc9170794a8c0cf52bf13b43baba459aa4365182f337db68882c",
-    "licenses/texts/npm/@shikijs/primitive/4.0.2/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
-    "licenses/texts/npm/@shikijs/themes/4.0.2/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
-    "licenses/texts/npm/@shikijs/themes/4.0.2/upstream/Themes-NOTICE.txt": "dcfef6e3b5642d22523c2559df627fbaf26d08bf7814fa49d1f30fdc08dd71be",
-    "licenses/texts/npm/@shikijs/types/4.0.2/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
+    "licenses/texts/npm/@shikijs/core/4.4.3/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
+    "licenses/texts/npm/@shikijs/engine-javascript/4.4.3/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
+    "licenses/texts/npm/@shikijs/engine-oniguruma/4.4.3/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
+    "licenses/texts/npm/@shikijs/engine-oniguruma/4.4.3/upstream/Oniguruma-NOTICES.txt": "615d94d89eacc046241518c247f6650a5df80d1adf4b284a756f500867620b35",
+    "licenses/texts/npm/@shikijs/engine-oniguruma/4.4.3/upstream/vscode-oniguruma-LICENSE.txt": "ddde8aba8fe72b4830e27901fc78733eb6db7b6c653161075de213a6adeda3fd",
+    "licenses/texts/npm/@shikijs/langs/4.4.3/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
+    "licenses/texts/npm/@shikijs/langs/4.4.3/upstream/TextMate-NOTICE.txt": "891a322f68bde2f18f5ce84592c03cf7cda3197f648df71b5a31d647f5892586",
+    "licenses/texts/npm/@shikijs/primitive/4.4.3/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
+    "licenses/texts/npm/@shikijs/themes/4.4.3/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
+    "licenses/texts/npm/@shikijs/themes/4.4.3/upstream/Themes-NOTICE.txt": "5562622d13daf3f745bca7ccdc2bf3f77d6720cf5d41f1ee34e3e46cf4e226f9",
+    "licenses/texts/npm/@shikijs/types/4.4.3/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
     "licenses/texts/npm/@shikijs/vscode-textmate/10.0.2/LICENSE.md": "b5cb7ff7859e7d282d98fc43ab081b0dda5dc659dc3385cf65740c759a7e6a6c",
     "licenses/texts/npm/@standard-schema/spec/1.1.0/LICENSE": "653b779005a3a4d64a7288c940f7b9a0e8f0b1e0375f6aa6af9473caf131e564",
     "licenses/texts/npm/@tanstack/react-virtual/3.14.10/LICENSE": "a405ee70c632bb938acb7ac5f210e814409b3760ea9d2329d8ed8ffcfd11a0e7",
@@ -1787,8 +1787,6 @@
     "licenses/texts/npm/jsdom/26.1.0/LICENSE.txt": "242d37e7cab25cbafc36cc973ee88f9345fddf066afe4f72b7ac3d9ad4e24cce",
     "licenses/texts/npm/lru-cache/10.4.3/LICENSE": "451ec07eeb9c4e1b86de9abdaa426462a8be48f887ec7421cf0bbb9c769555ab",
     "licenses/texts/npm/lucide-react/1.49.0/LICENSE": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
-    "licenses/texts/npm/lucide-react/1.49.0/dist/esm/icons/copyright.mjs": "9142a087ed6e09cda86417dfe45f9245d3b2f8a4f383de2e8e6e88ce82c21342",
-    "licenses/texts/npm/lucide-react/1.49.0/dist/esm/icons/copyright.mjs.map": "e76a3007f3232ceab27c936e80a40031141d8969b53e3db1da647f8fb2ecd436",
     "licenses/texts/npm/lz-string/1.5.0/LICENSE": "433fc9dfe659dbfb1e91eed8351f13651e97bfa3ac6d03394c3d63f61d4bbc80",
     "licenses/texts/npm/lz-string/1.5.0/tests/lib/jasmine-1.3.1/MIT.LICENSE": "4980fbf7a066767fb0fe963464cbb1b8c566fb46c55848fcf940143fdca68046",
     "licenses/texts/npm/magic-string/0.30.21/LICENSE": "1cbe51b907662f6cb1492b16c359384a595180bf0e4d101603ed525e75c4e484",
@@ -1843,7 +1841,7 @@
     "licenses/texts/npm/saxes/6.0.0/upstream/AUTHORS": "4e9bfee1d0ed0a8bdacbdc1acf0a999b17054aa7bfc52eff00e869472be2a5cc",
     "licenses/texts/npm/saxes/6.0.0/upstream/LICENSE": "0fac2374380621b22e6b50451057721a9c52935b02d16d106a9f04897f061d0e",
     "licenses/texts/npm/scheduler/0.28.0/LICENSE": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
-    "licenses/texts/npm/shiki/4.0.2/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
+    "licenses/texts/npm/shiki/4.4.3/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
     "licenses/texts/npm/source-map-js/1.2.1/LICENSE": "6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd",
     "licenses/texts/npm/space-separated-tokens/2.0.2/license": "ca4662cb5d1b738fbe5350c0d5485ba11773b4b7208974082ae6e129a52d631d",
     "licenses/texts/npm/std-env/4.3.0/LICENCE": "a6f36438e46fb911859f3b9c4cad045ba64e1af3d8f4512c60258fa2d7552d28",
@@ -1998,20 +1996,20 @@
         "status": "verified",
         "license": "MIT AND BSD-2-Clause AND LicenseRef-TextMate-Bundle",
         "project": "https://github.com/shikijs/shiki",
-        "version": "4.0.2",
-        "evidence": "Shiki's exact v4.0.2 lock pins tm-grammars 1.31.6 and tm-themes 1.12.1. Both local NOTICE files exactly match the original npm archives. Selected styles are GitHub Light (Primer), Catppuccin Latte (Catppuccin) and Solarized Light (VS Code), all with original MIT grants. YAML/TOML TextMate bundle grants are additionally retained from the source grammar revisions. The inlined Oniguruma WASM exactly matches the integrity-verified vscode-oniguruma 1.7.0 original. Each local legal text is compared with its pinned source during refresh.",
+        "version": "4.4.3",
+        "evidence": "Shiki's exact v4.4.3 lock pins tm-grammars 1.32.3 and tm-themes 1.12.3. Both local NOTICE files exactly match the original npm archives. Selected styles are GitHub Light and Dark (Primer), Catppuccin Latte (Catppuccin) and Solarized Light (VS Code), all with original MIT grants. YAML/TOML TextMate bundle grants are additionally retained from the source grammar revisions. The inlined Oniguruma WASM exactly matches the integrity-verified vscode-oniguruma 1.7.0 original. Each local legal text is compared with its pinned source during refresh.",
         "sources": [
           {
             "path": "licenses/texts/assets/code-highlighting/grammars-NOTICE.txt",
-            "url": "https://unpkg.com/tm-grammars@1.31.6/NOTICE"
+            "url": "https://unpkg.com/tm-grammars@1.32.3/NOTICE"
           },
           {
             "path": "licenses/texts/assets/code-highlighting/themes-NOTICE.txt",
-            "url": "https://unpkg.com/tm-themes@1.12.1/NOTICE"
+            "url": "https://unpkg.com/tm-themes@1.12.3/NOTICE"
           },
           {
             "path": "licenses/texts/assets/code-highlighting/shiki-LICENSE.txt",
-            "url": "https://unpkg.com/shiki@4.0.2/LICENSE"
+            "url": "https://unpkg.com/shiki@4.4.3/LICENSE"
           },
           {
             "path": "licenses/texts/assets/code-highlighting/oniguruma-LICENSE.txt",
@@ -3841,12 +3839,12 @@
     },
     {
       "ecosystem": "npm",
-      "name": "@shikijs/engine-javascript",
-      "version": "4.0.2",
-      "lockPath": "node_modules/@shikijs/engine-javascript",
-      "source": "https://registry.npmjs.org/@shikijs/engine-javascript/-/engine-javascript-4.0.2.tgz",
-      "integrity": "sha512-7PW0Nm49DcoUIQEXlJhNNBHyoGMjalRETTCcjMqEaMoJRLljy1Bi/EGV3/qLBgLKQejdspiiYuHGQW6dX94Nag==",
-      "archiveSha256": "cdc6652896a334950d250f8d5ca4b0a7b4d4f35901e16d4d665b9d603982347c",
+      "name": "@shikijs/core",
+      "version": "4.4.3",
+      "lockPath": "node_modules/@shikijs/core",
+      "source": "https://registry.npmjs.org/@shikijs/core/-/core-4.4.3.tgz",
+      "integrity": "sha512-QCR4q2ZO/ILJEuwiBMel4wdcTDb1JGwfjKTxPDF6x8ixOaluPrVqIn06C99AcRPhmYlBR56d/Fb+GN58GzExpg==",
+      "archiveSha256": "0889692e2609eaa85462744cf3d64e5c3165528cc701913c6bcda9ce7a251103",
       "repository": "git+https://github.com/shikijs/shiki.git",
       "scope": [
         "runtime"
@@ -3859,21 +3857,21 @@
       "selectedLicense": "MIT",
       "notices": [
         {
-          "path": "licenses/texts/npm/@shikijs/engine-javascript/4.0.2/LICENSE",
+          "path": "licenses/texts/npm/@shikijs/core/4.4.3/LICENSE",
           "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/@shikijs/engine-javascript/-/engine-javascript-4.0.2.tgz#package/LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@shikijs/core/-/core-4.4.3.tgz#package/LICENSE",
           "sha256": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee"
         }
       ]
     },
     {
       "ecosystem": "npm",
-      "name": "@shikijs/types",
-      "version": "4.0.2",
-      "lockPath": "node_modules/@shikijs/engine-javascript/node_modules/@shikijs/types",
-      "source": "https://registry.npmjs.org/@shikijs/types/-/types-4.0.2.tgz",
-      "integrity": "sha512-qzbeRooUTPnLE+sHD/Z8DStmaDgnbbc/pMrU203950aRqjX/6AFHeDYT+j00y2lPdz0ywJKx7o/7qnqTivtlXg==",
-      "archiveSha256": "44e8f721a84283958d443196a76e451f3311227ed5f07cfa4eefa660237d81c4",
+      "name": "@shikijs/engine-javascript",
+      "version": "4.4.3",
+      "lockPath": "node_modules/@shikijs/engine-javascript",
+      "source": "https://registry.npmjs.org/@shikijs/engine-javascript/-/engine-javascript-4.4.3.tgz",
+      "integrity": "sha512-FbOjFJp9VLdo1Wevs10BBtVxiTWwNLqZh5Gkhjgda/ioL15YOgeSl9n+6XMa3qRlPQzfhFNe641SrynFHYG0nQ==",
+      "archiveSha256": "4e3dea18ad0bab80e4173ec413aa465ea32499b556a80a276b8f65ecbe45544c",
       "repository": "git+https://github.com/shikijs/shiki.git",
       "scope": [
         "runtime"
@@ -3886,9 +3884,9 @@
       "selectedLicense": "MIT",
       "notices": [
         {
-          "path": "licenses/texts/npm/@shikijs/types/4.0.2/LICENSE",
+          "path": "licenses/texts/npm/@shikijs/engine-javascript/4.4.3/LICENSE",
           "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/@shikijs/types/-/types-4.0.2.tgz#package/LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@shikijs/engine-javascript/-/engine-javascript-4.4.3.tgz#package/LICENSE",
           "sha256": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee"
         }
       ]
@@ -3896,11 +3894,11 @@
     {
       "ecosystem": "npm",
       "name": "@shikijs/engine-oniguruma",
-      "version": "4.0.2",
+      "version": "4.4.3",
       "lockPath": "node_modules/@shikijs/engine-oniguruma",
-      "source": "https://registry.npmjs.org/@shikijs/engine-oniguruma/-/engine-oniguruma-4.0.2.tgz",
-      "integrity": "sha512-UpCB9Y2sUKlS9z8juFSKz7ZtysmeXCgnRF0dlhXBkmQnek7lAToPte8DkxmEYGNTMii72zU/lyXiCB6StuZeJg==",
-      "archiveSha256": "169944bf7b7d2836c5986d557107ef799234547a16498cc2c91bb64f14646f91",
+      "source": "https://registry.npmjs.org/@shikijs/engine-oniguruma/-/engine-oniguruma-4.4.3.tgz",
+      "integrity": "sha512-EcOQkxdxGQrc1Row/cC2c96/v1dbZqGnEVu1qTuT/MJmp6+cXCvQussowVmCv5Tqr3KuY3c7IbM6HTW3LJ1k9w==",
+      "archiveSha256": "55f01ac5549508bdd970eca18fec1c0332cc5f875042c39b85eca09e9c2a43e1",
       "repository": "git+https://github.com/shikijs/shiki.git",
       "scope": [
         "runtime"
@@ -3913,19 +3911,19 @@
       "selectedLicense": "MIT AND BSD-2-Clause",
       "notices": [
         {
-          "path": "licenses/texts/npm/@shikijs/engine-oniguruma/4.0.2/LICENSE",
+          "path": "licenses/texts/npm/@shikijs/engine-oniguruma/4.4.3/LICENSE",
           "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/@shikijs/engine-oniguruma/-/engine-oniguruma-4.0.2.tgz#package/LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@shikijs/engine-oniguruma/-/engine-oniguruma-4.4.3.tgz#package/LICENSE",
           "sha256": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee"
         },
         {
-          "path": "licenses/texts/npm/@shikijs/engine-oniguruma/4.0.2/upstream/vscode-oniguruma-LICENSE.txt",
+          "path": "licenses/texts/npm/@shikijs/engine-oniguruma/4.4.3/upstream/vscode-oniguruma-LICENSE.txt",
           "sourcePath": "upstream/vscode-oniguruma-LICENSE.txt",
           "sourceUrl": "https://unpkg.com/vscode-oniguruma@1.7.0/LICENSE.txt",
           "sha256": "ddde8aba8fe72b4830e27901fc78733eb6db7b6c653161075de213a6adeda3fd"
         },
         {
-          "path": "licenses/texts/npm/@shikijs/engine-oniguruma/4.0.2/upstream/Oniguruma-NOTICES.txt",
+          "path": "licenses/texts/npm/@shikijs/engine-oniguruma/4.4.3/upstream/Oniguruma-NOTICES.txt",
           "sourcePath": "upstream/Oniguruma-NOTICES.txt",
           "sourceUrl": "https://unpkg.com/vscode-oniguruma@1.7.0/NOTICES.txt",
           "sha256": "615d94d89eacc046241518c247f6650a5df80d1adf4b284a756f500867620b35"
@@ -3935,39 +3933,12 @@
     },
     {
       "ecosystem": "npm",
-      "name": "@shikijs/types",
-      "version": "4.0.2",
-      "lockPath": "node_modules/@shikijs/engine-oniguruma/node_modules/@shikijs/types",
-      "source": "https://registry.npmjs.org/@shikijs/types/-/types-4.0.2.tgz",
-      "integrity": "sha512-qzbeRooUTPnLE+sHD/Z8DStmaDgnbbc/pMrU203950aRqjX/6AFHeDYT+j00y2lPdz0ywJKx7o/7qnqTivtlXg==",
-      "archiveSha256": "44e8f721a84283958d443196a76e451f3311227ed5f07cfa4eefa660237d81c4",
-      "repository": "git+https://github.com/shikijs/shiki.git",
-      "scope": [
-        "runtime"
-      ],
-      "optional": false,
-      "os": [],
-      "cpu": [],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/@shikijs/types/4.0.2/LICENSE",
-          "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/@shikijs/types/-/types-4.0.2.tgz#package/LICENSE",
-          "sha256": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee"
-        }
-      ]
-    },
-    {
-      "ecosystem": "npm",
       "name": "@shikijs/langs",
-      "version": "4.0.2",
+      "version": "4.4.3",
       "lockPath": "node_modules/@shikijs/langs",
-      "source": "https://registry.npmjs.org/@shikijs/langs/-/langs-4.0.2.tgz",
-      "integrity": "sha512-KaXby5dvoeuZzN0rYQiPMjFoUrz4hgwIE+D6Du9owcHcl6/g16/yT5BQxSW5cGt2MZBz6Hl0YuRqf12omRfUUg==",
-      "archiveSha256": "a58ae0b034bad858cec93584edc67965a13c747e7db3e7e517b3f5faf264f403",
+      "source": "https://registry.npmjs.org/@shikijs/langs/-/langs-4.4.3.tgz",
+      "integrity": "sha512-ePic0yfAJGOF83D5wBHK/00EjK65oahBYxFk5epgq33WRv7X9UuxLEV8PtR0szC0z8dl7INIpIodB99JRFlR+A==",
+      "archiveSha256": "230dfb9fa5f55e2b446586c93c4d6866af959109e31acc923c47c3b6d4f2e672",
       "repository": "git+https://github.com/shikijs/shiki.git",
       "scope": [
         "runtime"
@@ -3980,28 +3951,28 @@
       "selectedLicense": "MIT AND LicenseRef-TextMate-Bundle",
       "notices": [
         {
-          "path": "licenses/texts/npm/@shikijs/langs/4.0.2/LICENSE",
+          "path": "licenses/texts/npm/@shikijs/langs/4.4.3/LICENSE",
           "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/@shikijs/langs/-/langs-4.0.2.tgz#package/LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@shikijs/langs/-/langs-4.4.3.tgz#package/LICENSE",
           "sha256": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee"
         },
         {
-          "path": "licenses/texts/npm/@shikijs/langs/4.0.2/upstream/TextMate-NOTICE.txt",
+          "path": "licenses/texts/npm/@shikijs/langs/4.4.3/upstream/TextMate-NOTICE.txt",
           "sourcePath": "upstream/TextMate-NOTICE.txt",
-          "sourceUrl": "https://unpkg.com/tm-grammars@1.31.6/NOTICE",
-          "sha256": "b8e325ab8b5cfc9170794a8c0cf52bf13b43baba459aa4365182f337db68882c"
+          "sourceUrl": "https://unpkg.com/tm-grammars@1.32.3/NOTICE",
+          "sha256": "891a322f68bde2f18f5ce84592c03cf7cda3197f648df71b5a31d647f5892586"
         }
       ],
-      "noticeEvidence": "Shiki v4.0.2 pnpm-lock.yaml pins tm-grammars 1.31.6. Retain that exact published collection's complete NOTICE with each original grammar copyright/grant, not only Shiki's wrapper MIT license. The local grammar NOTICE is byte-identical to the exact npm archive."
+      "noticeEvidence": "Shiki v4.4.3 pnpm-lock.yaml pins tm-grammars 1.32.3. Retain that exact published collection's complete NOTICE with each original grammar copyright/grant, not only Shiki's wrapper MIT license. The local grammar NOTICE is byte-identical to the exact npm archive."
     },
     {
       "ecosystem": "npm",
-      "name": "@shikijs/types",
-      "version": "4.0.2",
-      "lockPath": "node_modules/@shikijs/langs/node_modules/@shikijs/types",
-      "source": "https://registry.npmjs.org/@shikijs/types/-/types-4.0.2.tgz",
-      "integrity": "sha512-qzbeRooUTPnLE+sHD/Z8DStmaDgnbbc/pMrU203950aRqjX/6AFHeDYT+j00y2lPdz0ywJKx7o/7qnqTivtlXg==",
-      "archiveSha256": "44e8f721a84283958d443196a76e451f3311227ed5f07cfa4eefa660237d81c4",
+      "name": "@shikijs/primitive",
+      "version": "4.4.3",
+      "lockPath": "node_modules/@shikijs/primitive",
+      "source": "https://registry.npmjs.org/@shikijs/primitive/-/primitive-4.4.3.tgz",
+      "integrity": "sha512-m0wBeLDQDeIxRdUmrCPdQqfuUamDwRL5isCfYbguKD6NiaKpVbsv+3J81DyIKgNW5h4WAIIr8T4EkgQrBBxvaQ==",
+      "archiveSha256": "78234a4b2aa6ea5b2a57469b6e9f41481761bcad422c8bd402c4975332cdaa21",
       "repository": "git+https://github.com/shikijs/shiki.git",
       "scope": [
         "runtime"
@@ -4014,9 +3985,9 @@
       "selectedLicense": "MIT",
       "notices": [
         {
-          "path": "licenses/texts/npm/@shikijs/types/4.0.2/LICENSE",
+          "path": "licenses/texts/npm/@shikijs/primitive/4.4.3/LICENSE",
           "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/@shikijs/types/-/types-4.0.2.tgz#package/LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@shikijs/primitive/-/primitive-4.4.3.tgz#package/LICENSE",
           "sha256": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee"
         }
       ]
@@ -4024,11 +3995,11 @@
     {
       "ecosystem": "npm",
       "name": "@shikijs/themes",
-      "version": "4.0.2",
+      "version": "4.4.3",
       "lockPath": "node_modules/@shikijs/themes",
-      "source": "https://registry.npmjs.org/@shikijs/themes/-/themes-4.0.2.tgz",
-      "integrity": "sha512-mjCafwt8lJJaVSsQvNVrJumbnnj1RI8jbUKrPKgE6E3OvQKxnuRoBaYC51H4IGHePsGN/QtALglWBU7DoKDFnA==",
-      "archiveSha256": "364f5bfccd76bb963e7efe9b2bc7968ded25b7a08409e3442537277931f2e9fd",
+      "source": "https://registry.npmjs.org/@shikijs/themes/-/themes-4.4.3.tgz",
+      "integrity": "sha512-w8UHjeUnIR965KMWJHUPXOc2mNJUnK3vpVLYLvw5IYU2mnTTJ89E24OrJDBNiJDQ0qzb0tc4l7mrIXx5cFeIyw==",
+      "archiveSha256": "a0e7f10d16995903c5e3b4d672b4e022c545d39007e40daf1165dadb191c1e55",
       "repository": "git+https://github.com/shikijs/shiki.git",
       "scope": [
         "runtime"
@@ -4041,28 +4012,28 @@
       "selectedLicense": "MIT",
       "notices": [
         {
-          "path": "licenses/texts/npm/@shikijs/themes/4.0.2/LICENSE",
+          "path": "licenses/texts/npm/@shikijs/themes/4.4.3/LICENSE",
           "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/@shikijs/themes/-/themes-4.0.2.tgz#package/LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@shikijs/themes/-/themes-4.4.3.tgz#package/LICENSE",
           "sha256": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee"
         },
         {
-          "path": "licenses/texts/npm/@shikijs/themes/4.0.2/upstream/Themes-NOTICE.txt",
+          "path": "licenses/texts/npm/@shikijs/themes/4.4.3/upstream/Themes-NOTICE.txt",
           "sourcePath": "upstream/Themes-NOTICE.txt",
-          "sourceUrl": "https://unpkg.com/tm-themes@1.12.1/NOTICE",
-          "sha256": "dcfef6e3b5642d22523c2559df627fbaf26d08bf7814fa49d1f30fdc08dd71be"
+          "sourceUrl": "https://unpkg.com/tm-themes@1.12.3/NOTICE",
+          "sha256": "5562622d13daf3f745bca7ccdc2bf3f77d6720cf5d41f1ee34e3e46cf4e226f9"
         }
       ],
-      "noticeEvidence": "Shiki v4.0.2 pnpm-lock.yaml pins tm-themes 1.12.1. Its original NOTICE preserves MIT copyright/grants for GitHub Light and Dark (Primer), Catppuccin Latte (Catppuccin), Solarized Light (VS Code) and the rest of the distributed collection. Local NOTICE bytes match the exact npm archive."
+      "noticeEvidence": "Shiki v4.4.3 pnpm-lock.yaml pins tm-themes 1.12.3. Its original NOTICE preserves MIT copyright/grants for GitHub Light and Dark (Primer), Catppuccin Latte (Catppuccin), Solarized Light (VS Code) and the rest of the distributed collection. Local NOTICE bytes match the exact npm archive."
     },
     {
       "ecosystem": "npm",
       "name": "@shikijs/types",
-      "version": "4.0.2",
-      "lockPath": "node_modules/@shikijs/themes/node_modules/@shikijs/types",
-      "source": "https://registry.npmjs.org/@shikijs/types/-/types-4.0.2.tgz",
-      "integrity": "sha512-qzbeRooUTPnLE+sHD/Z8DStmaDgnbbc/pMrU203950aRqjX/6AFHeDYT+j00y2lPdz0ywJKx7o/7qnqTivtlXg==",
-      "archiveSha256": "44e8f721a84283958d443196a76e451f3311227ed5f07cfa4eefa660237d81c4",
+      "version": "4.4.3",
+      "lockPath": "node_modules/@shikijs/types",
+      "source": "https://registry.npmjs.org/@shikijs/types/-/types-4.4.3.tgz",
+      "integrity": "sha512-UEJxmRR++MAGR6hugn0vgVS2W/6lWAts84FFSrnlH9sP0LNol7E5+NQ792pH8liWUhyMyjhTgSUH3k7iD7tc5g==",
+      "archiveSha256": "86ab1ecd51fb8ee466cb027202e85510c2508ea9057e4fa7d256cba4189f7a2d",
       "repository": "git+https://github.com/shikijs/shiki.git",
       "scope": [
         "runtime"
@@ -4075,9 +4046,9 @@
       "selectedLicense": "MIT",
       "notices": [
         {
-          "path": "licenses/texts/npm/@shikijs/types/4.0.2/LICENSE",
+          "path": "licenses/texts/npm/@shikijs/types/4.4.3/LICENSE",
           "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/@shikijs/types/-/types-4.0.2.tgz#package/LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@shikijs/types/-/types-4.4.3.tgz#package/LICENSE",
           "sha256": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee"
         }
       ]
@@ -6569,18 +6540,6 @@
           "sourcePath": "LICENSE",
           "sourceUrl": "https://registry.npmjs.org/lucide-react/-/lucide-react-1.49.0.tgz#package/LICENSE",
           "sha256": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57"
-        },
-        {
-          "path": "licenses/texts/npm/lucide-react/1.49.0/dist/esm/icons/copyright.mjs.map",
-          "sourcePath": "dist/esm/icons/copyright.mjs.map",
-          "sourceUrl": "https://registry.npmjs.org/lucide-react/-/lucide-react-1.49.0.tgz#package/dist/esm/icons/copyright.mjs.map",
-          "sha256": "e76a3007f3232ceab27c936e80a40031141d8969b53e3db1da647f8fb2ecd436"
-        },
-        {
-          "path": "licenses/texts/npm/lucide-react/1.49.0/dist/esm/icons/copyright.mjs",
-          "sourcePath": "dist/esm/icons/copyright.mjs",
-          "sourceUrl": "https://registry.npmjs.org/lucide-react/-/lucide-react-1.49.0.tgz#package/dist/esm/icons/copyright.mjs",
-          "sha256": "9142a087ed6e09cda86417dfe45f9245d3b2f8a4f383de2e8e6e88ce82c21342"
         }
       ]
     },
@@ -7767,11 +7726,11 @@
     {
       "ecosystem": "npm",
       "name": "shiki",
-      "version": "4.0.2",
+      "version": "4.4.3",
       "lockPath": "node_modules/shiki",
-      "source": "https://registry.npmjs.org/shiki/-/shiki-4.0.2.tgz",
-      "integrity": "sha512-eAVKTMedR5ckPo4xne/PjYQYrU3qx78gtJZ+sHlXEg5IHhhoQhMfZVzetTYuaJS0L2Ef3AcCRzCHV8T0WI6nIQ==",
-      "archiveSha256": "d9bf54a7ad21132f6671d6fe1dc15912f52b3fb377d75db320ff86934cdf0967",
+      "source": "https://registry.npmjs.org/shiki/-/shiki-4.4.3.tgz",
+      "integrity": "sha512-Mb/GvXPHBAXdgGIcnfU5L3ldpn1XcxrGkPHwqgRx17/I2XRfqlFKk2vGkHWINn1kdXvzJZeuO3is6I9KLPFm0g==",
+      "archiveSha256": "d8536a2fc9cb41782e551eabf61e44b7c0ae18890ec201e790a3819be1ff98de",
       "repository": "git+https://github.com/shikijs/shiki.git",
       "scope": [
         "runtime"
@@ -7784,90 +7743,9 @@
       "selectedLicense": "MIT",
       "notices": [
         {
-          "path": "licenses/texts/npm/shiki/4.0.2/LICENSE",
+          "path": "licenses/texts/npm/shiki/4.4.3/LICENSE",
           "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/shiki/-/shiki-4.0.2.tgz#package/LICENSE",
-          "sha256": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee"
-        }
-      ]
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@shikijs/core",
-      "version": "4.0.2",
-      "lockPath": "node_modules/shiki/node_modules/@shikijs/core",
-      "source": "https://registry.npmjs.org/@shikijs/core/-/core-4.0.2.tgz",
-      "integrity": "sha512-hxT0YF4ExEqB8G/qFdtJvpmHXBYJ2lWW7qTHDarVkIudPFE6iCIrqdgWxGn5s+ppkGXI0aEGlibI0PAyzP3zlw==",
-      "archiveSha256": "e58ed487f22507a3e6ba6e0f8a8b7009fa436338f15e2d1cb5ab9b608e5f9a8a",
-      "repository": "git+https://github.com/shikijs/shiki.git",
-      "scope": [
-        "runtime"
-      ],
-      "optional": false,
-      "os": [],
-      "cpu": [],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/@shikijs/core/4.0.2/LICENSE",
-          "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/@shikijs/core/-/core-4.0.2.tgz#package/LICENSE",
-          "sha256": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee"
-        }
-      ]
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@shikijs/primitive",
-      "version": "4.0.2",
-      "lockPath": "node_modules/shiki/node_modules/@shikijs/primitive",
-      "source": "https://registry.npmjs.org/@shikijs/primitive/-/primitive-4.0.2.tgz",
-      "integrity": "sha512-M6UMPrSa3fN5ayeJwFVl9qWofl273wtK1VG8ySDZ1mQBfhCpdd8nEx7nPZ/tk7k+TYcpqBZzj/AnwxT9lO+HJw==",
-      "archiveSha256": "2cc5fb76cdc57662b53bc9d104abf32f096f99c4908d92808f395e7e90f6dc11",
-      "repository": "git+https://github.com/shikijs/shiki.git",
-      "scope": [
-        "runtime"
-      ],
-      "optional": false,
-      "os": [],
-      "cpu": [],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/@shikijs/primitive/4.0.2/LICENSE",
-          "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/@shikijs/primitive/-/primitive-4.0.2.tgz#package/LICENSE",
-          "sha256": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee"
-        }
-      ]
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@shikijs/types",
-      "version": "4.0.2",
-      "lockPath": "node_modules/shiki/node_modules/@shikijs/types",
-      "source": "https://registry.npmjs.org/@shikijs/types/-/types-4.0.2.tgz",
-      "integrity": "sha512-qzbeRooUTPnLE+sHD/Z8DStmaDgnbbc/pMrU203950aRqjX/6AFHeDYT+j00y2lPdz0ywJKx7o/7qnqTivtlXg==",
-      "archiveSha256": "44e8f721a84283958d443196a76e451f3311227ed5f07cfa4eefa660237d81c4",
-      "repository": "git+https://github.com/shikijs/shiki.git",
-      "scope": [
-        "runtime"
-      ],
-      "optional": false,
-      "os": [],
-      "cpu": [],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/@shikijs/types/4.0.2/LICENSE",
-          "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/@shikijs/types/-/types-4.0.2.tgz#package/LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/shiki/-/shiki-4.4.3.tgz#package/LICENSE",
           "sha256": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee"
         }
       ]

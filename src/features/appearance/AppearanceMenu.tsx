@@ -105,7 +105,7 @@ export function AppearanceMenu() {
             {iconThemes.map(({ id, license }) => license && <a key={id} className="ui-choice-link" href={license.url} target="_blank" rel="noreferrer">{license.label}</a>)}
             <a className="ui-choice-link" href={grammarNotices} target="_blank" rel="noreferrer">TextMate grammar original notices</a>
             <a className="ui-choice-link" href={textmateLicense} target="_blank" rel="noreferrer">TextMate bundle license · YAML / TOML</a>
-            <a className="ui-choice-link" href={shikiLicense} target="_blank" rel="noreferrer">Shiki 4.0.2 · MIT license</a>
+            <a className="ui-choice-link" href={shikiLicense} target="_blank" rel="noreferrer">Shiki 4.4.3 · MIT license</a>
             <a className="ui-choice-link" href={onigurumaLicense} target="_blank" rel="noreferrer">VS Code Oniguruma · Microsoft · MIT</a>
             <a className="ui-choice-link" href={onigurumaNotices} target="_blank" rel="noreferrer">Oniguruma · K. Kosako · BSD-2-Clause</a>
           </DisclosureSection>

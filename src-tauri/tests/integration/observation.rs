@@ -67,9 +67,15 @@ async fn external_edits_preserve_status_authority_until_categories_change_and_re
     assert_eq!(first_revision, second_revision);
     assert_eq!(first_files[0].stable_path_id, second_files[0].stable_path_id);
     assert_eq!(first_files[0].path_id, second_files[0].path_id);
-    let ReviewResult::Text { hunks, .. } = service.review_file(&id, first_revision, &first_files[0].path_id, ReviewCategory::Unstaged).await
-        else { panic!("unchanged status authority did not permit current content") };
-    assert!(hunks.iter().flat_map(|hunk| &hunk.lines).any(|line| line.text == "second edit"));
+    let review = service.review_file(&id, first_revision, &first_files[0].path_id, ReviewCategory::Unstaged).await;
+    #[cfg(unix)]
+    {
+        let ReviewResult::Text { hunks, .. } = review
+            else { panic!("unchanged status authority did not permit current content") };
+        assert!(hunks.iter().flat_map(|hunk| &hunk.lines).any(|line| line.text == "second edit"));
+    }
+    #[cfg(not(unix))]
+    assert!(matches!(review, ReviewResult::Unsupported { reason: gitview_lib::diff::UnsupportedReason::Other, .. }));
 
     fs::write(root.join("tracked.txt"), b"original\n").unwrap();
     wait_for(&service, &id, |s| matches!(s, ObservationSnapshot::Ready { files, .. } if files.is_empty())).await;

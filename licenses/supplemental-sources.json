@@ -102,25 +102,25 @@
     {
       "ecosystem": "npm",
       "name": "@shikijs/langs",
-      "version": "4.0.2",
-      "evidence": "Shiki v4.0.2 pnpm-lock.yaml pins tm-grammars 1.31.6. Retain that exact published collection's complete NOTICE with each original grammar copyright/grant, not only Shiki's wrapper MIT license. The local grammar NOTICE is byte-identical to the exact npm archive.",
+      "version": "4.4.3",
+      "evidence": "Shiki v4.4.3 pnpm-lock.yaml pins tm-grammars 1.32.3. Retain that exact published collection's complete NOTICE with each original grammar copyright/grant, not only Shiki's wrapper MIT license. The local grammar NOTICE is byte-identical to the exact npm archive.",
       "sources": [
-        { "path": "upstream/TextMate-NOTICE.txt", "url": "https://unpkg.com/tm-grammars@1.31.6/NOTICE" }
+        { "path": "upstream/TextMate-NOTICE.txt", "url": "https://unpkg.com/tm-grammars@1.32.3/NOTICE" }
       ]
     },
     {
       "ecosystem": "npm",
       "name": "@shikijs/themes",
-      "version": "4.0.2",
-      "evidence": "Shiki v4.0.2 pnpm-lock.yaml pins tm-themes 1.12.1. Its original NOTICE preserves MIT copyright/grants for GitHub Light and Dark (Primer), Catppuccin Latte (Catppuccin), Solarized Light (VS Code) and the rest of the distributed collection. Local NOTICE bytes match the exact npm archive.",
+      "version": "4.4.3",
+      "evidence": "Shiki v4.4.3 pnpm-lock.yaml pins tm-themes 1.12.3. Its original NOTICE preserves MIT copyright/grants for GitHub Light and Dark (Primer), Catppuccin Latte (Catppuccin), Solarized Light (VS Code) and the rest of the distributed collection. Local NOTICE bytes match the exact npm archive.",
       "sources": [
-        { "path": "upstream/Themes-NOTICE.txt", "url": "https://unpkg.com/tm-themes@1.12.1/NOTICE" }
+        { "path": "upstream/Themes-NOTICE.txt", "url": "https://unpkg.com/tm-themes@1.12.3/NOTICE" }
       ]
     },
     {
       "ecosystem": "npm",
       "name": "@shikijs/engine-oniguruma",
-      "version": "4.0.2",
+      "version": "4.4.3",
       "evidence": "The exact engine manifest pins vscode-oniguruma 1.7.0. Its inlined wasmBinary and Shiki's onig.wasm are byte-identical to release/onig.wasm in that integrity-verified npm artifact (SHA-256 fd885c2d12e5951e59d761ebd4a006e06254b1491fd6f530c92b69fb4d8d77d9). Preserve Microsoft MIT binding rights AND K.Kosako BSD-2-Clause Oniguruma 6.9.5_rev1 original notices.",
       "sources": [
         { "path": "upstream/vscode-oniguruma-LICENSE.txt", "url": "https://unpkg.com/vscode-oniguruma@1.7.0/LICENSE.txt" },
