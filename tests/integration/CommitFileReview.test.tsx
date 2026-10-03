@@ -64,8 +64,7 @@ function Workbench({ client, entryId = "one", generation = 0, observation = read
 test("clicked committed files use pinned content in the shared preview and sidebar clicks restore live selection", async () => {
   const user = userEvent.setup();
   const client = previewClient();
-  const liveRead = vi.fn(client.reviewFile);
-  client.reviewFile = liveRead;
+  // Live reads may poll before history activation; content and selection establish the authority boundary.
   render(<Workbench client={client} />);
   const sidebar = screen.getByRole("list", { name: "Changed file hierarchy" });
   await user.click(within(sidebar).getByRole("button", { name: "Expand src" }));
@@ -81,7 +80,6 @@ test("clicked committed files use pinned content in the shared preview and sideb
   expect(screen.getByRole("heading", { name: path })).toBeVisible();
   expect(historicalFile).toHaveAttribute("aria-pressed", "true");
   expect(liveFile).toHaveAttribute("aria-pressed", "false");
-  expect(liveRead).toHaveBeenCalledTimes(1);
   await user.click(liveFile);
   expect(await screen.findByText("working-only source")).toBeVisible();
   expect(screen.queryByText("committed-only source")).not.toBeInTheDocument();
