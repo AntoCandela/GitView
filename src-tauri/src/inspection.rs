@@ -112,6 +112,8 @@ async fn read_native_contexts(process: &GitProcess, probe: &GitProbe, context: &
         };
         let facts = probe.probe_with_deadline(&root, deadline).await.map_err(probe_error)?;
         if facts.root != listed_root { continue; }
+        // Git includes a bare repository in this listing even though it has no working checkout.
+        if facts.kind == RepositoryKind::Bare { continue; }
         let identity = NativeIdentity::capture(&facts.root, &facts.git_dir).map_err(|_| HistoryErrorCode::Inaccessible)?;
         let label = facts.root.file_name().and_then(|name| name.to_str()).unwrap_or(&facts.repository_label).to_owned();
         let target = SelectedContext { entry_id: String::new(), root: facts.root, git_dir: facts.git_dir, identity, kind: facts.kind };

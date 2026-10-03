@@ -5,7 +5,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { HistoryPage, HistoryPageResult } from "../../src/contracts/history";
-import type { CommitFilesResult } from "../../src/contracts/inspection";
+import type { CommitFilesResult, ContextOptionsResult } from "../../src/contracts/inspection";
 import type { RepositoryClient } from "../../src/contracts/repositories";
 import { HistoryGraph } from "../../src/features/history";
 import { deferred } from "../support/deferred";
@@ -180,6 +180,90 @@ test("searchable branch viewing changes history only and a late old branch canno
   expect(client.selectWorktree).not.toHaveBeenCalled();
 });
 
+test("worktree filtering narrows branch choices without navigating or changing viewed history", async () => {
+  const user = userEvent.setup();
+  const client = graphClient();
+  client.listContexts = async () => ({ kind: "options",
+    branches: [{ name: "main" }, { name: "topic" }, { name: "unassigned" }],
+    worktrees: [
+      { id: "main-tree", label: "Project", branch: "main", current: true },
+      { id: "topic-tree", label: "Linked", branch: "topic", current: false },
+    ],
+  });
+  const select = vi.fn();
+  render(<HistoryGraph client={client} entryId="one" selectionGeneration={0} onSelectWorktree={select} />);
+  const trigger = await screen.findByRole("button", { name: "View branch or worktree: main" });
+  await user.click(trigger);
+  const all = await screen.findByRole("button", { name: "All worktrees" });
+  expect(screen.getByRole("button", { name: "View branch main" })).toHaveAccessibleDescription(/Checked out in Project/);
+  expect(screen.getByRole("button", { name: "View branch topic" })).toHaveAccessibleDescription(/Checked out in Linked/);
+  expect(screen.getByRole("button", { name: "View branch unassigned" })).not.toHaveAccessibleDescription(/Checked out/);
+  await user.click(screen.getByRole("button", { name: "Filter branches by worktree Linked" }));
+  expect(screen.queryByRole("button", { name: "View branch main" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "View branch unassigned" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "View branch topic" })).toBeVisible();
+  expect(trigger).toHaveAccessibleName("View branch or worktree: main");
+  expect(screen.getByRole("button", { name: `Merge topic, Commit ${merge}` })).toBeVisible();
+  expect(select).not.toHaveBeenCalled();
+  const search = screen.getByRole("searchbox", { name: "Search branches and worktrees" });
+  await user.type(search, "main");
+  expect(screen.queryByRole("button", { name: "View branch main" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "View branch topic" })).not.toBeInTheDocument();
+  await user.click(all);
+  expect(screen.getByRole("button", { name: "View branch main" })).toBeVisible();
+  await user.clear(search);
+  expect(screen.getByRole("button", { name: "View branch unassigned" })).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Filter branches by worktree Linked" }));
+  await user.click(screen.getByRole("button", { name: "Open worktree Linked" }));
+  expect(select).toHaveBeenCalledExactlyOnceWith("topic-tree");
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
+
+test("detached worktree scope stays branchless and filtering works without navigation capability", async () => {
+  const user = userEvent.setup();
+  const client = graphClient();
+  client.listContexts = async () => ({ kind: "options", branches: [{ name: "main" }],
+    worktrees: [{ id: "detached-tree", label: "Detached checkout", branch: null, current: false }],
+  });
+  render(<HistoryGraph client={client} entryId="one" selectionGeneration={0} />);
+  await user.click(await screen.findByRole("button", { name: "View branch or worktree: main" }));
+  const filter = await screen.findByRole("button", { name: "Filter branches by worktree Detached checkout" });
+  expect(screen.getByRole("button", { name: "Open worktree Detached checkout" })).toBeDisabled();
+  filter.focus();
+  await user.keyboard("{Enter}");
+  expect(filter).toHaveAttribute("aria-pressed", "true");
+  expect(screen.queryByRole("button", { name: "View branch main" })).not.toBeInTheDocument();
+  expect(within(screen.getByRole("group", { name: "Repository branches" })).getByRole("status")).toHaveTextContent(/detached.*no checked-out branch/i);
+  await user.click(screen.getByRole("button", { name: "All worktrees" }));
+  await user.click(screen.getByRole("button", { name: "View branch main" }));
+  expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+});
+
+test("context generation changes discard branch scope and late context choices", async () => {
+  const user = userEvent.setup();
+  const old = deferred<ContextOptionsResult>();
+  const client = graphClient();
+  client.historyPage = async (entryId) => ({ kind: "page", page: historyPage(mergeHistory(), { entryId }) });
+  client.listContexts = vi.fn<RepositoryClient["listContexts"]>()
+    .mockResolvedValueOnce({ kind: "options", branches: [{ name: "topic" }], worktrees: [
+      { id: "old-tree", label: "Old checkout", branch: "topic", current: false },
+    ] })
+    .mockReturnValueOnce(old.promise)
+    .mockResolvedValue({ kind: "options", branches: [{ name: "main" }], worktrees: [] });
+  const { rerender } = render(<HistoryGraph client={client} entryId="one" selectionGeneration={0} />);
+  await user.click(await screen.findByRole("button", { name: "View branch or worktree: main" }));
+  await user.click(await screen.findByRole("button", { name: "Filter branches by worktree Old checkout" }));
+  rerender(<HistoryGraph client={client} entryId="one" selectionGeneration={1} />);
+  await user.click(await screen.findByRole("button", { name: "View branch or worktree: main" }));
+  rerender(<HistoryGraph client={client} entryId="two" selectionGeneration={2} />);
+  await user.click(await screen.findByRole("button", { name: "View branch or worktree: main" }));
+  expect(await screen.findByRole("button", { name: "All worktrees" })).toHaveAttribute("aria-pressed", "true");
+  await act(async () => old.resolve({ kind: "options", branches: [{ name: "obsolete" }], worktrees: [] }));
+  expect(screen.getByRole("button", { name: "View branch main" })).toBeVisible();
+  expect(screen.queryByRole("button", { name: "View branch obsolete" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Filter branches by worktree Old checkout" })).not.toBeInTheDocument();
+});
+
 test("worktree disclosure supports keyboard selection, Escape and outside dismissal", async () => {
   const user = userEvent.setup();
   const client = graphClient();
@@ -194,6 +278,9 @@ test("worktree disclosure supports keyboard selection, Escape and outside dismis
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(trigger).toHaveFocus();
   await user.click(trigger);
+  await screen.findByRole("button", { name: "All worktrees" });
+  await user.keyboard("{ArrowDown}");
+  expect(await screen.findByRole("tooltip")).toBeVisible();
   await user.keyboard("{Escape}");
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   expect(trigger).toHaveFocus();
