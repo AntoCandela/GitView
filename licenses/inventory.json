@@ -15,8 +15,8 @@
     "CODE_OF_CONDUCT.md": "5d955fd2bed345f78cc377f046b293f7a88686bbaef9bed26908692c31b9e064",
     "THIRD_PARTY_NOTICES.md": "db663664467573a7921bf1b9315f647c0e47590356d467a4aeb31870fedaf35e",
     "licenses/supplemental-sources.json": "64545a5f85549db6f46b8821055e17c3354d9132288dafe11547c37c06254037",
-    "package-lock.json": "3c014c39d68ca5f0eb6474445b3f958b627334ffb3fd523eeeecaca6e954aca5",
-    "package.json": "9dc965da9af8116b78e05815d801e086d8b536e1d03cd603a2f5a34d00e92eea",
+    "package-lock.json": "2cefcf78e4cd593f156a047a5c1c1db0550cee0568fd62c8d6b6d5a0c981ece5",
+    "package.json": "bff194863b2ec8eeab634adea93b32596e4956849a1e5e40b933e0a5c6d8cfc4",
     "public/favicon.svg": "8a3a2a8cf0c6358aeee5edd83559bab768088b9a9f3522a292e8fa23ed55f99e",
     "scripts/check-licenses.mjs": "b66e6a04431c497b6e4d3cc17e888577d10c851f3a5bc02ab7d2b65f185d2bfd",
     "scripts/fileIconThemes.ts": "612d6aa80b52a846f3002abbe9cc1ab35dc8f77c6b436b433407d5af252e8e45",
@@ -1727,7 +1727,7 @@
     "licenses/texts/npm/@types/estree/1.0.9/LICENSE": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
     "licenses/texts/npm/@types/hast/3.0.5/LICENSE": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
     "licenses/texts/npm/@types/mdast/4.0.4/LICENSE": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
-    "licenses/texts/npm/@types/node/22.20.5/LICENSE": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+    "licenses/texts/npm/@types/node/24.19.1/LICENSE": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
     "licenses/texts/npm/@types/react-dom/19.3.0/LICENSE": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
     "licenses/texts/npm/@types/react/19.3.0/LICENSE": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
     "licenses/texts/npm/@types/unist/3.0.3/LICENSE": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
@@ -1858,7 +1858,7 @@
     "licenses/texts/npm/tr46/5.1.1/LICENSE.md": "499d6d466d064e0460427967a344e2a32fcb86ea8c6cd1a285ec4f1fa03fba67",
     "licenses/texts/npm/trim-lines/3.0.1/license": "9f084fac69d8cf1e6ce983ba5a3499c7695ed74a26ec625c38f0fd19fddd5e10",
     "licenses/texts/npm/typescript/5.9.3/LICENSE.txt": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
-    "licenses/texts/npm/undici-types/6.21.0/LICENSE": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27",
+    "licenses/texts/npm/undici-types/7.24.6/LICENSE": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27",
     "licenses/texts/npm/unist-util-is/6.0.1/license": "82974dbf2639d13edab95c32ed9cb6c0867ede272cd2e07ce47ce8548fe55c05",
     "licenses/texts/npm/unist-util-position/5.0.0/license": "63cb98b3f6abfb3c3592c16f88253c1bdc834087bf52671e8ce5609e4eb693cf",
     "licenses/texts/npm/unist-util-stringify-position/4.0.0/license": "ca4662cb5d1b738fbe5350c0d5485ba11773b4b7208974082ae6e129a52d631d",
@@ -4951,11 +4951,11 @@
     {
       "ecosystem": "npm",
       "name": "@types/node",
-      "version": "22.20.5",
+      "version": "24.19.1",
       "lockPath": "node_modules/@types/node",
-      "source": "https://registry.npmjs.org/@types/node/-/node-22.20.5.tgz",
-      "integrity": "sha512-U2+DNr+wSjpsTS/wZGYHq7GcwfuSmKiKvoPvK22zwTlRhU91yOniN4qRR5KhIjvif7ysw/dz/hKmfDH0Ris4aA==",
-      "archiveSha256": "1d382e6ea27221dcf02fc1cada5c5d396c4ca499552201323ca43713baa60012",
+      "source": "https://registry.npmjs.org/@types/node/-/node-24.19.1.tgz",
+      "integrity": "sha512-aS3/DG0oM05K0RIXXP+hKjinGG5IgSSVGzswZxW3O0sS3pH4/fycXundUC9XsszgKCk4gHXylTEK6hyFxVxnoQ==",
+      "archiveSha256": "4605482935b2a8c26c53c7637fbc20665e49f9b0b6dc0db50449500e86727a82",
       "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
       "scope": [
         "development/build/test"
@@ -4968,9 +4968,9 @@
       "selectedLicense": "MIT",
       "notices": [
         {
-          "path": "licenses/texts/npm/@types/node/22.20.5/LICENSE",
+          "path": "licenses/texts/npm/@types/node/24.19.1/LICENSE",
           "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/@types/node/-/node-22.20.5.tgz#node v22.20/LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@types/node/-/node-24.19.1.tgz#node v24.19/LICENSE",
           "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
         }
       ]
@@ -8185,11 +8185,11 @@
     {
       "ecosystem": "npm",
       "name": "undici-types",
-      "version": "6.21.0",
+      "version": "7.24.6",
       "lockPath": "node_modules/undici-types",
-      "source": "https://registry.npmjs.org/undici-types/-/undici-types-6.21.0.tgz",
-      "integrity": "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==",
-      "archiveSha256": "cfa1a9a5e18988850e548f4f6b629c58da32dc32bebb116e58ea301e516fd16d",
+      "source": "https://registry.npmjs.org/undici-types/-/undici-types-7.24.6.tgz",
+      "integrity": "sha512-WRNW+sJgj5OBN4/0JpHFqtqzhpbnV0GuB+OozA9gCL7a993SmU+1JBZCzLNxYsbMfIeDL+lTsphD5jN5N+n0zg==",
+      "archiveSha256": "2abf595a86b87dd22951218848ec4ad89c018db0e656716dc04b8b2f9290a0f4",
       "repository": "git+https://github.com/nodejs/undici.git",
       "scope": [
         "development/build/test"
@@ -8202,9 +8202,9 @@
       "selectedLicense": "MIT",
       "notices": [
         {
-          "path": "licenses/texts/npm/undici-types/6.21.0/LICENSE",
+          "path": "licenses/texts/npm/undici-types/7.24.6/LICENSE",
           "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/undici-types/-/undici-types-6.21.0.tgz#package/LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/undici-types/-/undici-types-7.24.6.tgz#package/LICENSE",
           "sha256": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27"
         }
       ]

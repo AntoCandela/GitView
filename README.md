@@ -19,7 +19,7 @@ Git inspection does not checkout, stage, commit, fetch, push, delete repository 
 
 Install:
 
-- [Node.js](https://nodejs.org/) **20.19+ on Node 20**, or **22.12+ on Node 22 / a newer supported release**, and npm (Vite 7 requirements).
+- [Node.js](https://nodejs.org/) **24.21+ on Node 24 LTS**, and npm. The exact shared CI baseline is in `.nvmrc`; with nvm, run `nvm install && nvm use` before installing dependencies.
 - [Rust](https://www.rust-lang.org/tools/install), Cargo and an [existing Git installation](https://git-scm.com/downloads) available on `PATH`.
 - [Tauri 2 platform prerequisites](https://v2.tauri.app/start/prerequisites/): Xcode Command Line Tools on macOS; C++ build tools and WebView2 on Windows; WebKitGTK 4.1 and the listed distribution-specific development libraries on Linux.
 
