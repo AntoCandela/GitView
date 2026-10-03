@@ -6,7 +6,7 @@ import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, writeFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { collectArchiveNotices, deriveDiagnosticCommonJs, npmPackageEntries, verifyGlslGrammar, verifyVendoredSource } from '../../scripts/check-licenses.mjs';
+import { collectArchiveNotices, deriveDiagnosticCommonJs, inspectMplSource, npmPackageEntries, verifyGlslGrammar, verifyVendoredSource } from '../../scripts/check-licenses.mjs';
 
 async function fixture(t, entries) {
   const root = await mkdtemp(join(tmpdir(), 'gitview-licenses-'));
@@ -69,6 +69,34 @@ test('archive collector rejects empty legal evidence', async t => {
 test('archive collector rejects output traversal', async t => {
   const { archive, options } = await archiveFixture(t, { 'package/LICENSE': 'Original grant' });
   await assert.rejects(collectArchiveNotices(archive, { ...options, component: '../escape' }), /unsafe_notice_path/);
+});
+
+test('MPL source review distinguishes the license template from an attached incompatibility notice', async t => {
+  const license = 'MPL license template: Incompatible With Secondary Licenses\n';
+  const { archive } = await archiveFixture(t, {
+    'package/LICENSE': license,
+    'package/nested/LICENSE': ` ${license}`,
+    'package/src/lib.rs': '// MPL-2.0 source\npub fn transform() {}\n',
+  });
+  const source = { archiveSha256: hash(await readFile(archive)), licenseSha256: hash(license) };
+  const evidence = inspectMplSource(archive, source);
+  assert.equal(evidence.incompatibleSecondaryLicense, false);
+  assert.equal(evidence.filesReviewed, 3);
+  assert.throws(() => inspectMplSource(archive, { ...source, archiveSha256: '0'.repeat(64) }), /mpl_source_integrity/);
+  assert.throws(() => inspectMplSource(archive, { ...source, licenseSha256: '0'.repeat(64) }), /mpl_license_integrity/);
+
+  const incompatible = await archiveFixture(t, {
+    'package/LICENSE': license,
+    'package/src/lib.rs': '// This Source Code Form is Incompatible With Secondary Licenses.\n',
+  });
+  assert.equal(inspectMplSource(incompatible.archive, { ...source, archiveSha256: hash(await readFile(incompatible.archive)) }).incompatibleSecondaryLicense, true);
+});
+
+test('MPL source review refuses archives with no source files', async t => {
+  const license = 'MPL template\n';
+  const { archive } = await archiveFixture(t, { 'package/LICENSE': license });
+  const source = { archiveSha256: hash(await readFile(archive)), licenseSha256: hash(license) };
+  assert.throws(() => inspectMplSource(archive, source), /mpl_source_missing/);
 });
 
 test('vendored evidence includes all files and rejects patched-source drift', async t => {

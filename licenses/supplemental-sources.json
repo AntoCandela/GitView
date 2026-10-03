@@ -1,5 +1,14 @@
 {
   "schemaVersion": 1,
+  "npmMplSources": [
+    {
+      "name": "lightningcss",
+      "version": "1.33.0",
+      "url": "https://codeload.github.com/parcel-bundler/lightningcss/tar.gz/1d680fa14e9a089c92dc0929f869d6757ae91c30",
+      "archiveSha256": "ab377f42f5aa2f7f85058408ab45dbd03caa65fe6c00f4fdc32b9611c4e51bb4",
+      "licenseSha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+    }
+  ],
   "rules": [
     {
       "ecosystem": "cargo",
@@ -9,17 +18,10 @@
     },
     {
       "ecosystem": "npm",
-      "namePrefix": "@esbuild/",
-      "version": "0.28.2",
-      "referenceParent": "esbuild",
-      "evidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "namePrefix": "@rollup/rollup-",
-      "version": "4.62.2",
-      "referenceParent": "rollup",
-      "evidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
+      "namePrefix": "@rolldown/binding-",
+      "version": "1.2.12",
+      "referenceParent": "rolldown",
+      "evidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
     },
     {
       "ecosystem": "npm",

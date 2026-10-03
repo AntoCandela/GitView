@@ -13,13 +13,13 @@
     ".agents/skills/gitview-verification/SKILL.md": "0f1a3fe20f4e401940e57b42825ac87a6bf70f13fe4ce8c25cf4e10ca7ff87c1",
     ".agents/skills/gitview-worker-isolation/SKILL.md": "951b3673b5aa6aaa73ac6bf5c5d640214db36cbd8f2ea5db51ca7e23b72b4e4c",
     "CODE_OF_CONDUCT.md": "5d955fd2bed345f78cc377f046b293f7a88686bbaef9bed26908692c31b9e064",
-    "THIRD_PARTY_NOTICES.md": "db663664467573a7921bf1b9315f647c0e47590356d467a4aeb31870fedaf35e",
-    "licenses/supplemental-sources.json": "64545a5f85549db6f46b8821055e17c3354d9132288dafe11547c37c06254037",
-    "package-lock.json": "2cefcf78e4cd593f156a047a5c1c1db0550cee0568fd62c8d6b6d5a0c981ece5",
-    "package.json": "bff194863b2ec8eeab634adea93b32596e4956849a1e5e40b933e0a5c6d8cfc4",
+    "THIRD_PARTY_NOTICES.md": "154b893544f1244a54c29c94a2816ba89c7ffd4a6bdda9398e4ce1beddc6fb55",
+    "licenses/supplemental-sources.json": "b2712ecebf785086f7c93ad39c2dfeb66603d29b032db00e72371c319a75d9f0",
+    "package-lock.json": "bb33e376391117729f477854c0ee41ea54299e4c82eb1a402015e2ed0f6e1437",
+    "package.json": "ebb7aa4c52733794b9eb67bc274ebc9ef62cd3671a0aa5359d54fb6c4185a92e",
     "public/favicon.svg": "8a3a2a8cf0c6358aeee5edd83559bab768088b9a9f3522a292e8fa23ed55f99e",
-    "scripts/check-licenses.mjs": "b66e6a04431c497b6e4d3cc17e888577d10c851f3a5bc02ab7d2b65f185d2bfd",
-    "scripts/fileIconThemes.ts": "612d6aa80b52a846f3002abbe9cc1ab35dc8f77c6b436b433407d5af252e8e45",
+    "scripts/check-licenses.mjs": "c08b144de0acf63d84cc99a9d53e5cbdce963801810e4387939e01cbd69724d3",
+    "scripts/fileIconThemes.ts": "3dab7f01b1b8498d31b661da005f604429d6730dc8f4c51253133e902b3abfcb",
     "scripts/generate-brand.mjs": "add0f7fe15f8da3c5c83c7c477121757ec3c4df0bff78d5301a861637cf1bfc5",
     "scripts/glslGrammar.ts": "87f30b5fe59c7c2438b8f49b391cc302856d136e4155152419c067f29977b1ad",
     "scripts/vendor-patches.mjs": "8d852741549a75a37279b25a18400343260be2b6ae8602e16995878def2184bc",
@@ -868,7 +868,7 @@
     "vendor/why-is-node-running/index.d.ts": "6c0e0082473acc9f8c37110af01649c6d0532b40670db87e023a7649713652eb",
     "vendor/why-is-node-running/index.js": "6daa0abe98665e2eec698b6fe89d7576829689351111095aa4b458e9e3df4880",
     "vendor/why-is-node-running/package.json": "b5e59e9cccc8aee90b2f725b2e2b7b6c56eb619a63330b0ec8937c533152201d",
-    "vite.config.ts": "bb8ad669c0af53777c9f309d49006f6f57afc349805aeb19541847f8f3a263df"
+    "vite.config.ts": "8817b0000ebcc375868b06b388f6fd83e495934568b64a04eef3d186581e83fd"
   },
   "legalTextHashes": {
     "licenses/texts/assets/catppuccin-latte/LICENSE.txt": "dab37945e3097e43c74c08437196152a50f8d5d5e1d0335f469b203e183e21b8",
@@ -1682,6 +1682,7 @@
     "licenses/texts/npm/@fontsource-variable/geist-mono/5.3.0/LICENSE": "cc815ed4fc045f0e991abb10395b7932bd028c6a067deb13316d6002105074e6",
     "licenses/texts/npm/@fontsource-variable/geist/5.3.0/LICENSE": "71609cbb5c78b5870d712eab73a31d76622635c6ed034ab5cee3b9ecbda8685f",
     "licenses/texts/npm/@jridgewell/sourcemap-codec/1.6.0/LICENSE": "769d154fbde32a915af110b1123650bc79f4cbe675acc66e005265bf069c6c6c",
+    "licenses/texts/npm/@oxc-project/types/0.152.0/LICENSE": "95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3",
     "licenses/texts/npm/@parcel/watcher-android-arm64/2.6.0/LICENSE": "5cfba9d5711264d45a2431a53c79f597cef12720cc7c764db2602daa92d0bd2a",
     "licenses/texts/npm/@parcel/watcher-darwin-arm64/2.6.0/LICENSE": "5cfba9d5711264d45a2431a53c79f597cef12720cc7c764db2602daa92d0bd2a",
     "licenses/texts/npm/@parcel/watcher-darwin-x64/2.6.0/LICENSE": "5cfba9d5711264d45a2431a53c79f597cef12720cc7c764db2602daa92d0bd2a",
@@ -1697,6 +1698,7 @@
     "licenses/texts/npm/@parcel/watcher/2.6.0/LICENSE": "5cfba9d5711264d45a2431a53c79f597cef12720cc7c764db2602daa92d0bd2a",
     "licenses/texts/npm/@playwright/test/1.63.0/LICENSE": "45873d00a0dd243596deb4aa23b2493b3d1f0671921bf2538ea431d7380220eb",
     "licenses/texts/npm/@playwright/test/1.63.0/NOTICE": "6d602191187b35b9b01d2cffa01c8469c2c8d9de8a96f1bf868e0f264f51c81d",
+    "licenses/texts/npm/@rolldown/pluginutils/1.0.1/LICENSE": "e1919b3b98b8bf6c1b99fcc60a0ed46027c97ac947432e1278446c9606f50161",
     "licenses/texts/npm/@shikijs/core/4.4.3/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
     "licenses/texts/npm/@shikijs/engine-javascript/4.4.3/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
     "licenses/texts/npm/@shikijs/engine-oniguruma/4.4.3/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
@@ -1766,7 +1768,6 @@
     "licenses/texts/npm/dom-accessibility-api/0.6.3/LICENSE.md": "0ffe67fe630169de46df2d29dc18f5857b4c98f0f95b0cd9e3c21fef51f9a9b8",
     "licenses/texts/npm/entities/6.0.1/LICENSE": "cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164",
     "licenses/texts/npm/es-module-lexer/2.3.2/LICENSE": "8a4b6c44eebfb026d23719a348145a661a555568dbfdc11618ff2d0dd9306b00",
-    "licenses/texts/npm/esbuild/0.28.2/LICENSE.md": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681",
     "licenses/texts/npm/estree-walker/3.0.3/LICENSE": "8a6dcbabe7179f9c8489c08a7d874d0f1e093ae7449e03756ccf87cb9d0e296e",
     "licenses/texts/npm/expect-type/1.4.0/LICENSE": "7c6cc83c84eaa249a85bf12fe3eedd831bb50c696e8890b5248223ae68c7b408",
     "licenses/texts/npm/fdir/6.5.0/LICENSE": "9a39f2aadab11a3697edd668ff2d8ad885b649737b7ab4d3bf12b34e5ada0c86",
@@ -1785,6 +1786,18 @@
     "licenses/texts/npm/is-potential-custom-element-name/1.0.1/LICENSE-MIT.txt": "483acb265f182907d1caf6cff9c16c96f31325ed23792832cc5d8b12d5f88c8a",
     "licenses/texts/npm/js-tokens/4.0.0/LICENSE": "2213d91c606205c71eb051a199478cdc2adde945893404d7f1421436dd6d5cc1",
     "licenses/texts/npm/jsdom/26.1.0/LICENSE.txt": "242d37e7cab25cbafc36cc973ee88f9345fddf066afe4f72b7ac3d9ad4e24cce",
+    "licenses/texts/npm/lightningcss-android-arm64/1.33.0/LICENSE": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+    "licenses/texts/npm/lightningcss-darwin-arm64/1.33.0/LICENSE": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+    "licenses/texts/npm/lightningcss-darwin-x64/1.33.0/LICENSE": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+    "licenses/texts/npm/lightningcss-freebsd-x64/1.33.0/LICENSE": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+    "licenses/texts/npm/lightningcss-linux-arm-gnueabihf/1.33.0/LICENSE": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+    "licenses/texts/npm/lightningcss-linux-arm64-gnu/1.33.0/LICENSE": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+    "licenses/texts/npm/lightningcss-linux-arm64-musl/1.33.0/LICENSE": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+    "licenses/texts/npm/lightningcss-linux-x64-gnu/1.33.0/LICENSE": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+    "licenses/texts/npm/lightningcss-linux-x64-musl/1.33.0/LICENSE": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+    "licenses/texts/npm/lightningcss-win32-arm64-msvc/1.33.0/LICENSE": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+    "licenses/texts/npm/lightningcss-win32-x64-msvc/1.33.0/LICENSE": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+    "licenses/texts/npm/lightningcss/1.33.0/LICENSE": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
     "licenses/texts/npm/lru-cache/10.4.3/LICENSE": "451ec07eeb9c4e1b86de9abdaa426462a8be48f887ec7421cf0bbb9c769555ab",
     "licenses/texts/npm/lucide-react/1.49.0/LICENSE": "b495047bd93a9b06913511076f504daba17d5bbeb3e0650f3bb53a4220329c57",
     "licenses/texts/npm/lz-string/1.5.0/LICENSE": "433fc9dfe659dbfb1e91eed8351f13651e97bfa3ac6d03394c3d63f61d4bbc80",
@@ -1834,7 +1847,8 @@
     "licenses/texts/npm/regex-utilities/2.3.0/LICENSE": "8ca7af4f6c753e5ab8388e1078d94ce4650723bba4b0d4dfe562fbd45fb4a4e6",
     "licenses/texts/npm/regex/6.1.0/LICENSE": "3d19c2b6246b3072547af2bd05e6b4c09bd3d15955590f1f1e1d20382c919a49",
     "licenses/texts/npm/reselect/5.3.0/LICENSE": "e98047a5dee068b33f82e8c4b7a63037b5108c93393198efd4097753004af5dd",
-    "licenses/texts/npm/rollup/4.62.2/LICENSE.md": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8",
+    "licenses/texts/npm/rolldown/1.2.12/LICENSE": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734",
+    "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c",
     "licenses/texts/npm/rrweb-cssom/0.8.0/LICENSE.txt": "e539937c489c4928ad7461669ec017f4d916fb3565fc26f5b8a0ce816d2ed23c",
     "licenses/texts/npm/safer-buffer/2.1.2/LICENSE": "4bc935e71be198c67ddf3c2b5fddb195f6edc182bfc155a96a6db61b44b494b9",
     "licenses/texts/npm/sass/1.105.1/LICENSE": "70523849f4b581562a26d0c6562b76fe9c1278467dc4a94dad0caa9e0cfe1ecd",
@@ -1867,7 +1881,7 @@
     "licenses/texts/npm/use-sync-external-store/1.7.0/LICENSE": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
     "licenses/texts/npm/vfile-message/4.0.3/license": "dd1081884a92952802f4803110a6bb543acea9a814c786d58605b4c1219b5ebb",
     "licenses/texts/npm/vfile/6.0.3/license": "05811400116ed61f1a7693b78fe8ca6598c155a12f3978e609db4df648a4cb3d",
-    "licenses/texts/npm/vite/7.3.6/LICENSE.md": "a77a1c089806b39ad339535bdf3677f636c91d96693e8ad7b11fe733f650ea64",
+    "licenses/texts/npm/vite/8.3.2/LICENSE.md": "a47172e44a86a7e2cd1c16282341f7726ec60caafe3a6166fe3e0602005b6fa6",
     "licenses/texts/npm/vitest/4.1.11/LICENSE.md": "881d660c26831481b697e39724d4a35c9f86e07b67156d4aeb693a0b39910435",
     "licenses/texts/npm/w3c-xmlserializer/5.0.0/LICENSE.md": "ab654de803cdaa9e2819ab2e934bdf7f757e308649ec231d78e80e92425cdc34",
     "licenses/texts/npm/webidl-conversions/7.0.0/LICENSE.md": "a889cc4dbee2ae172c179856b25d75b0b7a5a136e1b97109b9b590b2ff1a879c",
@@ -2386,838 +2400,6 @@
     },
     {
       "ecosystem": "npm",
-      "name": "@esbuild/aix-ppc64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/aix-ppc64",
-      "source": "https://registry.npmjs.org/@esbuild/aix-ppc64/-/aix-ppc64-0.28.2.tgz",
-      "integrity": "sha512-XExcO+dvLKvVtNTibSTBej1NCAbaGhWn9Ww1ZPx80qsahhPFe/8jgWP0IchNe0F3HwkU7n8ejhH8bjonqht8mQ==",
-      "archiveSha256": "df7900ab960d4eb54ac3d9a1fa21a604416985017cf0398132def352014225eb",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "aix"
-      ],
-      "cpu": [
-        "ppc64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/android-arm",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/android-arm",
-      "source": "https://registry.npmjs.org/@esbuild/android-arm/-/android-arm-0.28.2.tgz",
-      "integrity": "sha512-kXXoiPVVGQcnIYGOeaovwOURpniDBpSq4A03qkQ+BMQqtGG6HYap3xne9C1O1yo4TR3qxlCX5IqqmX6fFo2Lqg==",
-      "archiveSha256": "1723a8da8ceec6f6900616d00ac068e705c0348587400d0ca80ea4daa87a4183",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "android"
-      ],
-      "cpu": [
-        "arm"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/android-arm64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/android-arm64",
-      "source": "https://registry.npmjs.org/@esbuild/android-arm64/-/android-arm64-0.28.2.tgz",
-      "integrity": "sha512-5YfKeeI8qWfBZIX+u2xZC3Zlb3Os/gLS2sbEKM+I4ZOcsWmHS2WLysCcQZDAFRslDUU5Oiq44gf6PYN1vGwG5A==",
-      "archiveSha256": "faf07e1f4ffd327051edaa982cceacff8a15138d4b7cdaa91064a1f0fe6f0943",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "android"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/android-x64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/android-x64",
-      "source": "https://registry.npmjs.org/@esbuild/android-x64/-/android-x64-0.28.2.tgz",
-      "integrity": "sha512-O387ite7SzUyCcy3JQX4P4bLtEA7bLLkx+esve5JHnyYfNTxcVpXZo9jhdB0lTKN44gztELTdU7nS8Nr16Fs1Q==",
-      "archiveSha256": "2f5c6be83dea93c0fa8a7b46590c9c8db229b2463ea35aa4626ef2658b7e657b",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "android"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/darwin-arm64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/darwin-arm64",
-      "source": "https://registry.npmjs.org/@esbuild/darwin-arm64/-/darwin-arm64-0.28.2.tgz",
-      "integrity": "sha512-n4KqkOQrraxHJcgjM1RvwbigfQKIKJVpM7xp+KsxiyUSrRdIXnt73VhrPAx0fV44hgfmIVKjxMN9J1t5jySVkw==",
-      "archiveSha256": "1980cde09749094452b20d36ff267585ccb3f72749c7bc97291cd9996ccf5a2a",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "darwin"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/darwin-x64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/darwin-x64",
-      "source": "https://registry.npmjs.org/@esbuild/darwin-x64/-/darwin-x64-0.28.2.tgz",
-      "integrity": "sha512-uq6suIWYP37qzGddBKPw5QEQPi6HiLGsO7UmkpfyaYNQ3D+rN6w6WfwH+nuqcGXWvawGwxOEroO4YGnFh95azw==",
-      "archiveSha256": "abb6a7a895aaf2cc0df36fecc3bf0042479ffec51a643a056d54e9109f27db55",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "darwin"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/freebsd-arm64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/freebsd-arm64",
-      "source": "https://registry.npmjs.org/@esbuild/freebsd-arm64/-/freebsd-arm64-0.28.2.tgz",
-      "integrity": "sha512-n+I0BTSRIoy+d6RPKnEVwql5UwBJolytvY4mAOIEJorKlqgPII8ix6slVVrfZ5Tnj7glIZvloylbB/EJPMWEXw==",
-      "archiveSha256": "a3269361bfc571ebf6b8361b7a0cac290b23aed8332be81c322d52289ce2cdce",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "freebsd"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/freebsd-x64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/freebsd-x64",
-      "source": "https://registry.npmjs.org/@esbuild/freebsd-x64/-/freebsd-x64-0.28.2.tgz",
-      "integrity": "sha512-78XJTJkvPs0kz2w61301PJjXl4g7q3JqiYMZ/M/yVI73EHBrCRTgkhu9oqG7vPqq+a/yadEW8aD+agKlk5xrmg==",
-      "archiveSha256": "53e57271b5fc7ab39312b906d3ff84d0633cfd067332f740e4b6f1f46803fb8a",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "freebsd"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/linux-arm",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/linux-arm",
-      "source": "https://registry.npmjs.org/@esbuild/linux-arm/-/linux-arm-0.28.2.tgz",
-      "integrity": "sha512-XlDnu2q5yoqems+xay6wSAcg9DDD7K9RLKZEBOMZm3ckNpJBvOX20tSfby8KfrrhINDyv9V2YVZKY/SpoGJI8w==",
-      "archiveSha256": "bdf99344430174119a1403803b4400d1cb93340b6f8fad2433c7cd55841ad327",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "arm"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/linux-arm64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/linux-arm64",
-      "source": "https://registry.npmjs.org/@esbuild/linux-arm64/-/linux-arm64-0.28.2.tgz",
-      "integrity": "sha512-pW4AC0P3it8c7do9MVM4p51FzHzdM/TZrerurgRcHJ2WTa1VQ1CIq18xncfpBJw4ojkiZZrKW2yIBWBP92j6Ug==",
-      "archiveSha256": "a96dbfa41d3ef5dbd1ef22b1c10d5187be9267e86093a870f06402a7ec931596",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/linux-ia32",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/linux-ia32",
-      "source": "https://registry.npmjs.org/@esbuild/linux-ia32/-/linux-ia32-0.28.2.tgz",
-      "integrity": "sha512-CYbnj78HsIeA+DhgUKgFCfvNsTHFhMMrinUrMZpDXJXKN8T3XViTZ/+wtHeVxEWY8ewSzTFN+nRmSwO2tZaLUQ==",
-      "archiveSha256": "47540b6a8fce26aac6559630dc232f83fe20642e87f1f1fab47512f0ea425084",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "ia32"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/linux-loong64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/linux-loong64",
-      "source": "https://registry.npmjs.org/@esbuild/linux-loong64/-/linux-loong64-0.28.2.tgz",
-      "integrity": "sha512-buwkd8nsph4R+ajRvw0qM5Hja/TXQow3ptzWO2EbG/cqcIkHloRrdlBtQlshyYGTNFvfkfJ5tpPLVkY4DtsPfQ==",
-      "archiveSha256": "5f043a3f0e6180956d8cf4731b90858fec365c42fab4c1fada75085c4a94fdb9",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "loong64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/linux-mips64el",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/linux-mips64el",
-      "source": "https://registry.npmjs.org/@esbuild/linux-mips64el/-/linux-mips64el-0.28.2.tgz",
-      "integrity": "sha512-ZVykbDyk7519VwiNb9Lcj9m8XM6v5V9uKPvrEMkkEedVewf+0itkhahp4HDpgERXhwLRpWFypsGbG/J8s0QjJA==",
-      "archiveSha256": "c2a97154b4b7fb29567d56b3f26b10097c0582bf7fc224dd361eac8095327696",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "mips64el"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/linux-ppc64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/linux-ppc64",
-      "source": "https://registry.npmjs.org/@esbuild/linux-ppc64/-/linux-ppc64-0.28.2.tgz",
-      "integrity": "sha512-CAXl+Dtd9UUuJd8pKKdwh6MLm3MUMiqMPmhZ3tTSXPqfyQ3vDl6R5hZdZ/kYojK4ofXtdfSv1tFq8XzWx3heNQ==",
-      "archiveSha256": "41f0068aaaf6d444bdb5238430ccbaa7912ae769127576f90cd4c2adb2f1ca07",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "ppc64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/linux-riscv64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/linux-riscv64",
-      "source": "https://registry.npmjs.org/@esbuild/linux-riscv64/-/linux-riscv64-0.28.2.tgz",
-      "integrity": "sha512-GeXCej4IQtU1B+QlDV8W/RRvbzI3O/Stss+/bCXv4lZls5WGRtu2a+3JkA3i4qIUlMXpcHebWpF8AkJhATowuA==",
-      "archiveSha256": "1b3108c646b20581440993de33d2cfd8939aafc1933d62db211ed609da5066c6",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "riscv64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/linux-s390x",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/linux-s390x",
-      "source": "https://registry.npmjs.org/@esbuild/linux-s390x/-/linux-s390x-0.28.2.tgz",
-      "integrity": "sha512-3H1weTYZPxt/WOhByszQZybS9w5lKzUn1FDMsgEChbHWQwHYQQRfBxgCcZvPhjHfKyJjIievvMmEUawJrdY9Dg==",
-      "archiveSha256": "fb2faced3739cf64c755d64aee53cbe15f50aedaeb7a625ee63d29a8f58d187d",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "s390x"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/linux-x64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/linux-x64",
-      "source": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.28.2.tgz",
-      "integrity": "sha512-4xTZr1FUmSoQW4XIWmit3tzQrUTZM+N3P0XV8xROKYF50XfI7xeO90+1bZvNwxIufQ9hDQVRJH5YhgPVF8A/HQ==",
-      "archiveSha256": "9573bb2233aab0f9ea7647d5cca9726113cc1768de61d66b17267f4db84488f6",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/netbsd-arm64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/netbsd-arm64",
-      "source": "https://registry.npmjs.org/@esbuild/netbsd-arm64/-/netbsd-arm64-0.28.2.tgz",
-      "integrity": "sha512-sSATRjPeDBg3pdgHoQfoYBob11Kk1FGa9lui5RIHZCoCkJa9QKlvl3/vKz2usCmYYjs7ymJR/2Nnsqe+Hjt5nw==",
-      "archiveSha256": "8b0a5553e22db99b73f9620038f5e7bf06ba4b2509e1bb540d822f64a35d1f4c",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "netbsd"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/netbsd-x64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/netbsd-x64",
-      "source": "https://registry.npmjs.org/@esbuild/netbsd-x64/-/netbsd-x64-0.28.2.tgz",
-      "integrity": "sha512-lqnzCV+mM0gIADaKihiCg6ifgfU2L3h5E33rNQBN1Y4MaVGnzryzmvvf7UHxprpQdE8hpqLolJ9Rl+SkIRDpyw==",
-      "archiveSha256": "caf02fee8a2332d26af62d0a0c53abc35a42de5bcb968d9b94986b2c00c94f95",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "netbsd"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/openbsd-arm64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/openbsd-arm64",
-      "source": "https://registry.npmjs.org/@esbuild/openbsd-arm64/-/openbsd-arm64-0.28.2.tgz",
-      "integrity": "sha512-AL2qJILH7lNjrDmCQDvdxMfAUIv8KMNZOvrwAQ8i8//ntL9FflhOyMJ8OZSMBb8/AWXe3/5v5S20y3zCoZWKoQ==",
-      "archiveSha256": "7c03d85f4f182de6e38cd6335263e89230f7fb72e4a23cd9d73da4357d18c1a0",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "openbsd"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/openbsd-x64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/openbsd-x64",
-      "source": "https://registry.npmjs.org/@esbuild/openbsd-x64/-/openbsd-x64-0.28.2.tgz",
-      "integrity": "sha512-QtiuPytchRyC4rwUKhexJdQKvDuZ6hWloi3igqPQNUJCS1/v9EiO3UTOXR6A3FoMo4fnAKbWJdqaIwhOzh8qEw==",
-      "archiveSha256": "0dd9cf7fdb29b09cad6d2b191244adcd165444ec25d12ccbe098067d5a6d2ebf",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "openbsd"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/openharmony-arm64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/openharmony-arm64",
-      "source": "https://registry.npmjs.org/@esbuild/openharmony-arm64/-/openharmony-arm64-0.28.2.tgz",
-      "integrity": "sha512-WkhYDmpTjLvGlScA1rwjRUmhl4k8oXR3cIbtqWmELgU/dFeHHlEllxDvdWcNJV9rbzCexB5vz8gtNewWLgCT7Q==",
-      "archiveSha256": "0f1cb63fd9beb4d6cda70c0976e168cdd4f1ceb056b918a83607bb41516ab397",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "openharmony"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/sunos-x64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/sunos-x64",
-      "source": "https://registry.npmjs.org/@esbuild/sunos-x64/-/sunos-x64-0.28.2.tgz",
-      "integrity": "sha512-GPMSkTOtMnv2U2F8gxe4Io6qmVs+YKyp832Etqqxr0hFngmXQ3rzwytelm3GIn7T4VviRUlf3sOgBOiTdvaf7g==",
-      "archiveSha256": "86353429e0f040280094dae3073ac1ee9310545b532e1c34a1a3617e4608b9e4",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "sunos"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/win32-arm64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/win32-arm64",
-      "source": "https://registry.npmjs.org/@esbuild/win32-arm64/-/win32-arm64-0.28.2.tgz",
-      "integrity": "sha512-PIhhEkE9uPBleRBrQEJpUn7MBnibZzbGzYWPmY3x+YoVg/95zbjB4CxPPOQ8l5tYYM4mMaCthF8/1DIfBQQyWQ==",
-      "archiveSha256": "b3cffeaa165134f7da679c8619266953afd5f41641a254615a57e757f67c7336",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "win32"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/win32-ia32",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/win32-ia32",
-      "source": "https://registry.npmjs.org/@esbuild/win32-ia32/-/win32-ia32-0.28.2.tgz",
-      "integrity": "sha512-YmJbfTlvU7Sdn9BB+4PRES4oB6pxgS37MAONj+hBr/cpXS1aBPKXxNnDbu+QCWPj0o9dgyxeq79g6c5P8KeuYA==",
-      "archiveSha256": "e05a9b0cb0c9c6facfb02222d00064dd37baf5c1163f6c0eea936cb93f87a011",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "win32"
-      ],
-      "cpu": [
-        "ia32"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@esbuild/win32-x64",
-      "version": "0.28.2",
-      "lockPath": "node_modules/@esbuild/win32-x64",
-      "source": "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.28.2.tgz",
-      "integrity": "sha512-5ebpxr3nWMzrL/rnUI755Jkuee0bHL/Gq0WTF9lvcpv73wAp5eu8MfBUgWK9bhWvZjj7yX8etf/8tI8Ney695g==",
-      "archiveSha256": "7286c3611b6f1f4c4d9ec90adcbc478407ff0d28ead96567f361d53e67613e19",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "win32"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
-        }
-      ],
-      "noticeEvidence": "Platform binary package manifests identify the same esbuild repository/version and MIT terms. Complete notice retained from the same-version locked esbuild distribution. These executable build tools are not GitView app resources; their redistribution would additionally require validating embedded toolchain/component notices."
-    },
-    {
-      "ecosystem": "npm",
       "name": "@floating-ui/core",
       "version": "1.8.0",
       "lockPath": "node_modules/@floating-ui/core",
@@ -3402,6 +2584,33 @@
           "sourcePath": "LICENSE",
           "sourceUrl": "https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.6.0.tgz#package/LICENSE",
           "sha256": "769d154fbde32a915af110b1123650bc79f4cbe675acc66e005265bf069c6c6c"
+        }
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@oxc-project/types",
+      "version": "0.152.0",
+      "lockPath": "node_modules/@oxc-project/types",
+      "source": "https://registry.npmjs.org/@oxc-project/types/-/types-0.152.0.tgz",
+      "integrity": "sha512-oM/5rLBm2tPkg0iBgkH/FOeR3PCDpY19GTgAZjMFM8h9WI9VW7cLgzp6nwtarYKmovavIQZ+Fe/RKX/8C8O/Rw==",
+      "archiveSha256": "6ca2408f73d7d4549426d45b02e8aae7abbc35887a02f7f836cace7cb7f6979e",
+      "repository": "git+https://github.com/oxc-project/oxc.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": false,
+      "os": [],
+      "cpu": [],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@oxc-project/types/0.152.0/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@oxc-project/types/-/types-0.152.0.tgz#package/LICENSE",
+          "sha256": "95ced5ecf1133fbf41d409b5555c86c344f83f3b019926057ddbc07cfdcc27b3"
         }
       ]
     },
@@ -3834,6 +3043,603 @@
           "sourcePath": "NOTICE",
           "sourceUrl": "https://registry.npmjs.org/@playwright/test/-/test-1.63.0.tgz#package/NOTICE",
           "sha256": "6d602191187b35b9b01d2cffa01c8469c2c8d9de8a96f1bf868e0f264f51c81d"
+        }
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-android-arm-eabi",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-android-arm-eabi",
+      "source": "https://registry.npmjs.org/@rolldown/binding-android-arm-eabi/-/binding-android-arm-eabi-1.2.12.tgz",
+      "integrity": "sha512-dB/a1214qKfHMXCpgqR4OZT+jS4kTyEXbQGJPqzobt5EwH5rX080pxE37alt3RzvR1bf1Yz/yGqRfrYAxuPw0A==",
+      "archiveSha256": "84d85153a0f3f527f8861f839ef6caaf82f6f3064982dad077f6871d48a0547a",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "android"
+      ],
+      "cpu": [
+        "arm"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-android-arm64",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-android-arm64",
+      "source": "https://registry.npmjs.org/@rolldown/binding-android-arm64/-/binding-android-arm64-1.2.12.tgz",
+      "integrity": "sha512-7KHFgQ5VJxIHcLlrwrc3Xbds7oTNQT7Pgi9gQCJKrd2VGab/UksIOYp6VD8MzCstGxOKMgNamPwUCfxPdP1OHg==",
+      "archiveSha256": "9b7051f76ac9bc422d436f1eaf02a3830d83fae3f93c7409d7b606858cba0dca",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "android"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-darwin-arm64",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-darwin-arm64",
+      "source": "https://registry.npmjs.org/@rolldown/binding-darwin-arm64/-/binding-darwin-arm64-1.2.12.tgz",
+      "integrity": "sha512-3YIhqHD96nA5SaYNRBR16HnGv4oavZvXfD/ayHM+oYZ0WD/8lBAtf6zQua4kEyAvpqrluKXl0lnOBoiNby7x9w==",
+      "archiveSha256": "8f7a8036c3b25ce7b515b5768fb58fce87292f9f89c1b49ac1972e2c07e68e67",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-darwin-x64",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-darwin-x64",
+      "source": "https://registry.npmjs.org/@rolldown/binding-darwin-x64/-/binding-darwin-x64-1.2.12.tgz",
+      "integrity": "sha512-UuuJ35MFw4gmFOrE9pEqIV+K3syIKveph+Qc1/ljHZVdoDW4pz/JHR/eMVom+TZGl/5OOvGJOWaOCVt3ZfqhxA==",
+      "archiveSha256": "1acdff0749e51e28aa8c94e08a65b229cb53fe08ddda486f36fa7e43aeb448da",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-freebsd-x64",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-freebsd-x64",
+      "source": "https://registry.npmjs.org/@rolldown/binding-freebsd-x64/-/binding-freebsd-x64-1.2.12.tgz",
+      "integrity": "sha512-uMvssit0a4W+/7D8CbHUvG719mH3R2jwXAlh/XcPvuHTE0g++LymF88DCGNX0HM2rBOn0xrzgXktIB6fLSJBTQ==",
+      "archiveSha256": "c3359b2f7a81343bbd2bf492f8f144f2a11551cebc5f14101498de139e2e8e42",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "freebsd"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-linux-arm-gnueabihf",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-linux-arm-gnueabihf",
+      "source": "https://registry.npmjs.org/@rolldown/binding-linux-arm-gnueabihf/-/binding-linux-arm-gnueabihf-1.2.12.tgz",
+      "integrity": "sha512-XcFu0R0xWnwzSf4IQgFH1rJIckPN1pLy2R+4r9IDB7Yfu/ys9cVqfa4pBrMHj7a3gl8mIR4nRNPg0e5IvEVs6g==",
+      "archiveSha256": "b162ae34a55e3796b493344a1976eed7093164903ca2aadd1db3b46a1d3a5ecd",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "arm"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-linux-arm64-gnu",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-linux-arm64-gnu",
+      "source": "https://registry.npmjs.org/@rolldown/binding-linux-arm64-gnu/-/binding-linux-arm64-gnu-1.2.12.tgz",
+      "integrity": "sha512-260UrKgn8tz39ak+SMDOirKzr7V04M9dWPw5llW00SwBivCZoWcRBKV1d8cXnRkUmSZA3BdiUmBHWk7734Ulpw==",
+      "archiveSha256": "a98f689e2dd4cab8482678ad660215bb750db7288e0b5c1673d51ffb743b6b9a",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-linux-arm64-musl",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-linux-arm64-musl",
+      "source": "https://registry.npmjs.org/@rolldown/binding-linux-arm64-musl/-/binding-linux-arm64-musl-1.2.12.tgz",
+      "integrity": "sha512-5YK1I9SqDkbPgc1IA8BgDl34suqUS2q0KWnBrirm0E51YjOs6eo6dV6jbQfNE/argHRSvd0QUGgtpIoYx+WWpw==",
+      "archiveSha256": "53e075a52a5ce9f84db1fdc64b52011d241ecf341140a3f9028e7327d86db2ff",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-linux-ppc64-gnu",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-linux-ppc64-gnu",
+      "source": "https://registry.npmjs.org/@rolldown/binding-linux-ppc64-gnu/-/binding-linux-ppc64-gnu-1.2.12.tgz",
+      "integrity": "sha512-Rkcrmp7eFRg74yL5fXEU91JEWbdEPLevWwGtXpmhbjlD1StScbWTmO94Bhly+Mo+ketKYkdmM1vNUKeWSlx8cQ==",
+      "archiveSha256": "3617e223fd84182b2375f356787d9d641def4bec5aaf3bc0b32ae6c856e04268",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "ppc64"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-linux-s390x-gnu",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-linux-s390x-gnu",
+      "source": "https://registry.npmjs.org/@rolldown/binding-linux-s390x-gnu/-/binding-linux-s390x-gnu-1.2.12.tgz",
+      "integrity": "sha512-qvK4DuAsQc2BSjlx+Xr+IzOIvvxbGZqxFwdWfG6F518Erj0GGISyQbJ6pIappnOxlNPzNHvo/L0BwB30GZ+zVw==",
+      "archiveSha256": "ff56ac38c26f009895e298a34126c6477d8a5e0338ad67e0b492ea7e22ba0301",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "s390x"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-linux-x64-gnu",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-linux-x64-gnu",
+      "source": "https://registry.npmjs.org/@rolldown/binding-linux-x64-gnu/-/binding-linux-x64-gnu-1.2.12.tgz",
+      "integrity": "sha512-Q9uLBO53Xd4QIq1WOycVQyPP1O4HhraEV2qqb3uTrnVw6QZih9duY4vNXOivL1xoUS1/z+W8eF4NMfl2a8Sdjw==",
+      "archiveSha256": "18c402a07284684a098becb29e4ca95c9bc67ebc161c0d8acce477c02bc21207",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-linux-x64-musl",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-linux-x64-musl",
+      "source": "https://registry.npmjs.org/@rolldown/binding-linux-x64-musl/-/binding-linux-x64-musl-1.2.12.tgz",
+      "integrity": "sha512-3IBxWFMjbOZskDPKv8Lf9BCnahlKuHthWkYnyIxOH/QcJrFcS4EmcenthApkwr/5+nEqZlLzeYbxeMaX7A5u4g==",
+      "archiveSha256": "a25527d2964e57dcaaabad3a4119a5f0060d78b6698636b1b94cb749715a0131",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-openharmony-arm64",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-openharmony-arm64",
+      "source": "https://registry.npmjs.org/@rolldown/binding-openharmony-arm64/-/binding-openharmony-arm64-1.2.12.tgz",
+      "integrity": "sha512-xtX61xg4LKPkPWilZU1ynKClz5Gj4bf74LML4r3eVLWumKnGjoEr1OSHQhMdbBDoYTi+yjrujvpZe2pUnqCrrA==",
+      "archiveSha256": "14da3fe15e00fe1aaeb5e229ca92378cb2229deb95fac3a9f6e4d4dfa6bdeec6",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "openharmony"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-win32-arm64-msvc",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-win32-arm64-msvc",
+      "source": "https://registry.npmjs.org/@rolldown/binding-win32-arm64-msvc/-/binding-win32-arm64-msvc-1.2.12.tgz",
+      "integrity": "sha512-At7fPB6PCaIjzgIhEZFxuT+BBFqiQibJDT4d3PhiR3f4E7bbMZF4aKblbFfEM3sETRDd1YiQx/+U/g/B/ou5Ew==",
+      "archiveSha256": "12813852cdb577e6e29ad3523ad5828a910a7d5c7c9da3b1e4d67e447e2c049a",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "win32"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/binding-win32-x64-msvc",
+      "version": "1.2.12",
+      "lockPath": "node_modules/@rolldown/binding-win32-x64-msvc",
+      "source": "https://registry.npmjs.org/@rolldown/binding-win32-x64-msvc/-/binding-win32-x64-msvc-1.2.12.tgz",
+      "integrity": "sha512-WIw2haVKwjuYdXkHaoC0mF8Le71TuCBxjrdKqLbJGctbBABj+ClfmNvtbOnzpq3RokNo5+V1qhtSzJyXorsklQ==",
+      "archiveSha256": "60521dc21e20dc98bd52439b91381108d2cf4ffe5cfecb37ba97f47d596e98bd",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "win32"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ],
+      "noticeEvidence": "Authenticated same-version native manifests identify the Rolldown repository and MIT terms. Retain both parent LICENSE and THIRD-PARTY-LICENSE. These build executables are not app resources; available distribution notices do not establish complete embedded-native-component closure."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@rolldown/pluginutils",
+      "version": "1.0.1",
+      "lockPath": "node_modules/@rolldown/pluginutils",
+      "source": "https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.1.tgz",
+      "integrity": "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==",
+      "archiveSha256": "13fcb3423d37f95a8e861c172e4b62fd24f22412be4e942087367242476e3400",
+      "repository": "git+https://github.com/rolldown/plugins.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": false,
+      "os": [],
+      "cpu": [],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@rolldown/pluginutils/1.0.1/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@rolldown/pluginutils/-/pluginutils-1.0.1.tgz#package/LICENSE",
+          "sha256": "e1919b3b98b8bf6c1b99fcc60a0ed46027c97ac947432e1278446c9606f50161"
         }
       ]
     },
@@ -5824,7 +5630,7 @@
       "scope": [
         "development/build/test"
       ],
-      "optional": true,
+      "optional": false,
       "os": [],
       "cpu": [],
       "declaredLicense": "Apache-2.0",
@@ -5971,33 +5777,6 @@
           "sourcePath": "LICENSE",
           "sourceUrl": "https://registry.npmjs.org/es-module-lexer/-/es-module-lexer-2.3.2.tgz#package/LICENSE",
           "sha256": "8a4b6c44eebfb026d23719a348145a661a555568dbfdc11618ff2d0dd9306b00"
-        }
-      ]
-    },
-    {
-      "ecosystem": "npm",
-      "name": "esbuild",
-      "version": "0.28.2",
-      "lockPath": "node_modules/esbuild",
-      "source": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz",
-      "integrity": "sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA==",
-      "archiveSha256": "e045f94c235c7adc50e77ba2a579c7bec41b496b6b47c3a7845f7c1e19959a88",
-      "repository": "git+https://github.com/evanw/esbuild.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": false,
-      "os": [],
-      "cpu": [],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/esbuild/0.28.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/esbuild/-/esbuild-0.28.2.tgz#package/LICENSE.md",
-          "sha256": "b40ec5baec7bb34fa5b1c09521fa3cd52d5fad7adafed74932a2010d3612a681"
         }
       ]
     },
@@ -6488,6 +6267,494 @@
           "sha256": "242d37e7cab25cbafc36cc973ee88f9345fddf066afe4f72b7ac3d9ad4e24cce"
         }
       ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss",
+      "version": "1.33.0",
+      "lockPath": "node_modules/lightningcss",
+      "source": "https://registry.npmjs.org/lightningcss/-/lightningcss-1.33.0.tgz",
+      "integrity": "sha512-WkUDrojuJs0xkgGf2udWxa3yGBRxPtxUkB79i6aCZLRgc7PM8fZe9TosfPDcvEpQZbuFASnHYmRLBLUbmLOIIA==",
+      "archiveSha256": "d492f4278bb7234ceaa3c2638ef944e108ea17a23db7c6a2367c14fa725598cf",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": false,
+      "os": [],
+      "cpu": [],
+      "declaredLicense": "MPL-2.0",
+      "upstreamLicense": "MPL-2.0",
+      "selectedLicense": "MPL-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/lightningcss/1.33.0/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/lightningcss/-/lightningcss-1.33.0.tgz#package/LICENSE",
+          "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+        }
+      ],
+      "mplSource": {
+        "name": "lightningcss",
+        "version": "1.33.0",
+        "url": "https://codeload.github.com/parcel-bundler/lightningcss/tar.gz/1d680fa14e9a089c92dc0929f869d6757ae91c30",
+        "archiveSha256": "ab377f42f5aa2f7f85058408ab45dbd03caa65fe6c00f4fdc32b9611c4e51bb4",
+        "licenseSha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+        "filesReviewed": 230,
+        "incompatibleSecondaryLicense": false
+      },
+      "incompatibleSecondaryLicense": false
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss-android-arm64",
+      "version": "1.33.0",
+      "lockPath": "node_modules/lightningcss-android-arm64",
+      "source": "https://registry.npmjs.org/lightningcss-android-arm64/-/lightningcss-android-arm64-1.33.0.tgz",
+      "integrity": "sha512-gEpRTalKdosp4Bb8qWtc2iOgE5SeIHlpS1up9bFq2wAyYhl1UdTObYiHe98zEM9SQvSoqQZ1IQD0JNpg3Ml5pg==",
+      "archiveSha256": "e6fd2befa439a4934dd50a9283820a7b95725246a3251c60588f074aff20509a",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "android"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "MPL-2.0",
+      "upstreamLicense": "MPL-2.0",
+      "selectedLicense": "MPL-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/lightningcss-android-arm64/1.33.0/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/lightningcss-android-arm64/-/lightningcss-android-arm64-1.33.0.tgz#package/LICENSE",
+          "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+        }
+      ],
+      "mplSource": {
+        "name": "lightningcss",
+        "version": "1.33.0",
+        "url": "https://codeload.github.com/parcel-bundler/lightningcss/tar.gz/1d680fa14e9a089c92dc0929f869d6757ae91c30",
+        "archiveSha256": "ab377f42f5aa2f7f85058408ab45dbd03caa65fe6c00f4fdc32b9611c4e51bb4",
+        "licenseSha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+        "filesReviewed": 230,
+        "incompatibleSecondaryLicense": false
+      },
+      "incompatibleSecondaryLicense": false
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss-darwin-arm64",
+      "version": "1.33.0",
+      "lockPath": "node_modules/lightningcss-darwin-arm64",
+      "source": "https://registry.npmjs.org/lightningcss-darwin-arm64/-/lightningcss-darwin-arm64-1.33.0.tgz",
+      "integrity": "sha512-Sciaz8eenNTKn9b3t7+xr0ipTp9YxKQY4npwQ3mrRuL0BAVHBLyZxofhaKBAVtzmtRZ/zTyo0/to4B1uWG/Djg==",
+      "archiveSha256": "06e9d271513d7e3f08e680d5e48bb70543c13161ff41bc5b56934726d9a2e913",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "MPL-2.0",
+      "upstreamLicense": "MPL-2.0",
+      "selectedLicense": "MPL-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/lightningcss-darwin-arm64/1.33.0/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/lightningcss-darwin-arm64/-/lightningcss-darwin-arm64-1.33.0.tgz#package/LICENSE",
+          "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+        }
+      ],
+      "mplSource": {
+        "name": "lightningcss",
+        "version": "1.33.0",
+        "url": "https://codeload.github.com/parcel-bundler/lightningcss/tar.gz/1d680fa14e9a089c92dc0929f869d6757ae91c30",
+        "archiveSha256": "ab377f42f5aa2f7f85058408ab45dbd03caa65fe6c00f4fdc32b9611c4e51bb4",
+        "licenseSha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+        "filesReviewed": 230,
+        "incompatibleSecondaryLicense": false
+      },
+      "incompatibleSecondaryLicense": false
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss-darwin-x64",
+      "version": "1.33.0",
+      "lockPath": "node_modules/lightningcss-darwin-x64",
+      "source": "https://registry.npmjs.org/lightningcss-darwin-x64/-/lightningcss-darwin-x64-1.33.0.tgz",
+      "integrity": "sha512-Z5UPAxzrjlWNNyGy6i65cJzzvgJ5D3T6wMvs+gWpY9d7qRhANrxqAp6LhxIgZhWEw18RfJTGcRxjuLIBr+m8XQ==",
+      "archiveSha256": "c0b555fe6ec4c5c660503b1e87aad7ac90ba5af1e2cb1742155d485a39d5b973",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "MPL-2.0",
+      "upstreamLicense": "MPL-2.0",
+      "selectedLicense": "MPL-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/lightningcss-darwin-x64/1.33.0/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/lightningcss-darwin-x64/-/lightningcss-darwin-x64-1.33.0.tgz#package/LICENSE",
+          "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+        }
+      ],
+      "mplSource": {
+        "name": "lightningcss",
+        "version": "1.33.0",
+        "url": "https://codeload.github.com/parcel-bundler/lightningcss/tar.gz/1d680fa14e9a089c92dc0929f869d6757ae91c30",
+        "archiveSha256": "ab377f42f5aa2f7f85058408ab45dbd03caa65fe6c00f4fdc32b9611c4e51bb4",
+        "licenseSha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+        "filesReviewed": 230,
+        "incompatibleSecondaryLicense": false
+      },
+      "incompatibleSecondaryLicense": false
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss-freebsd-x64",
+      "version": "1.33.0",
+      "lockPath": "node_modules/lightningcss-freebsd-x64",
+      "source": "https://registry.npmjs.org/lightningcss-freebsd-x64/-/lightningcss-freebsd-x64-1.33.0.tgz",
+      "integrity": "sha512-QQM/Ti/hQajJwCY+RiWuCZ9sdtI/XQk7nDK5vC8kkdwixezOlDgvDx7+RT+QjK6FcFT4MpsuoBnHIo/O3StRRg==",
+      "archiveSha256": "828e9a915d504a2796bdbe56643397d3ac639bf9abc629ba11163e7b7ef150a6",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "freebsd"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "MPL-2.0",
+      "upstreamLicense": "MPL-2.0",
+      "selectedLicense": "MPL-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/lightningcss-freebsd-x64/1.33.0/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/lightningcss-freebsd-x64/-/lightningcss-freebsd-x64-1.33.0.tgz#package/LICENSE",
+          "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+        }
+      ],
+      "mplSource": {
+        "name": "lightningcss",
+        "version": "1.33.0",
+        "url": "https://codeload.github.com/parcel-bundler/lightningcss/tar.gz/1d680fa14e9a089c92dc0929f869d6757ae91c30",
+        "archiveSha256": "ab377f42f5aa2f7f85058408ab45dbd03caa65fe6c00f4fdc32b9611c4e51bb4",
+        "licenseSha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+        "filesReviewed": 230,
+        "incompatibleSecondaryLicense": false
+      },
+      "incompatibleSecondaryLicense": false
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss-linux-arm-gnueabihf",
+      "version": "1.33.0",
+      "lockPath": "node_modules/lightningcss-linux-arm-gnueabihf",
+      "source": "https://registry.npmjs.org/lightningcss-linux-arm-gnueabihf/-/lightningcss-linux-arm-gnueabihf-1.33.0.tgz",
+      "integrity": "sha512-N7FVBe6iS24MlM6R/4RBTxGhQheZGs7tiQ9U32UtF75NzP5Q7xWPRqLBCKxlRQRk3rY1jCIPLzx7WzOhuUIRLQ==",
+      "archiveSha256": "b2a0af78c27da36a2449c2fe71eb3730e6c40d7aaab20bdc3689282432bb3117",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "arm"
+      ],
+      "declaredLicense": "MPL-2.0",
+      "upstreamLicense": "MPL-2.0",
+      "selectedLicense": "MPL-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/lightningcss-linux-arm-gnueabihf/1.33.0/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/lightningcss-linux-arm-gnueabihf/-/lightningcss-linux-arm-gnueabihf-1.33.0.tgz#package/LICENSE",
+          "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+        }
+      ],
+      "mplSource": {
+        "name": "lightningcss",
+        "version": "1.33.0",
+        "url": "https://codeload.github.com/parcel-bundler/lightningcss/tar.gz/1d680fa14e9a089c92dc0929f869d6757ae91c30",
+        "archiveSha256": "ab377f42f5aa2f7f85058408ab45dbd03caa65fe6c00f4fdc32b9611c4e51bb4",
+        "licenseSha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+        "filesReviewed": 230,
+        "incompatibleSecondaryLicense": false
+      },
+      "incompatibleSecondaryLicense": false
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss-linux-arm64-gnu",
+      "version": "1.33.0",
+      "lockPath": "node_modules/lightningcss-linux-arm64-gnu",
+      "source": "https://registry.npmjs.org/lightningcss-linux-arm64-gnu/-/lightningcss-linux-arm64-gnu-1.33.0.tgz",
+      "integrity": "sha512-j2v/itmy4HlNxlc6voKXYgBqNi0Ng2LShg4z7GufpEgs05P+2suBVyi9I6YHq5uoVFx9ETin3eCEhLVyXGQnKg==",
+      "archiveSha256": "257b51498dfd90fc99b87afd28408ff9b53162e521db4e06a493e356b8536711",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "MPL-2.0",
+      "upstreamLicense": "MPL-2.0",
+      "selectedLicense": "MPL-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/lightningcss-linux-arm64-gnu/1.33.0/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/lightningcss-linux-arm64-gnu/-/lightningcss-linux-arm64-gnu-1.33.0.tgz#package/LICENSE",
+          "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+        }
+      ],
+      "mplSource": {
+        "name": "lightningcss",
+        "version": "1.33.0",
+        "url": "https://codeload.github.com/parcel-bundler/lightningcss/tar.gz/1d680fa14e9a089c92dc0929f869d6757ae91c30",
+        "archiveSha256": "ab377f42f5aa2f7f85058408ab45dbd03caa65fe6c00f4fdc32b9611c4e51bb4",
+        "licenseSha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+        "filesReviewed": 230,
+        "incompatibleSecondaryLicense": false
+      },
+      "incompatibleSecondaryLicense": false
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss-linux-arm64-musl",
+      "version": "1.33.0",
+      "lockPath": "node_modules/lightningcss-linux-arm64-musl",
+      "source": "https://registry.npmjs.org/lightningcss-linux-arm64-musl/-/lightningcss-linux-arm64-musl-1.33.0.tgz",
+      "integrity": "sha512-yiO5ROMuYQgXbC60yjZU5CYSFZGKXL0HFATXt9mHJn1+zW55oCtMI9NfcVhYLMFDL7gV7oBPon/EmMMGg2OvtQ==",
+      "archiveSha256": "048a00d8ef519a413e01907a5a50e01d7c4e86ddcde49a5020eed7747196b9f6",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "MPL-2.0",
+      "upstreamLicense": "MPL-2.0",
+      "selectedLicense": "MPL-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/lightningcss-linux-arm64-musl/1.33.0/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/lightningcss-linux-arm64-musl/-/lightningcss-linux-arm64-musl-1.33.0.tgz#package/LICENSE",
+          "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+        }
+      ],
+      "mplSource": {
+        "name": "lightningcss",
+        "version": "1.33.0",
+        "url": "https://codeload.github.com/parcel-bundler/lightningcss/tar.gz/1d680fa14e9a089c92dc0929f869d6757ae91c30",
+        "archiveSha256": "ab377f42f5aa2f7f85058408ab45dbd03caa65fe6c00f4fdc32b9611c4e51bb4",
+        "licenseSha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+        "filesReviewed": 230,
+        "incompatibleSecondaryLicense": false
+      },
+      "incompatibleSecondaryLicense": false
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss-linux-x64-gnu",
+      "version": "1.33.0",
+      "lockPath": "node_modules/lightningcss-linux-x64-gnu",
+      "source": "https://registry.npmjs.org/lightningcss-linux-x64-gnu/-/lightningcss-linux-x64-gnu-1.33.0.tgz",
+      "integrity": "sha512-ar+Ju7LmcN0Jo4FpL4hpFybwNG9/3A/Br5KW2n2jyODg3MEZXaDYADdemoNS+BDNfMgKvylJLj4S5tyRActuAg==",
+      "archiveSha256": "fd485dfd57082c4ef864dd867fa87fd8e1a9b5d58ee85c2b76e28e42c8f3e1d3",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "MPL-2.0",
+      "upstreamLicense": "MPL-2.0",
+      "selectedLicense": "MPL-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/lightningcss-linux-x64-gnu/1.33.0/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/lightningcss-linux-x64-gnu/-/lightningcss-linux-x64-gnu-1.33.0.tgz#package/LICENSE",
+          "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+        }
+      ],
+      "mplSource": {
+        "name": "lightningcss",
+        "version": "1.33.0",
+        "url": "https://codeload.github.com/parcel-bundler/lightningcss/tar.gz/1d680fa14e9a089c92dc0929f869d6757ae91c30",
+        "archiveSha256": "ab377f42f5aa2f7f85058408ab45dbd03caa65fe6c00f4fdc32b9611c4e51bb4",
+        "licenseSha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+        "filesReviewed": 230,
+        "incompatibleSecondaryLicense": false
+      },
+      "incompatibleSecondaryLicense": false
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss-linux-x64-musl",
+      "version": "1.33.0",
+      "lockPath": "node_modules/lightningcss-linux-x64-musl",
+      "source": "https://registry.npmjs.org/lightningcss-linux-x64-musl/-/lightningcss-linux-x64-musl-1.33.0.tgz",
+      "integrity": "sha512-RYiYbkokw0trfKqqzfF55lginwEPrD3OJDfTuJzFs1MK6iFnDenaz1fqLLtX4ITG3OktJQXOeTaw1awrBAlZPw==",
+      "archiveSha256": "f3a1a10f3c393db5ce03438035b94fcd48bc7b7b52bb97f76a3ed52784624441",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "MPL-2.0",
+      "upstreamLicense": "MPL-2.0",
+      "selectedLicense": "MPL-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/lightningcss-linux-x64-musl/1.33.0/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/lightningcss-linux-x64-musl/-/lightningcss-linux-x64-musl-1.33.0.tgz#package/LICENSE",
+          "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+        }
+      ],
+      "mplSource": {
+        "name": "lightningcss",
+        "version": "1.33.0",
+        "url": "https://codeload.github.com/parcel-bundler/lightningcss/tar.gz/1d680fa14e9a089c92dc0929f869d6757ae91c30",
+        "archiveSha256": "ab377f42f5aa2f7f85058408ab45dbd03caa65fe6c00f4fdc32b9611c4e51bb4",
+        "licenseSha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+        "filesReviewed": 230,
+        "incompatibleSecondaryLicense": false
+      },
+      "incompatibleSecondaryLicense": false
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss-win32-arm64-msvc",
+      "version": "1.33.0",
+      "lockPath": "node_modules/lightningcss-win32-arm64-msvc",
+      "source": "https://registry.npmjs.org/lightningcss-win32-arm64-msvc/-/lightningcss-win32-arm64-msvc-1.33.0.tgz",
+      "integrity": "sha512-1K+MPfLSFVpphzpdbfkhlWk6wBrTObBzS2T6db10PNOZgR9GoVsAWzwNyuhUYYbTp23j+4RrncfujZ4uAzXvwA==",
+      "archiveSha256": "9c211ef0a63a92626091f7c0a97b0ddb39b4278da5b11d13512b7eed9680bd7d",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "win32"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "MPL-2.0",
+      "upstreamLicense": "MPL-2.0",
+      "selectedLicense": "MPL-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/lightningcss-win32-arm64-msvc/1.33.0/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/lightningcss-win32-arm64-msvc/-/lightningcss-win32-arm64-msvc-1.33.0.tgz#package/LICENSE",
+          "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+        }
+      ],
+      "mplSource": {
+        "name": "lightningcss",
+        "version": "1.33.0",
+        "url": "https://codeload.github.com/parcel-bundler/lightningcss/tar.gz/1d680fa14e9a089c92dc0929f869d6757ae91c30",
+        "archiveSha256": "ab377f42f5aa2f7f85058408ab45dbd03caa65fe6c00f4fdc32b9611c4e51bb4",
+        "licenseSha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+        "filesReviewed": 230,
+        "incompatibleSecondaryLicense": false
+      },
+      "incompatibleSecondaryLicense": false
+    },
+    {
+      "ecosystem": "npm",
+      "name": "lightningcss-win32-x64-msvc",
+      "version": "1.33.0",
+      "lockPath": "node_modules/lightningcss-win32-x64-msvc",
+      "source": "https://registry.npmjs.org/lightningcss-win32-x64-msvc/-/lightningcss-win32-x64-msvc-1.33.0.tgz",
+      "integrity": "sha512-OlEICDx/Xl0FqSp4bry8zFnCvGpig3Gl4gCquvYwHuqJKEC1+n9NgDniFvqHGmMv1ZkqDJrDqKKSykTDX+ehuA==",
+      "archiveSha256": "feb506faf3bdf4139826f521777c71b53c355f8eb6bcdd3220e16c5e131f1197",
+      "repository": "https://github.com/parcel-bundler/lightningcss.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "win32"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "MPL-2.0",
+      "upstreamLicense": "MPL-2.0",
+      "selectedLicense": "MPL-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/lightningcss-win32-x64-msvc/1.33.0/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/lightningcss-win32-x64-msvc/-/lightningcss-win32-x64-msvc-1.33.0.tgz#package/LICENSE",
+          "sha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e"
+        }
+      ],
+      "mplSource": {
+        "name": "lightningcss",
+        "version": "1.33.0",
+        "url": "https://codeload.github.com/parcel-bundler/lightningcss/tar.gz/1d680fa14e9a089c92dc0929f869d6757ae91c30",
+        "archiveSha256": "ab377f42f5aa2f7f85058408ab45dbd03caa65fe6c00f4fdc32b9611c4e51bb4",
+        "licenseSha256": "5eba353fe5076ac3432177f8ab1cf75e3afcd0584251e37c3bfead5f447d040e",
+        "filesReviewed": 230,
+        "incompatibleSecondaryLicense": false
+      },
+      "incompatibleSecondaryLicense": false
     },
     {
       "ecosystem": "npm",
@@ -7584,6 +7851,39 @@
     },
     {
       "ecosystem": "npm",
+      "name": "rolldown",
+      "version": "1.2.12",
+      "lockPath": "node_modules/rolldown",
+      "source": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz",
+      "integrity": "sha512-8wafseiaG80xmXSfqidUNqZcylTlhmPZZt+za2m+js2sFZ8dTNlhIOV2WcbIPx2hgwPBJpEUGFAMZ9bgBBLTSQ==",
+      "archiveSha256": "b5ad810c24ba712b00c51d7c0af3c34b7b71448cc9637ee274fe472d07ccd724",
+      "repository": "git+https://github.com/rolldown/rolldown.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": false,
+      "os": [],
+      "cpu": [],
+      "declaredLicense": "MIT",
+      "upstreamLicense": "MIT",
+      "selectedLicense": "MIT",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/LICENSE",
+          "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+        },
+        {
+          "path": "licenses/texts/npm/rolldown/1.2.12/THIRD-PARTY-LICENSE",
+          "sourcePath": "THIRD-PARTY-LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/rolldown/-/rolldown-1.2.12.tgz#package/THIRD-PARTY-LICENSE",
+          "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+        }
+      ]
+    },
+    {
+      "ecosystem": "npm",
       "name": "rrweb-cssom",
       "version": "0.8.0",
       "lockPath": "node_modules/rrweb-cssom",
@@ -8428,11 +8728,11 @@
     {
       "ecosystem": "npm",
       "name": "vite",
-      "version": "7.3.6",
+      "version": "8.3.2",
       "lockPath": "node_modules/vite",
-      "source": "https://registry.npmjs.org/vite/-/vite-7.3.6.tgz",
-      "integrity": "sha512-4XP60spRGjSZFf1qYH+dJIkK2znL3zQfl9KkOV9MkkRR/3Dls0dxaBsQPTloEc5BLXWPL9vsOxopxyKoMmDueg==",
-      "archiveSha256": "c90bd3ea5e6a301d6aac20d22b314fad893a7ac7b010b91a4ac65bb68dd947a6",
+      "source": "https://registry.npmjs.org/vite/-/vite-8.3.2.tgz",
+      "integrity": "sha512-SQr1x6W5vVSbROg7vsyXIaxK9b0G7zsT68acdWWRmnBUsgDieLCRG+Rep9WdZgcposvv/GSnr4GUUBqB3vXq6w==",
+      "archiveSha256": "268c70bb56c0a5ff17dbe4b7ebf21e0981697cce707cfaca84317c5b6b1eac56",
       "repository": "git+https://github.com/vitejs/vite.git",
       "scope": [
         "development/build/test"
@@ -8445,837 +8745,10 @@
       "selectedLicense": "MIT",
       "notices": [
         {
-          "path": "licenses/texts/npm/vite/7.3.6/LICENSE.md",
+          "path": "licenses/texts/npm/vite/8.3.2/LICENSE.md",
           "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/vite/-/vite-7.3.6.tgz#package/LICENSE.md",
-          "sha256": "a77a1c089806b39ad339535bdf3677f636c91d96693e8ad7b11fe733f650ea64"
-        }
-      ]
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-android-arm-eabi",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-android-arm-eabi",
-      "source": "https://registry.npmjs.org/@rollup/rollup-android-arm-eabi/-/rollup-android-arm-eabi-4.62.2.tgz",
-      "integrity": "sha512-6o7ZLZK+BeenkZCFNDXqpbjw9bD6nuWonvS/lwQJp7NoVVxm6p3qE7qQ5jGuBjiFsgvqjD8mZAU5oWxTmbOeOg==",
-      "archiveSha256": "69a97f25f90e28795cf045041732001dc71472af6411713d97ae1424b2336758",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "android"
-      ],
-      "cpu": [
-        "arm"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-android-arm64",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-android-arm64",
-      "source": "https://registry.npmjs.org/@rollup/rollup-android-arm64/-/rollup-android-arm64-4.62.2.tgz",
-      "integrity": "sha512-BaH7BllCACHoH1LguOU56UItGfUWjujlO65kS9LAodViaN4bwIKd7oeW/ZHJ/4ljr/7MIiENnNy3HJ0zXv8Zkw==",
-      "archiveSha256": "d397887e52084a7cedf650a2f3e2c6d97f258d0e2272f113b3606f8cae744454",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "android"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-darwin-arm64",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-darwin-arm64",
-      "source": "https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.62.2.tgz",
-      "integrity": "sha512-v39RCCvj4He82I9sFmk+M1VZ0PLM9sfsLVikjfx2hYBNALhrrOR2D3JjQA6AhlaSOgcR+RzrKY7e1+bT6SUO/A==",
-      "archiveSha256": "d88076f79b94bbc7d4b0aa2f15b60d22cc743a32d26bc96b9be261de7306ed4d",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "darwin"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-darwin-x64",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-darwin-x64",
-      "source": "https://registry.npmjs.org/@rollup/rollup-darwin-x64/-/rollup-darwin-x64-4.62.2.tgz",
-      "integrity": "sha512-yl0y2vq3S3lHeuXhEdss6TWfKW8vkujImO12tn4ZkG/4oghr09LvdYm2RElVjokTQiUvDUGXLGsYeLqUMCKpGA==",
-      "archiveSha256": "9c5a5a78642d0245d8cfb901f3798fafb505e01f16e15987c49533135997b77a",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "darwin"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-freebsd-arm64",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-freebsd-arm64",
-      "source": "https://registry.npmjs.org/@rollup/rollup-freebsd-arm64/-/rollup-freebsd-arm64-4.62.2.tgz",
-      "integrity": "sha512-tT4pvt4qXD+vEoezupCWi+a1F0vvDiksiHc+PxRlYTOH1I6/X4id9jPxTP+Fg+545euaFT1jJVs4CEdHZAU1vw==",
-      "archiveSha256": "78bdfd11de99f06d09c6342edc23177bf7d477602aa1e5ce4370015f9011b6b3",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "freebsd"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-freebsd-x64",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-freebsd-x64",
-      "source": "https://registry.npmjs.org/@rollup/rollup-freebsd-x64/-/rollup-freebsd-x64-4.62.2.tgz",
-      "integrity": "sha512-6nU5F2wCW+qvCBhTn1pdIU3bzsIoF7EUwsCDRxilWGprQR6yd508YnH9+OKFCwpfS8pjZqDUmnCAr7exax0XCg==",
-      "archiveSha256": "b04fceb2c63b666597a9389c3874630ef6888b2f73dad087a7f9bd848e7c0588",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "freebsd"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-linux-arm-gnueabihf",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-linux-arm-gnueabihf",
-      "source": "https://registry.npmjs.org/@rollup/rollup-linux-arm-gnueabihf/-/rollup-linux-arm-gnueabihf-4.62.2.tgz",
-      "integrity": "sha512-n1GJHPOvpIfhi3TmrCeh6S6URt9BFCt0KQE3qvexyGCTAKpR4Lg+eWvNZEqu7epxwus/8ElT3hacYEucm49SZg==",
-      "archiveSha256": "15d7e7d42d07afdc6c7092d0361d05c5c8bfbee7f4b51a84409d271f3b6919c1",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "arm"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-linux-arm-musleabihf",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-linux-arm-musleabihf",
-      "source": "https://registry.npmjs.org/@rollup/rollup-linux-arm-musleabihf/-/rollup-linux-arm-musleabihf-4.62.2.tgz",
-      "integrity": "sha512-JqgflS8wEB+UXV/vS1RpRbifGBeN4D5lz8D8oOFbFZw4vedvdOgCFAjfBmIMdW3yL10XpQQ0Ambepw6MXrhOnA==",
-      "archiveSha256": "e2305229848f5562f76c97b96ca992a7408467fef38355bef7f2948882fd074a",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "arm"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-linux-arm64-gnu",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-linux-arm64-gnu",
-      "source": "https://registry.npmjs.org/@rollup/rollup-linux-arm64-gnu/-/rollup-linux-arm64-gnu-4.62.2.tgz",
-      "integrity": "sha512-wnFJkogWvN4jm/hQRF2UBaeUmk20j5+DmHvoyWii2b8HJDyvz1MF2OU/6ynXt2KR63rbZLWkFpoytpdc/yBuSA==",
-      "archiveSha256": "0f59dcf1c9f6ab3d6faac78f11a1ab2ebf6b94e07f813b291b518cfd1a18e340",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-linux-arm64-musl",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-linux-arm64-musl",
-      "source": "https://registry.npmjs.org/@rollup/rollup-linux-arm64-musl/-/rollup-linux-arm64-musl-4.62.2.tgz",
-      "integrity": "sha512-HVu2bp0zhvJ8xHEV9+UUs7S90VadmBSY3LcIMvozbPo4AuMGDWlz3ymHLHZPX4hR67TKTt8Qp5PJ5RBg/i+RMQ==",
-      "archiveSha256": "c1c9078519802730a489aaf48bf3274ccf0c7651da3396aa10d9707919f3bd2f",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-linux-loong64-gnu",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-linux-loong64-gnu",
-      "source": "https://registry.npmjs.org/@rollup/rollup-linux-loong64-gnu/-/rollup-linux-loong64-gnu-4.62.2.tgz",
-      "integrity": "sha512-mQqqAV8QaoSgr9I2fKDLY2BAVvmKjWoGiu/cSYQonsLvtqwEn1E4QYfnCOcp5zoEqNhsDYin1s6jx/VJmrxlZg==",
-      "archiveSha256": "46b40afb65173d1d50097af5135f05ccf629b3f43df96cb925890e8debfa2815",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "loong64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-linux-loong64-musl",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-linux-loong64-musl",
-      "source": "https://registry.npmjs.org/@rollup/rollup-linux-loong64-musl/-/rollup-linux-loong64-musl-4.62.2.tgz",
-      "integrity": "sha512-IxKLoxCQ2IWi6bT2akyDUBGsOImDKB+sPp4EsTmwFQ/fMwpCKm8uLSSgP/Kx/QYUgKis6SEZ5/Nlhup0DIA0PQ==",
-      "archiveSha256": "3c4ec108b2f1600c120a63633e70d5008e9e8f23012bd7731f9dfce71ad73594",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "loong64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-linux-ppc64-gnu",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-linux-ppc64-gnu",
-      "source": "https://registry.npmjs.org/@rollup/rollup-linux-ppc64-gnu/-/rollup-linux-ppc64-gnu-4.62.2.tgz",
-      "integrity": "sha512-Mk5ha2RQSgyFfmYYLkBpPnUk8D8FriBxesO1u9O75X0mHgXL1UQcH5Itl2lurWL2tj0RxV9b9tJgipac0hRY9A==",
-      "archiveSha256": "e6ef6caec5f70bc289e591da2251a820ac92e632779694ccbf5a70a3bbb28f9d",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "ppc64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-linux-ppc64-musl",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-linux-ppc64-musl",
-      "source": "https://registry.npmjs.org/@rollup/rollup-linux-ppc64-musl/-/rollup-linux-ppc64-musl-4.62.2.tgz",
-      "integrity": "sha512-CjvEnqJL/0/TQ3TXX3OPIJ/kmBellrWd4heXUmHeJlTnmwjKpSJzoehLaL6Xk0ZnMHBu9dZuFADNOrtjF4v+2w==",
-      "archiveSha256": "6c983c40d913b7a05986bf15ba243fa11359002ecd858763987655ea5ae35140",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "ppc64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-linux-riscv64-gnu",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-linux-riscv64-gnu",
-      "source": "https://registry.npmjs.org/@rollup/rollup-linux-riscv64-gnu/-/rollup-linux-riscv64-gnu-4.62.2.tgz",
-      "integrity": "sha512-1SiZbzwdkaDURsew/tSOrooKiYy7EQGT6m8ufavAi9NEyQb/6VuIxFXAL1fqa4iZe3g4NbNk4P7J32z2tw5Mgg==",
-      "archiveSha256": "91e0c4fa1b03d32eb7ab260a4fd417065cc0e5c57d7cf7d18629e32734389ea7",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "riscv64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-linux-riscv64-musl",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-linux-riscv64-musl",
-      "source": "https://registry.npmjs.org/@rollup/rollup-linux-riscv64-musl/-/rollup-linux-riscv64-musl-4.62.2.tgz",
-      "integrity": "sha512-nQts12zJ3NQRoE6uYljOH89v7szzLDvG2JD/vsX+vGXU8w/At1GowTZ5/7qeFQ8m7L55rpR8Okugnuo5bgjy2Q==",
-      "archiveSha256": "c9661dcac93bd1577fec413d188579cc180407910dca0e9617fc59542b312d86",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "riscv64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-linux-s390x-gnu",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-linux-s390x-gnu",
-      "source": "https://registry.npmjs.org/@rollup/rollup-linux-s390x-gnu/-/rollup-linux-s390x-gnu-4.62.2.tgz",
-      "integrity": "sha512-E9/ll019jhPIJgpzfZoIkBGhcz+kKNgVWYRY0zr9srBdPPFVpvOKW8VaJKUbeK+eZXyQF9ltME+Kk6affeaPgg==",
-      "archiveSha256": "279daaddc3005da171bc23101a04562820da4fdf6f8d43ea1854b860ab87ec0d",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "s390x"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-linux-x64-gnu",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-linux-x64-gnu",
-      "source": "https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.62.2.tgz",
-      "integrity": "sha512-5BqxR/pshjey51iliyzTD5Xi3EN0aLmQ2lZ3lvefVV9c82BvrLo2/6OT55iifpWBufs6kdwWbuOKS841DrmK9A==",
-      "archiveSha256": "5d28e2577c2cded50f62061c3bd7c047d86016bc527ede8552aad0a32147f807",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-linux-x64-musl",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-linux-x64-musl",
-      "source": "https://registry.npmjs.org/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.62.2.tgz",
-      "integrity": "sha512-uNN83XxQrRAh/w0/pmAfibcwyb6YWt4gP+dpnQKPVJshAloQ785ii8CT8ZCIxkGg9opVsvAlGhFitSm6D1Jjpg==",
-      "archiveSha256": "0d61c4745bfa74793229f99bdf8ad7d5d88d059d9fe29b2248acab82e7bd4c8b",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "linux"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-openbsd-x64",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-openbsd-x64",
-      "source": "https://registry.npmjs.org/@rollup/rollup-openbsd-x64/-/rollup-openbsd-x64-4.62.2.tgz",
-      "integrity": "sha512-srjEIxSH3LRnJN6THczDHWQplqEMFiAJrTab0msUryh9kwNpkICf3Ea6q6MN/2cZwRFUNx5w+h6Hpi4QuHS6Zg==",
-      "archiveSha256": "5d6e09119ac7022f79571dd1b464f723df606182ad3173f927ce1921d4816383",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "openbsd"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-openharmony-arm64",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-openharmony-arm64",
-      "source": "https://registry.npmjs.org/@rollup/rollup-openharmony-arm64/-/rollup-openharmony-arm64-4.62.2.tgz",
-      "integrity": "sha512-8hOJnxgbyObnCm5AlRA3A931xX19xq80RjVTKgJOvEKWqJruP/Uf12IbAOaDjjEXYRewwHLfmF0YRIdK3OwKWA==",
-      "archiveSha256": "3c8e2ef48ebe8648fdfea8afec3057b21aa39e8060ed500746faa8e3fe20d8a0",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "openharmony"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-win32-arm64-msvc",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-win32-arm64-msvc",
-      "source": "https://registry.npmjs.org/@rollup/rollup-win32-arm64-msvc/-/rollup-win32-arm64-msvc-4.62.2.tgz",
-      "integrity": "sha512-mmF4AY1i0hG/bLWUctUq59gtmgaSIRa3cu/A3JFRp/sCNEme2bgDEiDS22P9FbnJB8NJNF4jPJiSP5RHQpUTDg==",
-      "archiveSha256": "e4d4484653132e5f08ea80c947302b8ea911d9c69d2ce5d4e49161fe984334b3",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "win32"
-      ],
-      "cpu": [
-        "arm64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-win32-ia32-msvc",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-win32-ia32-msvc",
-      "source": "https://registry.npmjs.org/@rollup/rollup-win32-ia32-msvc/-/rollup-win32-ia32-msvc-4.62.2.tgz",
-      "integrity": "sha512-DZgkknc6jhHrk46V25vbAM0zZkyP0nSDkJB8/dRkLTxv470dOmWDqGoEJl/9A0dFfS7yE3REOwNDxpHwSLSt0Q==",
-      "archiveSha256": "833191ed452d8fc4a068002d89593468ffc454024f9bbdfd787a78611ed97214",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "win32"
-      ],
-      "cpu": [
-        "ia32"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-win32-x64-gnu",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-win32-x64-gnu",
-      "source": "https://registry.npmjs.org/@rollup/rollup-win32-x64-gnu/-/rollup-win32-x64-gnu-4.62.2.tgz",
-      "integrity": "sha512-T6xr6ucWSFto+VGajA8YH26LdpHRuP4YLHEKAtCWvJDOlnmWcDZVCI2Jmjr+IFHDlt2zRaTAKE4tfjTaWLgJBg==",
-      "archiveSha256": "f530cc6c12c512e7a7725a2b3d21c82f2329ecc8088248c22f34a18d38a05953",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "win32"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "@rollup/rollup-win32-x64-msvc",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/@rollup/rollup-win32-x64-msvc",
-      "source": "https://registry.npmjs.org/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.62.2.tgz",
-      "integrity": "sha512-BfzEnDJOt9T8M989/lA37EcJgat01wLRnoi5dQf3QzOH7jzpqTAzdDbVfRljVr5r+jzKqpbHeyOfAaXxAd0PAA==",
-      "archiveSha256": "b945849f90d307d1740b55283bf56b1747406008ae9347d6e2e1e224d4273e15",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": true,
-      "os": [
-        "win32"
-      ],
-      "cpu": [
-        "x64"
-      ],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
-        }
-      ],
-      "noticeEvidence": "Platform-specific Rollup packages identify the same upstream repository/version and MIT terms. Parent locked Rollup LICENSE.md preserves its full upstream/third-party distribution notice. Native build tools are not app resources."
-    },
-    {
-      "ecosystem": "npm",
-      "name": "rollup",
-      "version": "4.62.2",
-      "lockPath": "node_modules/vite/node_modules/rollup",
-      "source": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz",
-      "integrity": "sha512-RFnrW4lhXA3s3eqHDZvN654g8OTjzRfqpIRJYczCGB6HzphckVAi/Qh4tbPUbRuDi7s1Llv8g/NspLkttY3gTA==",
-      "archiveSha256": "027a15633b3bb2daf879ad4002488050b636c2c56dc8a3a71348c87cfd363373",
-      "repository": "git+https://github.com/rollup/rollup.git",
-      "scope": [
-        "development/build/test"
-      ],
-      "optional": false,
-      "os": [],
-      "cpu": [],
-      "declaredLicense": "MIT",
-      "upstreamLicense": "MIT",
-      "selectedLicense": "MIT",
-      "notices": [
-        {
-          "path": "licenses/texts/npm/rollup/4.62.2/LICENSE.md",
-          "sourcePath": "LICENSE.md",
-          "sourceUrl": "https://registry.npmjs.org/rollup/-/rollup-4.62.2.tgz#package/LICENSE.md",
-          "sha256": "fa1bd040c5bdeefe65b3821cebf474f2733ce65df13089bd151dda1778e62fe8"
+          "sourceUrl": "https://registry.npmjs.org/vite/-/vite-8.3.2.tgz#package/LICENSE.md",
+          "sha256": "a47172e44a86a7e2cd1c16282341f7726ec60caafe3a6166fe3e0602005b6fa6"
         }
       ]
     },

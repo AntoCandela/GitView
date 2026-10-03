@@ -17,6 +17,7 @@ const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const json = path => readFile(join(root, path), 'utf8').then(JSON.parse);
 const trees = new Map();
 let sourceArchivesDirectory;
+const mplReviews = new Map();
 
 function command(name, args) {
   return execFileSync(name, args, { cwd: root, maxBuffer: 128 * 1024 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -52,6 +53,42 @@ export async function collectArchiveNotices(archive, { component, sourceUrl, out
     notices.push(await retain(component, sourcePath, command('tar', ['-xzOf', archive, entry]), `${sourceUrl}#${entry}`, outputRoot));
   }
   return notices;
+}
+
+/** Review pinned source bytes, allowing only outer whitespace around the full MPL template. */
+export function inspectMplSource(archive, source) {
+  if (sha256(readFileSync(archive)) !== source.archiveSha256) throw new Error('mpl_source_integrity');
+  const entries = command('tar', ['-tzf', archive]).toString().trim().split(/\r?\n/).filter(entry => !entry.endsWith('/'));
+  const licenseEntry = entries.find(entry => /^[^/]+\/LICENSE$/.test(entry));
+  if (!licenseEntry) throw new Error('mpl_license_missing');
+  const license = command('tar', ['-xzOf', archive, licenseEntry]);
+  if (sha256(license) !== source.licenseSha256) throw new Error('mpl_license_integrity');
+  const template = license.toString().trim();
+  if (!entries.some(entry => /\.(?:rs|[cm]?js|ts|tsx|jsx|c|h|cpp)$/.test(entry))) throw new Error('mpl_source_missing');
+  let incompatibleSecondaryLicense = false;
+  for (const entry of entries) {
+    const text = command('tar', ['-xzOf', archive, entry]).toString();
+    if (text.trim() !== template && /incompatible\s+with\s+secondary\s+licenses/i.test(text)) incompatibleSecondaryLicense = true;
+  }
+  return { filesReviewed: entries.length, incompatibleSecondaryLicense };
+}
+
+async function npmMplReview(pkg) {
+  const sources = (await json('licenses/supplemental-sources.json')).npmMplSources ?? [];
+  const source = sources.find(source => source.version === pkg.version && (pkg.name === source.name || pkg.name.startsWith(`${source.name}-`)));
+  if (!source) throw new Error('npm_mpl_source_unregistered');
+  const key = `${source.url}@${source.archiveSha256}`;
+  if (!mplReviews.has(key)) {
+    const temporary = await mkdtemp(join(tmpdir(), 'gitview-mpl-'));
+    try {
+      const archive = join(temporary, 'source.tgz');
+      await writeFile(archive, download(source.url));
+      mplReviews.set(key, inspectMplSource(archive, source));
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
+    }
+  }
+  return { ...source, ...mplReviews.get(key) };
 }
 function selection(expression) {
   if (typeof expression !== 'string') return null;
@@ -453,6 +490,10 @@ async function refresh() {
     const npm = await npmInventory(await json('package-lock.json'), temporary);
     const cargo = await cargoInventory();
     await supplementalNotices([...npm, ...cargo]);
+    for (const pkg of npm.filter(pkg => pkg.selectedLicense?.includes('MPL-2.0'))) {
+      pkg.mplSource = await npmMplReview(pkg);
+      pkg.incompatibleSecondaryLicense = pkg.mplSource.incompatibleSecondaryLicense;
+    }
     for (const pkg of [...npm, ...cargo]) pkg.selectedLicense = selectedLicense(pkg);
     const assets = await json('licenses/asset-provenance.json');
     await verifyAssetOrigins(assets, [...npm, ...cargo], temporary);
@@ -494,6 +535,10 @@ async function check(integrityOnly) {
         const lockedPath = locked?.resolved?.startsWith('file:') ? locked.resolved.slice(5) : pkg.lockPath;
         if (!rule || lockedPath !== rule.path || pkg.version !== locked?.version || pkg.name !== rule.name || pkg.version !== rule.version || pkg.source !== rule.source || pkg.archiveSha256 !== rule.archiveSha256 || !isDeepStrictEqual(await verifyNpmVendor(rule), pkg.sourceFiles)) drift.push('npm_vendor_identity_drift');
       } else if (pkg.version !== locked?.version || pkg.source !== locked?.resolved || pkg.integrity !== locked?.integrity) drift.push('npm_record_identity_drift');
+      if (pkg.selectedLicense?.includes('MPL-2.0')) {
+        const reviewed = await npmMplReview(pkg);
+        if (!isDeepStrictEqual(pkg.mplSource, reviewed) || pkg.incompatibleSecondaryLicense !== reviewed.incompatibleSecondaryLicense) drift.push('npm_mpl_source_drift');
+      }
     } else if (pkg.ecosystem === 'cargo') {
       const locked = cargo.find(entry => entry.name === pkg.name && entry.version === pkg.version);
       if (pkg.sourceKind === 'vendored') {
