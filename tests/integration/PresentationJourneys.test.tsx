@@ -83,7 +83,8 @@ test.each([
   { context: "working", path: "src/example.ts", source: "working presentation source", other: "committed presentation source" },
   { context: "committed", path: "archive/version.ts", source: "committed presentation source", other: "working presentation source" },
 ])("the selected $context comparison survives layout and appearance changes", async ({ context, path, source, other }) => {
-  const user = userEvent.setup();
+  // Keep application timers real without adding artificial timer ticks between interactions.
+  const user = userEvent.setup({ delay: null });
   mountWorkspace();
   // Keep accessible-name scans local to the active surface, not every mounted workbench control.
   const layout = screen.getByRole("button", { name: "Workbench layout" });
