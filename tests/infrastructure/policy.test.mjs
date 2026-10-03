@@ -17,10 +17,11 @@ async function fixture(t, files) {
 }
 
 test('misplaced tests and tracked private artifacts block policy', async t => {
-  const result = await checkPolicy(await fixture(t, { 'src/view.test.ts': 'export {};', '.verification/manifest.json': '{}', 'data/diagnostics.sqlite-wal': '' }));
+  const result = await checkPolicy(await fixture(t, { 'src/view.test.ts': 'export {};', '.verification/manifest.json': '{}', '.vitest/json/output.json': '{}', 'data/diagnostics.sqlite-wal': '' }));
   assert.equal(result.passed, false);
   assert.ok(result.violations.some(item => item.rule === 'test_placement'));
   assert.ok(result.violations.some(item => item.rule === 'private_artifact'));
+  assert.ok(result.violations.some(item => item.rule === 'private_artifact' && item.file === '.vitest/json/output.json'));
 });
 
 test('valid non-allowlisted filenames are checked without becoming private artifacts', async t => {

@@ -5,7 +5,7 @@ import ts from 'typescript';
 import { execute, isEntryPoint, parseOptions } from './evidence.mjs';
 
 const humanReview = ['correctness', 'fixture_isolation', 'privacy_allowlist', 'trace_causality', 'native_observations'];
-const forbiddenArtifact = path => /(?:^|\/)(?:\.verification|target|dist|node_modules|coverage)(?:\/|$)/.test(path) || /\.(?:sqlite(?:3)?|db)(?:-(?:wal|shm)|-journal)?$/i.test(path) || /(?:^|\/)diagnostics[^/]*\.(?:json|log|zip)$/i.test(path);
+const forbiddenArtifact = path => /(?:^|\/)(?:\.verification|\.vitest|target|dist|node_modules|coverage)(?:\/|$)/.test(path) || /\.(?:sqlite(?:3)?|db)(?:-(?:wal|shm)|-journal)?$/i.test(path) || /(?:^|\/)diagnostics[^/]*\.(?:json|log|zip)$/i.test(path);
 const safePath = path => /^[A-Za-z0-9_./-]+$/.test(path) && !posix.isAbsolute(path) && !path.split('/').includes('..');
 const repositoryPath = path => typeof path === 'string' && !isAbsolute(path) && !posix.isAbsolute(path) && !path.includes('\0') && !path.split(/[\\/]/).includes('..');
 
