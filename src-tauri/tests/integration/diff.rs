@@ -2,6 +2,7 @@
 
 use super::*;
 use crate::application::RepositoryService;
+use crate::diagnostics::DiagnosticSink;
 use crate::observation::{ChangedPath, ObservationSnapshot};
 use crate::workspace::OpenOutcome;
 use crate::test_support::{self, ManualClock};
@@ -14,8 +15,11 @@ async fn select(service: &RepositoryService, root: &Path, clock: &ManualClock) -
     (entry_id, revision, paths)
 }
 async fn ready(service: &RepositoryService, entry: &str, clock: &ManualClock) -> (u64, Vec<ChangedPath>) {
+    let diagnostics = service.diagnostic_sink();
     clock.finish(async {
         loop {
+            // Each snapshot poll emits two records; do not turn readiness into queue overflow.
+            wait_for_diagnostic_writes(&diagnostics).await;
             match service.observe_selected_context(entry).await {
                 ObservationSnapshot::Ready { observation_revision, files, .. } => return (observation_revision, files),
                 ObservationSnapshot::Unavailable { error_code, .. } => panic!("fixture status unavailable: {error_code:?}"),
@@ -23,6 +27,16 @@ async fn ready(service: &RepositoryService, entry: &str, clock: &ManualClock) ->
             }
         }
     }).await
+}
+async fn wait_for_diagnostic_writes(diagnostics: &DiagnosticSink) {
+    let accepted = diagnostics.health().accepted;
+    loop {
+        let health = diagnostics.health();
+        assert_eq!(health.dropped, 0, "fixture capture must not drop causal evidence");
+        assert_eq!(health.last_error_code, None, "fixture capture must remain healthy");
+        if health.written >= accepted { return; }
+        tokio::task::yield_now().await;
+    }
 }
 fn path<'a>(paths: &'a [ChangedPath], name: &str) -> &'a str { &paths.iter().find(|path| path.display_path == name).unwrap().path_id }
 fn text(result: ReviewResult) -> (ReviewIdentity, Vec<TextHunk>, String, String) {
@@ -241,26 +255,36 @@ async fn cancelled_review_reaps_git_and_retains_safe_causal_failure_evidence() {
     assert!(clock.finish(review).await.unwrap_err().is_cancelled());
     // Reaping is an OS event; its polling sleep must use real time, not the paused clock.
     tokio::time::resume();
+    drop(clock);
     test_support::wait_for_reaped_child(temp.path()).await;
     service.shutdown().await;
-    // OS disappearance can precede the detached reaper's diagnostic submission.
+    // Reaping can precede diagnostic admission. Keep Tokio runnable until that fact is durable.
+    let diagnostics = store.sink();
     let rows = tokio::time::timeout(Duration::from_secs(5), async {
         loop {
-            store.flush(Duration::from_secs(5)).unwrap();
-            let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query {
-                operation_id: Some(id), limit: 200, ..Default::default()
-            }).unwrap();
+            wait_for_diagnostic_writes(&diagnostics).await;
+            let database = database.clone();
+            let rows = tokio::task::spawn_blocking(move || {
+                ReadOnlyDiagnostics::open(&database).unwrap().events(&Query {
+                    operation_id: Some(id), limit: 200, ..Default::default()
+                }).unwrap()
+            }).await.unwrap();
             assert!(!rows.has_more);
             if rows.events.iter().any(|row| row.component == Component::Process && row.event == Event::CleanupCompleted) {
                 break rows;
             }
-            tokio::task::yield_now().await;
+            tokio::time::sleep(Duration::from_millis(5)).await;
         }
     }).await.expect("reaped review must submit its cleanup evidence");
     assert!(rows.events.iter().any(|row| row.component == Component::Application && row.event == Event::Cancelled));
-    assert!(rows.events.iter().any(|row| row.component == Component::Process && row.event == Event::CleanupCompleted));
+    assert!(rows.events.iter().any(|row| row.component == Component::Process && row.event == Event::CleanupCompleted && !row.cleanup_failed));
     assert!(rows.events.iter().all(|row| row.operation_kind == OperationKind::ReviewFile));
-    store.shutdown(Duration::from_secs(5)).unwrap();
+    tokio::task::spawn_blocking(move || {
+        store.flush(Duration::from_secs(5)).unwrap();
+        assert_eq!(store.health().dropped, 0, "fixture capture must not drop causal evidence");
+        assert_eq!(store.health().last_error_code, None, "fixture capture must remain healthy");
+        store.shutdown(Duration::from_secs(5)).unwrap();
+    }).await.unwrap();
     let bytes = fs::read(database).unwrap();
     assert!(!bytes.windows(b"private-name".len()).any(|bytes| bytes == b"private-name"));
     assert!(!bytes.windows(b"private source".len()).any(|bytes| bytes == b"private source"));

@@ -83,7 +83,7 @@ test('CLI failure output omits untrusted link text and paths', async context => 
   await writeFile(join(root, 'AGENTS.md'), '[private-doc-payload](file:///private-doc-payload)\n');
   const result = spawnSync(process.execPath, [resolve('.agents/scripts/check-docs.mjs'), '--root', root], { encoding: 'utf8' });
   assert.equal(result.status, 1);
-  assert.deepEqual(JSON.parse(result.stderr), { error: 'invalid_doc_link', stage: null, processCode: null, exitCode: null });
+  assert.deepEqual(JSON.parse(result.stderr), { error: 'invalid_doc_link', stage: null, processCode: null, exitCode: null, compilerCodes: [] });
   assert.equal(result.stdout, '');
   assert.equal(result.stderr.includes('private-doc-payload'), false);
   assert.equal(result.stderr.includes(root), false);
@@ -106,7 +106,7 @@ test('failed Cargo metadata retains only closed process facts, never borrowed di
 
   await assert.rejects(exerciseDiagnostics({ root }), error => {
     assert.equal(error.message, 'doc_examples_failed');
-    assert.deepEqual(error.cause, { error: 'doc_examples_failed', stage: 'cargo_metadata', processCode: 'check_failed', exitCode: 101 });
+    assert.deepEqual(error.cause, { error: 'doc_examples_failed', stage: 'cargo_metadata', processCode: 'check_failed', exitCode: 101, compilerCodes: [] });
     assert.deepEqual(documentationFailureEvidence(error.cause), error.cause);
     assert.equal(JSON.stringify(error.cause).includes('private-metadata-payload'), false);
     assert.equal(JSON.stringify(error.cause).includes(root), false);
@@ -120,22 +120,22 @@ test('borrowed scanner exceptions become one closed CLI failure without filesyst
   const result = spawnSync(process.execPath, [resolve('.agents/scripts/check-docs.mjs'), '--root', missing], { encoding: 'utf8' });
   assert.equal(result.status, 1);
   assert.equal(result.stdout, '');
-  assert.deepEqual(JSON.parse(result.stderr), { error: 'doc_examples_failed', stage: null, processCode: null, exitCode: null });
+  assert.deepEqual(JSON.parse(result.stderr), { error: 'doc_examples_failed', stage: null, processCode: null, exitCode: null, compilerCodes: [] });
   assert.equal(result.stderr.includes(root), false);
   assert.equal(result.stderr.includes('private-scanner-payload'), false);
 });
 
 test('documentation failure evidence retains bounded startup and assertion facts', () => {
-  const startup = { error: 'doc_examples_failed', stage: 'driver_run', processCode: 'check_failed', exitCode: 3221225785 };
-  const assertion = { error: 'doc_examples_failed', stage: 'cli_children', processCode: 'assertion_failed', exitCode: null };
-  const invalidOutput = { error: 'invalid_example_output', stage: 'driver_output', processCode: 'invalid_output', exitCode: null };
+  const startup = { error: 'doc_examples_failed', stage: 'driver_run', processCode: 'check_failed', exitCode: 3221225785, compilerCodes: [] };
+  const assertion = { error: 'doc_examples_failed', stage: 'cli_children', processCode: 'assertion_failed', exitCode: null, compilerCodes: [] };
+  const invalidOutput = { error: 'invalid_example_output', stage: 'driver_output', processCode: 'invalid_output', exitCode: null, compilerCodes: [] };
   assert.deepEqual(documentationFailureEvidence(startup), startup);
   assert.deepEqual(documentationFailureEvidence(assertion), assertion);
   assert.deepEqual(documentationFailureEvidence(invalidOutput), invalidOutput);
 });
 
 test('documentation failure evidence rejects untrusted fields and values rather than forwarding them', () => {
-  const failure = { error: 'doc_examples_failed', stage: 'driver_run', processCode: 'check_failed', exitCode: 1 };
+  const failure = { error: 'doc_examples_failed', stage: 'driver_run', processCode: 'check_failed', exitCode: 1, compilerCodes: [] };
   assert.equal(documentationFailureEvidence({ ...failure, output: 'private-process-payload' }), null);
   assert.equal(documentationFailureEvidence({ ...failure, cause: { path: 'private-path' } }), null);
   assert.equal(documentationFailureEvidence({ ...failure, error: 'private-error' }), null);
@@ -147,6 +147,11 @@ test('documentation failure evidence rejects untrusted fields and values rather 
   assert.equal(documentationFailureEvidence({ ...failure, exitCode: -2_147_483_649 }), null);
   assert.equal(documentationFailureEvidence({ ...failure, exitCode: 1.5 }), null);
   assert.equal(documentationFailureEvidence({ ...failure, processCode: null }), null);
+  assert.equal(documentationFailureEvidence({ ...failure, compilerCodes: ['private-path'] }), null);
+  assert.equal(documentationFailureEvidence({ ...failure, compilerCodes: ['E0425'] }), null);
+  assert.equal(documentationFailureEvidence({ ...failure, stage: 'driver_build', compilerCodes: Array(17).fill('E0425') }), null);
+  const compiler = { ...failure, stage: 'driver_build', compilerCodes: ['E0425', 'LNK1104', 'C1010001'] };
+  assert.deepEqual(documentationFailureEvidence(compiler), compiler);
   assert.equal(documentationFailureEvidence({ error: 'doc_examples_failed' }), null);
   assert.equal(documentationFailureEvidence(null), null);
   assert.equal(documentationFailureEvidence([]), null);

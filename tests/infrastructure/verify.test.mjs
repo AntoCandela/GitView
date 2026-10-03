@@ -67,7 +67,7 @@ test('Rust failure locations resolve through module paths without retaining outs
 
 test('documentation failure evidence cannot certify success or publish unknown process data', async t => {
   const root = await fixture(t);
-  const failure = { error: 'doc_examples_failed', stage: 'driver_run', processCode: 'check_failed', exitCode: 3221225785 };
+  const failure = { error: 'doc_examples_failed', stage: 'driver_run', processCode: 'check_failed', exitCode: 3221225785, compilerCodes: [] };
   const privateFailure = { ...failure, stage: 'private_customer', output: 'SECRET_TOKEN' };
   const success = { status: 'passed', documents: 1, links: 1, skills: 1, examples: { rust: 2, sql: 3, reader: 'passed', cli: 'passed', privacy: 'passed' } };
   const checks = [child('startup', `console.log(JSON.stringify(${JSON.stringify(failure)}))`, 'documentation'), child('private', `console.log(JSON.stringify(${JSON.stringify(privateFailure)}))`, 'documentation')];

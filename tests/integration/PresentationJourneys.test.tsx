@@ -120,7 +120,8 @@ test.each([
 });
 
 test("saved reading and palette choices restore after remount while the session layout resets", async () => {
-  const user = userEvent.setup();
+  // Keep real application timers, but do not add artificial typing/pointer delays to this persistence journey.
+  const user = userEvent.setup({ delay: null });
   const client = presentationClient();
   const first = mountWorkspace(client);
   // Query each active surface locally so unrelated workbench controls do not dominate the journey.
@@ -133,10 +134,14 @@ test("saved reading and palette choices restore after remount while the session 
   const toolbar = within(layout.closest("header")!);
   await user.click(layout);
   const initialDialog = await screen.findByRole("dialog", { name: "Workbench layout" });
-  const initialLayout = within(within(initialDialog).getByRole("radiogroup", { name: "Panel arrangement" }))
-    .getByRole("radio", { checked: true }).getAttribute("aria-label")!;
+  const initialLayouts = within(within(initialDialog).getByRole("radiogroup", { name: "Panel arrangement" }));
+  const initialLayout = initialLayouts.getByRole("radio", { checked: true }).getAttribute("aria-label")!;
+  // Change the layout in the already-open menu; a second close/open adds no persistence coverage.
+  const changedLayout = initialLayouts.getByRole("radio", { name: historyAbove });
+  await user.click(changedLayout);
+  expect(changedLayout).toBeChecked();
   await user.keyboard("{Escape}");
-  await chooseLayout(user, layout, historyAbove);
+  await waitFor(() => expect(initialDialog).not.toBeInTheDocument());
   await user.click(within(selectedReview.getByRole("radiogroup", { name: "Code view" })).getByRole("radio", { name: "Full file" }));
   await user.click(within(selectedReview.getByRole("radiogroup", { name: "Long lines" })).getByRole("radio", { name: "Wrap" }));
   await user.click(toolbar.getByRole("button", { name: "Appearance" }));

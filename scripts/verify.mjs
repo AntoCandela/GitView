@@ -144,6 +144,7 @@ function extractEvidence(output, reporter, allowed, root, sources) {
           if (failure.stage) failures.add(`documentation:${failure.stage}`);
           if (failure.processCode) failures.add(`process:${failure.processCode}`);
           if (failure.exitCode !== null) failures.add(`process_exit:${failure.exitCode}`);
+          for (const code of failure.compilerCodes) failures.add(`compiler:${code}`);
         }
       }
       if (reporter === 'policy' && typeof data.passed === 'boolean' && Array.isArray(data.violations)) {

@@ -14,6 +14,15 @@ use uuid::Uuid;
 
 const WAIT: Duration = Duration::from_secs(5);
 
+fn assert_diagnostics_flushed(result: Result<(), Code>) {
+    match result {
+        Ok(()) => {},
+        Err(Code::Timeout) => panic!("diagnostic flush timed out"),
+        Err(Code::Storage) => panic!("diagnostic flush storage failure"),
+        Err(_) => panic!("diagnostic flush failed with another fixed code"),
+    }
+}
+
 fn request(window: &WebviewWindow<MockRuntime>, command: &str, body: serde_json::Value) -> tauri::webview::InvokeRequest {
     tauri::webview::InvokeRequest {
         cmd: command.into(),
@@ -354,6 +363,16 @@ fn review_ipc_is_restricted_and_correlates_success_and_failure_without_private_p
                 if let ObservationSnapshot::Ready { observation_revision, files, .. } = service.observe_selected_context(&entry_id).await {
                     break (observation_revision, files);
                 }
+                // Readiness polling must not outrun the durable diagnostic writer.
+                let sink = store.sink();
+                let accepted = sink.health().accepted;
+                loop {
+                    let health = sink.health();
+                    assert_eq!(health.dropped, 0);
+                    assert_eq!(health.last_error_code, None);
+                    if health.written >= accepted { break; }
+                    tokio::time::sleep(Duration::from_millis(5)).await;
+                }
                 tokio::time::sleep(Duration::from_millis(5)).await;
             }
         }).await.unwrap();
@@ -395,7 +414,7 @@ fn review_ipc_is_restricted_and_correlates_success_and_failure_without_private_p
         response(&main, "record_renderer_diagnostic", serde_json::json!({ "diagnostic": {
             "operationId": id.to_string(), "command": "review_file", "phase": "completed", "durationMs": 1,
         }}));
-        app.state::<DiagnosticStore>().flush(WAIT).unwrap();
+        assert_diagnostics_flushed(app.state::<DiagnosticStore>().flush(WAIT));
         let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(id), limit: 200, ..Default::default() }).unwrap();
         assert!(!rows.has_more);
         for component in [Component::Ipc, Component::Application, Component::Git] {
@@ -443,7 +462,7 @@ fn history_ipc_restricts_windows_and_correlates_real_topology_without_private_pa
     response(&main, "record_renderer_diagnostic", serde_json::json!({ "diagnostic": {
         "operationId": operation.to_string(), "command": "history_page", "phase": "completed", "durationMs": 1,
     }}));
-    app.state::<DiagnosticStore>().flush(WAIT).unwrap();
+    assert_diagnostics_flushed(app.state::<DiagnosticStore>().flush(WAIT));
     let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(operation), limit: 200, ..Default::default() }).unwrap();
     assert!(!rows.has_more);
     for component in [Component::Ipc, Component::Application, Component::Git, Component::Process, Component::Renderer] {
@@ -456,7 +475,7 @@ fn history_ipc_restricts_windows_and_correlates_real_topology_without_private_pa
     }));
     assert_eq!(result["kind"], "unavailable");
     assert_eq!(result["code"], "stale_cursor");
-    app.state::<DiagnosticStore>().flush(WAIT).unwrap();
+    assert_diagnostics_flushed(app.state::<DiagnosticStore>().flush(WAIT));
     let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(rejected), limit: 200, ..Default::default() }).unwrap();
     assert!(!rows.has_more);
     assert!(rows.events.iter().any(|row| row.component == Component::Application && row.event == Event::Superseded && row.code == Some(Code::StaleCursor)));
@@ -522,7 +541,7 @@ fn inspection_ipc_selects_discovered_worktrees_and_records_only_fixed_diagnostic
     let mut stale_body = review_body;
     stale_body["operationId"] = serde_json::json!(stale_operation.to_string());
     assert_eq!(response(&main, "review_commit_file", stale_body), serde_json::json!({ "kind": "stale_selection" }));
-    app.state::<DiagnosticStore>().flush(WAIT).unwrap();
+    assert_diagnostics_flushed(app.state::<DiagnosticStore>().flush(WAIT));
     let stale_rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(stale_operation), limit: 200, ..Default::default() }).unwrap();
     assert!(!stale_rows.has_more);
     for component in [Component::Ipc, Component::Application] {
@@ -537,7 +556,7 @@ fn inspection_ipc_selects_discovered_worktrees_and_records_only_fixed_diagnostic
         response(&main, "record_renderer_diagnostic", serde_json::json!({ "diagnostic": {
             "operationId": operation.to_string(), "command": command, "phase": "completed", "durationMs": 1,
         }}));
-        app.state::<DiagnosticStore>().flush(WAIT).unwrap();
+        assert_diagnostics_flushed(app.state::<DiagnosticStore>().flush(WAIT));
         let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(operation), limit: 200, ..Default::default() }).unwrap();
         assert!(!rows.has_more);
         assert!(rows.events.iter().all(|row| row.operation_kind == kind || row.operation_kind == OperationKind::PersistWorkspace));

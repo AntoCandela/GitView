@@ -13,18 +13,22 @@ const schemaColumns = ['id', 'timestamp_ms', 'session_id', 'operation_id', 'pare
 const codes = new Set(['invalid_arguments', 'invalid_doc_path', 'invalid_doc_link', 'missing_doc_fragment', 'invalid_skill_frontmatter', 'missing_doc_examples', 'invalid_example_snippets', 'invalid_example_output', 'doc_examples_failed']);
 const exerciseStages = new Set(['cargo_metadata', 'driver_build', 'driver_run', 'driver_output', 'cli_build', 'cli_schema', 'cli_errors', 'cli_children', 'privacy']);
 const processCodes = new Set(['ok', 'start_failed', 'cancelled', 'signal_termination', 'output_limit', 'check_failed', 'invalid_output', 'assertion_failed']);
+const compilerCode = /^(?:E\d{4}|LNK\d{4}|RC\d{4}|CVT\d{4}|C\d{4}|C[0-9A-F]{7})$/;
 
 /** Accept only the closed CLI failure envelope; never copy borrowed fields into evidence. */
 export function documentationFailureEvidence(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)
-      || Object.keys(value).length !== 4
-      || !['error', 'stage', 'processCode', 'exitCode'].every(key => Object.hasOwn(value, key))
+      || Object.keys(value).length !== 5
+      || !['error', 'stage', 'processCode', 'exitCode', 'compilerCodes'].every(key => Object.hasOwn(value, key))
       || !codes.has(value.error)
       || !(value.stage === null || exerciseStages.has(value.stage))
       || !(value.processCode === null || processCodes.has(value.processCode))
       || !(value.exitCode === null || (Number.isInteger(value.exitCode) && value.exitCode >= -2_147_483_648 && value.exitCode <= 4_294_967_295))
-      || (value.processCode === null && value.exitCode !== null)) return null;
-  return { error: value.error, stage: value.stage, processCode: value.processCode, exitCode: value.exitCode };
+      || (value.processCode === null && value.exitCode !== null)
+      || !Array.isArray(value.compilerCodes) || value.compilerCodes.length > 16
+      || value.compilerCodes.some(code => typeof code !== 'string' || !compilerCode.test(code))
+      || (value.compilerCodes.length > 0 && (!['driver_build', 'cli_build'].includes(value.stage) || value.processCode !== 'check_failed'))) return null;
+  return { error: value.error, stage: value.stage, processCode: value.processCode, exitCode: value.exitCode, compilerCodes: [...value.compilerCodes] };
 }
 
 /** Recognize a complete success envelope without accepting contradictory failure fields. */
@@ -57,6 +61,7 @@ function documentationError(error, stage = null) {
     stage,
     processCode: error instanceof SyntaxError ? 'invalid_output' : error instanceof assert.AssertionError ? 'assertion_failed' : null,
     exitCode: null,
+    compilerCodes: [],
   });
 }
 
@@ -197,10 +202,21 @@ async function skillExamples(root) {
   return { rust, queries: { recent, timed: sql[0], causal: sql[1] } };
 }
 
-async function run(executable, args, cwd) {
+function compilerFailureCodes(output) {
+  const codes = new Set();
+  const plain = output.replace(/\x1b\[[0-9;]*m/g, '');
+  for (const match of plain.matchAll(/\berror\[(E\d{4})\]|\b(?:fatal )?error (LNK\d{4}|RC\d{4}|CVT\d{4}|C\d{4}|c[0-9a-f]{7}):/g)) {
+    codes.add((match[1] ?? match[2]).toUpperCase());
+    if (codes.size === 16) break;
+  }
+  return [...codes].sort();
+}
+
+async function run(executable, args, cwd, { compiler = false } = {}) {
   const result = await execute(executable, args, { cwd, signal: AbortSignal.timeout(15 * 60 * 1000) });
   if (result.code !== 'ok') throw new DocumentationFailure({
     error: 'doc_examples_failed', stage: null, processCode: result.code, exitCode: result.exitCode,
+    compilerCodes: compiler && result.code === 'check_failed' ? compilerFailureCodes(result.output) : [],
   });
   return result.output;
 }
@@ -272,7 +288,7 @@ export async function exerciseDiagnostics({ root = repositoryRoot, output = '.ve
     // The copied lock retains dependency pins; only the throwaway root package requires resolution.
     const target = await ownedPath(root, '.verification/docs-native-target', { generated: true, missing: true });
     stage = 'driver_build';
-    await run('cargo', ['build', '--offline', '--manifest-path', join(scaffold, 'Cargo.toml'), '--target-dir', target], root);
+    await run('cargo', ['build', '--offline', '--manifest-path', join(scaffold, 'Cargo.toml'), '--target-dir', target], root, { compiler: true });
     const executableSuffix = process.platform === 'win32' ? '.exe' : '';
     stage = 'driver_run';
     const driverOutput = await run(join(target, 'debug', `${packageName}${executableSuffix}`), [database], root);
@@ -281,7 +297,7 @@ export async function exerciseDiagnostics({ root = repositoryRoot, output = '.ve
     const canonicalId = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
     if (!canonicalId.test(result.operationId) || !canonicalId.test(result.childOperationId) || result.operationId === result.childOperationId) throw new Error('invalid_example_output');
     stage = 'cli_build';
-    await run('cargo', ['build', '--offline', '--locked', '--manifest-path', join(native, 'Cargo.toml'), '--target-dir', target, '--bin', 'gitview-diagnostics'], root);
+    await run('cargo', ['build', '--offline', '--locked', '--manifest-path', join(native, 'Cargo.toml'), '--target-dir', target, '--bin', 'gitview-diagnostics'], root, { compiler: true });
     const cli = join(target, 'debug', `gitview-diagnostics${executableSuffix}`);
     stage = 'cli_schema';
     const schema = JSON.parse(await run(cli, ['--database', database, 'schema'], root));

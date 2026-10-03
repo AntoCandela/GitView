@@ -39,32 +39,44 @@ function scroll(scroller: HTMLElement, top: number) {
   fireEvent.scroll(scroller);
 }
 
+function expectFocusedFile(path: string) {
+  expect(document.activeElement).toHaveRole("button");
+  expect(document.activeElement).toHaveAccessibleName(`Review ${path}`);
+  expect(document.activeElement).toBeVisible();
+}
+
 test.each(["tree", "list"] as const)("5000 %s files keep bounded DOM and Tab crosses an unmounted range without activating a file", async (view) => {
-  const user = userEvent.setup();
+  // Focus is committed by each key event's layout effects; no interaction depends on a typing delay.
+  const user = userEvent.setup({ delay: null });
   const select = vi.fn();
   render(<><button>Before</button><ChangeTree files={filesIn([], 5000)} label="Files" view={view} onSelect={select} /><button>After</button></>);
-  scrollerFor();
-  expect(screen.getAllByRole("button", { name: /^Review / }).length).toBeLessThan(40);
-  await user.click(screen.getByRole("button", { name: "Before" }));
+  const scroller = scrollerFor();
+  const before = screen.getByRole("button", { name: "Before" });
+  const after = screen.getByRole("button", { name: "After" });
+  // Count every mounted button, including hidden rows, without recomputing each row's accessible name.
+  expect(scroller.querySelectorAll("button").length).toBeLessThan(40);
+  expect(screen.queryByRole("button", { name: "Review file-40.ts" })).not.toBeInTheDocument();
+  await user.click(before);
   await user.tab();
-  expect(screen.getByRole("button", { name: "Review file-0.ts" })).toHaveFocus();
-  await user.keyboard("{Tab>40/}");
-  expect(screen.getByRole("button", { name: "Review file-40.ts" })).toHaveFocus();
+  expectFocusedFile("file-0.ts");
+  // One API call avoids per-call scheduling; each Tab still receives its own keydown and keyup.
+  await user.keyboard("{Tab}".repeat(40));
+  expectFocusedFile("file-40.ts");
   expect(select).not.toHaveBeenCalled();
-  expect(screen.getAllByRole("button", { name: /^Review / }).length).toBeLessThan(40);
+  expect(scroller.querySelectorAll("button").length).toBeLessThan(40);
   await user.tab({ shift: true });
-  expect(screen.getByRole("button", { name: "Review file-39.ts" })).toHaveFocus();
+  expectFocusedFile("file-39.ts");
   await user.keyboard("{Enter}");
   expect(select).toHaveBeenLastCalledWith(expect.objectContaining({ id: "file-39.ts" }));
-  await user.click(screen.getByRole("button", { name: "After" }));
+  await user.click(after);
   await user.tab({ shift: true });
-  expect(screen.getByRole("button", { name: "Review file-4999.ts" })).toHaveFocus();
+  expectFocusedFile("file-4999.ts");
   await user.tab();
-  expect(screen.getByRole("button", { name: "After" })).toHaveFocus();
-  await user.click(screen.getByRole("button", { name: "Before" }));
+  expect(after).toHaveFocus();
+  await user.click(before);
   await user.tab();
   await user.tab({ shift: true });
-  expect(screen.getByRole("button", { name: "Before" })).toHaveFocus();
+  expect(before).toHaveFocus();
 });
 
 test("expanded hierarchy pins each ancestor once and releases its stack at a sibling section", () => {
