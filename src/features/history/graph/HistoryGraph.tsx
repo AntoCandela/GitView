@@ -1,6 +1,6 @@
 /** Presents read-only ancestry with inline committed paths and view-only branch navigation. */
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
 import type { HistoryPage } from "../../../contracts/history";
 import type { RepositoryClient } from "../../../contracts/repositories";
@@ -26,7 +26,6 @@ const refKindLabels: Record<HistoryPage["refs"][number]["kind"], string> = {
   local_branch: "Local branch", remote_tracking: "Remote-tracking branch", tag: "Tag",
 };
 const laneSpacing = 16;
-const rowHeight = 36;
 
 /** The parent supplies bounded flex space; expanded paths keep all outgoing lanes continuous. */
 export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWorktree, workingBranch, comparison }: HistoryGraphProps) {
@@ -46,6 +45,12 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
     }
     return byOid;
   }, [page?.refs]);
+  const headOid = page?.head.state === "attached" || page?.head.state === "detached" ? page.head.oid : null;
+  const headLabelId = useId();
+  const headerHeights = useMemo(() => layout.rows.map(({ commit }) =>
+    refsByOid.has(commit.oid) || commit.oid === headOid || commit.parents.length === 0 ? 40 : 28,
+  ), [layout.rows, refsByOid, headOid]);
+  const unresolvedParents = useMemo(() => [...new Map(layout.stubs.map((stub) => [stub.oid, stub])).values()], [layout.stubs]);
   const [selection, setSelection] = useState<{
     scope: typeof scope; refs: HistoryPage["refs"]; oid: string;
   } | null>(null);
@@ -77,7 +82,7 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
     count: layout.rows.length,
     getScrollElement: () => list.current,
     getItemKey,
-    estimateSize: () => rowHeight,
+    estimateSize: (index) => headerHeights[index],
     initialRect: { width: 480, height: 360 },
     overscan: 6,
     scrollMargin,
@@ -92,8 +97,8 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
     if (previous === null || previous === selectedOid) return;
     const index = indicesByOid.get(previous);
     // Offscreen expanded rows can unmount before ResizeObserver sees their collapsed size.
-    if (index !== undefined) virtualizer.resizeItem(index, rowHeight);
-  }, [selectedOid, indicesByOid, virtualizer]);
+    if (index !== undefined) virtualizer.resizeItem(index, headerHeights[index]);
+  }, [selectedOid, indicesByOid, headerHeights, virtualizer]);
 
   useLayoutEffect(() => {
     const element = notices.current;
@@ -153,7 +158,7 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
   }
 
   return (
-    <section className="history history-feature" aria-label="Commit ancestry" style={{ "--history-lane-width": `${Math.min(width, 180)}px` } as CSSProperties}>
+    <section className="history history-feature" aria-label="Commit ancestry" style={{ "--history-lane-width": `${width}px` } as CSSProperties}>
       <div className="history-toolbar">
         <ContextSelector key={`${entryId}:${selectionGeneration}`} client={client} entryId={entryId}
           branch={branch ?? page?.head.branch ?? (page?.head.state === "detached" ? "Detached" : "HEAD")}
@@ -182,6 +187,9 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
             {visibleRows.map((virtualRow) => {
               const index = virtualRow.index;
               const row = layout.rows[index];
+              const headerHeight = headerHeights[index];
+              const subjectHeight = headerHeight === 28 ? 28 : 24;
+              const isHead = row.commit.oid === headOid;
               return <div className="history-row" key={virtualRow.key} data-index={index}
                 ref={virtualizer.measureElement} style={{ transform: `translateY(${virtualRow.start - scrollMargin}px)` }}
                 onKeyDown={(event) => tabBetweenRows(event, index)}
@@ -189,6 +197,8 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
                 onBlurCapture={(event) => {
                   if (!event.currentTarget.contains(event.relatedTarget)) setFocus(null);
                 }}>
+            <div className="history-header" data-head={isHead} data-selected={selectedOid === row.commit.oid}
+              style={{ "--history-header-height": `${headerHeight}px`, "--history-subject-height": `${subjectHeight}px` } as CSSProperties}>
             <Tooltip content={<>
               <div>{selectedOid === row.commit.oid ? "Collapse" : "Expand"} changed files for commit {row.commit.oid}</div>
               {row.commit.subject && <div>{row.commit.subject}</div>}
@@ -197,27 +207,33 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
               </div>)}
             </>} trigger={<button type="button" className="history-commit" data-history-index={index}
               aria-label={`${row.commit.subject ? `${row.commit.subject}, ` : ""}Commit ${row.commit.oid}`}
+              aria-describedby={isHead ? `${headLabelId}-${row.commit.oid}` : undefined}
               aria-pressed={selectedOid === row.commit.oid}
               aria-expanded={selectedOid === row.commit.oid}
               onKeyDown={(event) => navigate(event, index)}
               onClick={() => { invalidateComparison?.(); setSelection(selectedOid === row.commit.oid ? null : { scope, refs: page.refs, oid: row.commit.oid }); }}
             >
-              <LaneRow row={row} width={width} colors={colors.commits} />
+              <LaneRow row={row} width={width} height={headerHeight} nodeY={subjectHeight / 2} isHead={isHead} colors={colors.commits} />
               <span className="history-commit-content">
                 <span className="history-subject">{row.commit.subject ?? row.commit.oid.slice(0, 10)}</span>
-                <span className="history-badges">
-                  {page.head.oid === row.commit.oid && <span className="history-badge history-badge-head" style={{ color: colors.commits.get(row.commit.oid) }}>{page.head.state === "detached" ? "HEAD · detached" : "HEAD"}</span>}
-                  {(refsByOid.get(row.commit.oid) ?? []).map((ref) => <span
-                    className={`history-badge history-badge-${ref.kind}`} key={`${ref.kind}:${ref.name}`}
-                    style={{ color: colors.refs.get(`${ref.kind}:${ref.name}`) }}
-                    aria-label={`${refKindLabels[ref.kind]} ${ref.name}`}
-                  >{ref.name}</span>)}
-                  {row.commit.root && row.commit.parents.length === 0 && <span className="history-badge">Root</span>}
-                  {!row.commit.root && row.commit.parents.length === 0 && <span className="history-badge">Ancestry unavailable</span>}
-                </span>
               </span>
               <code className="history-short-oid" aria-hidden="true">{row.commit.oid.slice(0, 7)}</code>
             </button>} />
+              <span className="history-badges">
+                {isHead && <span id={`${headLabelId}-${row.commit.oid}`} className="history-badge history-badge-head"
+                  style={{ color: colors.commits.get(row.commit.oid) }}>
+                  {page.head.scope === "repository" ? "Repository HEAD" : "HEAD"}{page.head.state === "detached" ? " · detached" : ""}
+                </span>}
+                {(refsByOid.get(row.commit.oid) ?? []).map((ref) => <Tooltip key={`${ref.kind}:${ref.name}`}
+                  content={`${refKindLabels[ref.kind]} ${ref.name}`}
+                  trigger={<span className={`history-badge history-badge-${ref.kind}`}
+                    style={{ color: colors.refs.get(`${ref.kind}:${ref.name}`) }}
+                    aria-label={`${refKindLabels[ref.kind]} ${ref.name}`}
+                  >{ref.name}</span>} />)}
+                {row.commit.root && row.commit.parents.length === 0 && <span className="history-badge">Root</span>}
+                {!row.commit.root && row.commit.parents.length === 0 && <span className="history-badge">Ancestry unavailable</span>}
+              </span>
+            </div>
             {selectedOid === row.commit.oid && <div className="history-expansion">
               <LaneContinuation row={row} width={width} colors={colors.commits} />
               <CommitFiles key={row.commit.oid} client={client} entryId={entryId} selectionGeneration={selectionGeneration}
@@ -228,11 +244,11 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
           </div>
           {layout.stubs.length > 0 && <div className="history-boundary">
             <svg className="history-lanes" viewBox={`0 0 ${width} 20`} preserveAspectRatio="none" aria-hidden="true">
-              {layout.stubs.map((stub) => <path className={`history-stub-${stub.state}`} key={stub.oid} style={{ color: colors.commits.get(stub.oid) }} d={`M ${stub.lane * laneSpacing + laneSpacing} 0 v 16`} />)}
+              {layout.stubs.map((stub) => <path className={`history-stub-${stub.state}`} key={stub.edgeKey} style={{ color: colors.commits.get(stub.colorOid) }} d={`M ${stub.lane * laneSpacing + laneSpacing} 0 v 16`} />)}
             </svg>
             <details className="history-stubs">
-              <Tooltip content="Toggle unresolved ancestry details" trigger={<summary>Unresolved ancestry ({layout.stubs.length})</summary>} />
-              <ul>{layout.stubs.map((stub) => <li key={stub.oid}>
+              <Tooltip content="Toggle unresolved ancestry details" trigger={<summary>Unresolved ancestry ({unresolvedParents.length})</summary>} />
+              <ul>{unresolvedParents.map((stub) => <li key={stub.oid}>
                 <code>{stub.oid}</code>
                 <span>{stub.state === "unavailable" ? "Unavailable parent" : page.hasMore ? "Parent beyond loaded pages" : "Parent outside loaded history"}</span>
               </li>)}</ul>
@@ -248,27 +264,37 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
   );
 }
 
-function LaneRow({ row, width, colors }: { row: HistoryRow; width: number; colors: Map<string, string> }) {
+function LaneRow({ row, width, height, nodeY, isHead, colors }: {
+  row: HistoryRow; width: number; height: number; nodeY: number; isHead: boolean; colors: Map<string, string>;
+}) {
   const nodeX = row.lane * laneSpacing + laneSpacing;
-  return <svg className="history-lanes" style={{ color: colors.get(row.commit.oid) }} viewBox={`0 0 ${width} ${rowHeight}`} preserveAspectRatio="none" aria-hidden="true">
-    {row.segments.map((segment, index) => {
+  return <svg className="history-lanes" style={{ color: colors.get(row.commit.oid) }} viewBox={`0 0 ${width} ${height}`} aria-hidden="true">
+    {row.segments.map((segment) => {
       const fromX = segment.fromLane * laneSpacing + laneSpacing;
       const toX = segment.toLane * laneSpacing + laneSpacing;
-      const fromY = segment.from === "top" ? 0 : rowHeight / 2;
-      const toY = segment.to === "node" ? rowHeight / 2 : rowHeight;
-      const middleY = (fromY + toY) / 2;
-      return <path key={index} style={{ color: colors.get(segment.oid) }}
-        d={`M ${fromX} ${fromY} C ${fromX} ${middleY}, ${toX} ${middleY}, ${toX} ${toY}`} />;
+      const fromY = segment.from === "top" ? 0 : nodeY;
+      const toY = segment.to === "node" ? nodeY : height;
+      const direction = Math.sign(toX - fromX);
+      const radius = Math.min(4, Math.abs(toX - fromX) / 2);
+      let path = `M ${fromX} ${fromY} V ${toY}`;
+      if (fromX !== toX) {
+        // Incoming edges turn only on their actual parent's row; extra parents leave horizontally.
+        path = segment.to === "node"
+          ? `M ${fromX} ${fromY} V ${nodeY - radius} Q ${fromX} ${nodeY} ${fromX + direction * radius} ${nodeY} H ${toX}`
+          : `M ${fromX} ${fromY} H ${toX - direction * radius} Q ${toX} ${nodeY} ${toX} ${nodeY + radius} V ${toY}`;
+      }
+      return <path key={`${segment.edgeKey}:${segment.from}`} style={{ color: colors.get(segment.colorOid) }} d={path} />;
     })}
-    <circle className={row.commit.root && row.commit.parents.length === 0 ? "history-root-node" : "history-node"} cx={nodeX} cy={rowHeight / 2} r={3.5} />
+    <circle className="history-node-halo" cx={nodeX} cy={nodeY} r={isHead ? 5.5 : 4.75} />
+    <circle className={isHead ? "history-head-node" : "history-node"} cx={nodeX} cy={nodeY} r={isHead ? 4 : 3.5} />
   </svg>;
 }
 
 function LaneContinuation({ row, width, colors }: { row: HistoryRow; width: number; colors: Map<string, string> }) {
   return <svg className="history-lanes history-continuation" viewBox={`0 0 ${width} 1`} preserveAspectRatio="none" aria-hidden="true">
-    {row.segments.filter((segment) => segment.to === "bottom").map((segment, index) => {
+    {row.segments.filter((segment) => segment.to === "bottom").map((segment) => {
       const x = segment.toLane * laneSpacing + laneSpacing;
-      return <path key={index} style={{ color: colors.get(segment.oid) }}
+      return <path key={segment.edgeKey} style={{ color: colors.get(segment.colorOid) }}
         d={`M ${x} 0 V 1`} />;
     })}
   </svg>;

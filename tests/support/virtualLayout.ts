@@ -10,7 +10,9 @@ export function installVirtualLayout({ viewportHeight = 360, viewportWidth = 480
   const boundingRect = HTMLElement.prototype.getBoundingClientRect;
   vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(function (this: HTMLElement) {
     if (this.matches(".history-scroll, .changes-tree")) return viewportHeight;
-    if (this.classList.contains("history-row") || this.classList.contains("history-lanes")) return 36;
+    if (this.classList.contains("history-row")) {
+      return Number.parseFloat(this.querySelector<HTMLElement>(".history-header")?.style.getPropertyValue("--history-header-height") ?? "") || 28;
+    }
     return 28;
   });
   vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(viewportWidth);
@@ -25,9 +27,10 @@ export function installVirtualLayout({ viewportHeight = 360, viewportWidth = 480
     if (this.classList.contains("changes-tree") || this.classList.contains("changes-tree-content")) {
       const row = this.closest<HTMLElement>(".history-row");
       const rowTop = Number(row?.style.transform.match(/translateY\(([-.\d]+)px\)/)?.[1] ?? 0);
+      const headerHeight = Number.parseFloat(row?.querySelector<HTMLElement>(".history-header")?.style.getPropertyValue("--history-header-height") ?? "") || 0;
       const parentHeight = row?.querySelector(".history-parent-choice") ? 28 : 0;
       const scrollTop = this.closest(".history-scroll")?.scrollTop ?? 0;
-      return new DOMRect(0, rowTop + (row ? 40 + parentHeight : 0) - scrollTop, viewportWidth, this.offsetHeight);
+      return new DOMRect(0, rowTop + (row ? headerHeight + 4 + parentHeight : 0) - scrollTop, viewportWidth, this.offsetHeight);
     }
     if (this.matches(".history-scroll, .history-row, .history-lanes")) return new DOMRect(0, 0, viewportWidth, this.offsetHeight);
     return boundingRect.call(this);

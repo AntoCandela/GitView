@@ -1,8 +1,12 @@
-/** Maps ordered raw parents to continuous lanes; unresolved ancestry always ends in a stub. */
+/** Keeps each raw parent edge in a persistent lane until its actual parent row or an ancestry stub. */
 
 import type { HistoryCommit } from "../../../contracts/history";
 
 export interface HistorySegment {
+  /** Stable child OID + raw parent index identity across every piece of this edge. */
+  edgeKey: string;
+  /** Source child OID used to look up its lineage color, not the shared target's color. */
+  colorOid: string;
   oid: string;
   fromLane: number;
   toLane: number;
@@ -18,56 +22,55 @@ export interface HistoryRow {
 }
 
 export interface HistoryStub {
+  edgeKey: string;
+  colorOid: string;
   oid: string;
   lane: number;
   state: "outside_page" | "unavailable";
 }
 
-/** Recomputing over appended pages resolves old boundary stubs without changing raw parent order. */
+type PendingEdge = Pick<HistorySegment, "oid" | "edgeKey" | "colorOid">;
+
+/** Appended pages preserve prefix geometry; shared targets join only at their actual commit row. */
 export function layoutHistory(commits: HistoryCommit[]): { rows: HistoryRow[]; stubs: HistoryStub[]; laneCount: number } {
-  const loaded = new Set(commits.map((commit) => commit.oid));
   const parentStates = new Map<string, HistoryStub["state"]>();
-  let lanes: string[] = [];
+  const lanes: (PendingEdge | null)[] = [];
   let laneCount = 1;
   const rows: HistoryRow[] = [];
   for (const commit of commits) {
-    let lane = lanes.indexOf(commit.oid);
-    const incoming = lane !== -1;
-    if (!incoming) {
-      lane = lanes.length;
-      lanes.push(commit.oid);
-    }
-    const next = lanes.filter((oid) => oid !== commit.oid);
-    let insertion = lane;
-    for (const parent of commit.parents) {
-      if (!loaded.has(parent.oid)) {
-        const state = parent.state === "unavailable" ? "unavailable" : "outside_page";
-        if (parentStates.get(parent.oid) !== "unavailable") parentStates.set(parent.oid, state);
-      }
-      if (!next.includes(parent.oid)) {
-        next.splice(insertion, 0, parent.oid);
-        insertion += 1;
-      }
-    }
+    const incomingLane = lanes.findIndex((edge) => edge?.oid === commit.oid);
+    const lane = incomingLane === -1 ? freeLane(lanes) : incomingLane;
     const segments: HistorySegment[] = [];
-    lanes.forEach((oid, fromLane) => {
-      if (oid === commit.oid) {
-        if (incoming) segments.push({ oid, fromLane, toLane: lane, from: "top", to: "node", parentIndex: null });
+    lanes.forEach((edge, fromLane) => {
+      if (edge === null) return;
+      if (edge.oid === commit.oid) {
+        segments.push({ ...edge, fromLane, toLane: lane, from: "top", to: "node", parentIndex: null });
+        lanes[fromLane] = null;
       } else {
-        segments.push({ oid, fromLane, toLane: next.indexOf(oid), from: "top", to: "bottom", parentIndex: null });
+        segments.push({ ...edge, fromLane, toLane: fromLane, from: "top", to: "bottom", parentIndex: null });
       }
     });
     commit.parents.forEach((parent, parentIndex) => {
-      segments.push({ oid: parent.oid, fromLane: lane, toLane: next.indexOf(parent.oid), from: "node", to: "bottom", parentIndex });
+      const state = parent.state === "unavailable" ? "unavailable" : "outside_page";
+      if (parentStates.get(parent.oid) !== "unavailable") parentStates.set(parent.oid, state);
+      const edge: PendingEdge = { oid: parent.oid, edgeKey: `${commit.oid}:${parentIndex}`, colorOid: commit.oid };
+      // Never share or compact live slots, even when two edges have the same target.
+      const toLane = parentIndex === 0 ? lane : freeLane(lanes);
+      lanes[toLane] = edge;
+      segments.push({ ...edge, fromLane: lane, toLane, from: "node", to: "bottom", parentIndex });
     });
-    laneCount = Math.max(laneCount, lanes.length, next.length);
+    laneCount = Math.max(laneCount, lane + 1, lanes.length);
     rows.push({ commit, lane, segments });
-    lanes = next;
   }
-  return {
-    rows,
-    laneCount,
-    stubs: lanes.map((oid, lane) => ({ oid, lane, state: parentStates.get(oid) ?? "outside_page" })),
-  };
+  const stubs: HistoryStub[] = [];
+  lanes.forEach((edge, lane) => {
+    if (edge !== null) stubs.push({ ...edge, lane, state: parentStates.get(edge.oid) ?? "outside_page" });
+  });
+  return { rows, stubs, laneCount };
+}
+
+function freeLane(lanes: (PendingEdge | null)[]): number {
+  const lane = lanes.indexOf(null);
+  return lane === -1 ? lanes.length : lane;
 }
 
