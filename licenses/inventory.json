@@ -868,7 +868,7 @@
     "vendor/why-is-node-running/index.d.ts": "6c0e0082473acc9f8c37110af01649c6d0532b40670db87e023a7649713652eb",
     "vendor/why-is-node-running/index.js": "6daa0abe98665e2eec698b6fe89d7576829689351111095aa4b458e9e3df4880",
     "vendor/why-is-node-running/package.json": "b5e59e9cccc8aee90b2f725b2e2b7b6c56eb619a63330b0ec8937c533152201d",
-    "vite.config.ts": "a722cc7a689f1e5fb9a4868601c48510e28ef4002b2d6ae4d5012bfabda4e3ed"
+    "vite.config.ts": "bb8ad669c0af53777c9f309d49006f6f57afc349805aeb19541847f8f3a263df"
   },
   "legalTextHashes": {
     "licenses/texts/assets/catppuccin-latte/LICENSE.txt": "dab37945e3097e43c74c08437196152a50f8d5d5e1d0335f469b203e183e21b8",
