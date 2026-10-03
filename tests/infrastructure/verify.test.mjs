@@ -316,3 +316,55 @@ test('CLI rejects unknown, duplicate, missing and invalid options', () => {
   assert.throws(() => parseArguments(['--command', 'unsafe']));
   assert.deepEqual(parseArguments(['--suite', 'integration', '--output', 'evidence']), { suite: 'integration', output: 'evidence' });
 });
+
+test('only source-owned literal test titles enter the failure allowlist after parser migration', async t => {
+  const root = await fixture(t);
+  await mkdir(join(root, 'tests/unit'), { recursive: true });
+  const source = join(root, 'tests/unit/Authority.test.tsx');
+  const moduleSource = join(root, 'tests/unit/Module.test.mjs');
+  const unsafe = 'x'.repeat(161);
+  await writeFile(source, [
+    "test('direct_case', () => {});", 'it(`template_case`, () => {});',
+    "test.skip('modified_case', () => {});", "it('escaped\\u005fcase', () => {});",
+    "test?.('optional_case', () => {});",
+    "const View = () => <span onClick={() => test('tsx_case', () => {})}/>;",
+    "test['skip']('computed_case', () => {});", "test.concurrent.only('deep_case', () => {});",
+    "obj.test('other_case', () => {});", "(test)('wrapped_case', () => {});",
+    "const title = 'variable_case'; test(title, () => {});",
+    "test(`interpolated_${'case'}`, () => {});", "test('concat_' + 'case', () => {});",
+    "test.each([])('curried_case', () => {});", "// test('comment_case', () => {});",
+    'const example = "test(\'string_case\', () => {})";',
+    "test('private/customer', () => {});", `test('${unsafe}', () => {});`,
+  ].join('\n'));
+  await writeFile(moduleSource, "it('module_case', () => {});\n");
+  const owned = ['direct_case', 'template_case', 'modified_case', 'escaped_case', 'optional_case', 'tsx_case'];
+  const unowned = ['computed_case', 'deep_case', 'other_case', 'wrapped_case', 'variable_case',
+    'interpolated_case', 'concat_case', 'curried_case', 'comment_case', 'string_case', 'private/customer', unsafe];
+  const report = {
+    success: false, numPassedTests: 0, numFailedTests: owned.length + unowned.length + 1,
+    numPendingTests: 0, numTodoTests: 0, numTotalTests: owned.length + unowned.length + 1,
+    testResults: [
+      { name: source, assertionResults: [...owned, ...unowned].map(title => ({ title, status: 'failed' })) },
+      { name: moduleSource, assertionResults: [{ title: 'module_case', status: 'failed' }] },
+    ],
+  };
+  const result = await runVerification({ root, checks: [reportChild('frontend', report, 'process.exitCode = 1')], metadata });
+  assert.equal(result.manifest.identifierInventory, 'available');
+  assert.equal(result.manifest.checks[0].omittedFailures, true);
+  assert.deepEqual(result.manifest.checks[0].failures, [
+    'direct_case', 'escaped_case', 'modified_case', 'module_case', 'optional_case',
+    'source:tests:unit:Authority.test.tsx', 'source:tests:unit:Module.test.mjs', 'template_case', 'tsx_case',
+  ]);
+  const persisted = await readFile(join(root, '.verification/manifest.json'), 'utf8');
+  assert.doesNotMatch(persisted, /computed_case|deep_case|other_case|wrapped_case|variable_case|interpolated_case|concat_case|curried_case|comment_case|string_case|private\/customer|x{161}/);
+});
+
+test('a parser failure makes identifier evidence unavailable without publishing its source', async t => {
+  const root = await fixture(t);
+  await mkdir(join(root, 'tests/unit'), { recursive: true });
+  await writeFile(join(root, 'tests/unit/Broken.test.ts'), "test('SECRET_TOKEN', () => {");
+  const result = await runVerification({ root, checks: [child('success', 'process.exit(0)')], metadata });
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.manifest.identifierInventory, 'unavailable');
+  assert.doesNotMatch(await readFile(join(root, '.verification/manifest.json'), 'utf8'), /SECRET_TOKEN|Broken\.test|source_parse_failed/);
+});

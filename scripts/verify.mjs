@@ -60,7 +60,7 @@ async function revisionMetadata(root, signal) {
 async function behaviorIdentifiers(root) {
   const identifiers = new Set();
   const sources = new Map();
-  const ts = await import('typescript');
+  const { staticString, visitSource } = await import('./source-ast.mjs');
   const files = [...await sourceFiles(root, 'tests'), ...await sourceFiles(root, 'src-tauri/tests')];
   for (const path of files) {
     if (!/\.(?:tsx?|mjs|rs)$/.test(path)) continue;
@@ -70,17 +70,14 @@ async function behaviorIdentifiers(root) {
       for (const match of source.matchAll(/\bfn\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g)) if (safeIdentifier(match[1])) identifiers.add(match[1]);
       continue;
     }
-    const tree = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
-    function visit(node) {
-      if (ts.isCallExpression(node)) {
-        const expression = node.expression;
-        const name = ts.isIdentifier(expression) ? expression.text : ts.isPropertyAccessExpression(expression) && ts.isIdentifier(expression.expression) ? expression.expression.text : null;
-        const title = node.arguments[0];
-        if (['test', 'it'].includes(name) && title && ts.isStringLiteralLike(title) && safeIdentifier(title.text)) identifiers.add(title.text);
-      }
-      ts.forEachChild(node, visit);
-    }
-    visit(tree);
+    visitSource(path, source, node => {
+      if (node.type !== 'CallExpression') return;
+      const expression = node.callee;
+      const name = expression.type === 'Identifier' ? expression.name
+        : expression.type === 'MemberExpression' && !expression.computed && expression.object.type === 'Identifier' ? expression.object.name : null;
+      const title = staticString(node.arguments[0]);
+      if (['test', 'it'].includes(name) && safeIdentifier(title)) identifiers.add(title);
+    });
   }
   return { identifiers, sources };
 }

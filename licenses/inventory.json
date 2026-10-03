@@ -13,10 +13,10 @@
     ".agents/skills/gitview-verification/SKILL.md": "0f1a3fe20f4e401940e57b42825ac87a6bf70f13fe4ce8c25cf4e10ca7ff87c1",
     ".agents/skills/gitview-worker-isolation/SKILL.md": "951b3673b5aa6aaa73ac6bf5c5d640214db36cbd8f2ea5db51ca7e23b72b4e4c",
     "CODE_OF_CONDUCT.md": "5d955fd2bed345f78cc377f046b293f7a88686bbaef9bed26908692c31b9e064",
-    "THIRD_PARTY_NOTICES.md": "154b893544f1244a54c29c94a2816ba89c7ffd4a6bdda9398e4ce1beddc6fb55",
-    "licenses/supplemental-sources.json": "b2712ecebf785086f7c93ad39c2dfeb66603d29b032db00e72371c319a75d9f0",
-    "package-lock.json": "62e553ac5d2d183cd4a5d88da4644b8e4b5381a18ade345abddb28590ace652f",
-    "package.json": "211114ff6cca800b6c5455a5220b1c66336ebd9f4f5daaf8c7f109ccd4c9123e",
+    "THIRD_PARTY_NOTICES.md": "31191a4041d14c5c177323ac0026c6db2dcab367c673cd9badc8a4bf304b360e",
+    "licenses/supplemental-sources.json": "645455d3db7941c109d78afb67be07632c5b5d63a9386cc424f875398b6204ba",
+    "package-lock.json": "6778d7d46b84d04878d8111353e989fcb756ea25e7e6f990186824986bf7fee0",
+    "package.json": "13572340d7b1480b9ff5e8e77d2fffc726a0b369fbd5a7cd5b4a21aff0f8068e",
     "public/favicon.svg": "8a3a2a8cf0c6358aeee5edd83559bab768088b9a9f3522a292e8fa23ed55f99e",
     "scripts/check-licenses.mjs": "c08b144de0acf63d84cc99a9d53e5cbdce963801810e4387939e01cbd69724d3",
     "scripts/fileIconThemes.ts": "3dab7f01b1b8498d31b661da005f604429d6730dc8f4c51253133e902b3abfcb",
@@ -1734,6 +1734,46 @@
     "licenses/texts/npm/@types/react-dom/19.3.0/LICENSE": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
     "licenses/texts/npm/@types/react/19.3.0/LICENSE": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
     "licenses/texts/npm/@types/unist/3.0.3/LICENSE": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+    "licenses/texts/npm/@typescript/typescript-aix-ppc64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-aix-ppc64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-darwin-arm64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-darwin-arm64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-darwin-x64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-darwin-x64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-freebsd-arm64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-freebsd-arm64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-freebsd-x64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-freebsd-x64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-linux-arm/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-linux-arm/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-linux-arm64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-linux-arm64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-linux-loong64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-linux-loong64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-linux-mips64el/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-linux-mips64el/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-linux-ppc64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-linux-ppc64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-linux-riscv64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-linux-riscv64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-linux-s390x/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-linux-s390x/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-linux-x64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-linux-x64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-netbsd-arm64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-netbsd-arm64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-netbsd-x64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-netbsd-x64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-openbsd-arm64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-openbsd-arm64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-openbsd-x64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-openbsd-x64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-sunos-x64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-sunos-x64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-win32-arm64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-win32-arm64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/@typescript/typescript-win32-x64/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/@typescript/typescript-win32-x64/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
     "licenses/texts/npm/@ungap/structured-clone/1.4.0/LICENSE": "dc6d4961d8b6ee747231582ae9c53ce1d66bf76bc9f5a28f554c0e97210953bf",
     "licenses/texts/npm/@vitest/mocker/5.0.3/LICENSE": "04575fc5bfae19a9b63100f8691f901a2e15a399011ac02db435a9ef27295551",
     "licenses/texts/npm/@vitest/spy/5.0.3/LICENSE": "04575fc5bfae19a9b63100f8691f901a2e15a399011ac02db435a9ef27295551",
@@ -1864,7 +1904,11 @@
     "licenses/texts/npm/tough-cookie/5.1.2/LICENSE": "22ec6791c91ba42c0516a05f4cbdde019aae4687f8a38c5ca7e8a69ee68f851d",
     "licenses/texts/npm/tr46/5.1.1/LICENSE.md": "499d6d466d064e0460427967a344e2a32fcb86ea8c6cd1a285ec4f1fa03fba67",
     "licenses/texts/npm/trim-lines/3.0.1/license": "9f084fac69d8cf1e6ce983ba5a3499c7695ed74a26ec625c38f0fd19fddd5e10",
-    "licenses/texts/npm/typescript/5.9.3/LICENSE.txt": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/typescript/7.0.2/LICENSE": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47",
+    "licenses/texts/npm/typescript/7.0.2/NOTICE.txt": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b",
+    "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad",
+    "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc",
+    "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0",
     "licenses/texts/npm/undici-types/7.24.6/LICENSE": "a6db8096b2707bc0102d256917d4d33f298ba36d8c3f25de067a2b5bb379db27",
     "licenses/texts/npm/unist-util-is/6.0.1/license": "82974dbf2639d13edab95c32ed9cb6c0867ede272cd2e07ce47ce8548fe55c05",
     "licenses/texts/npm/unist-util-position/5.0.0/license": "63cb98b3f6abfb3c3592c16f88253c1bdc834087bf52671e8ce5609e4eb693cf",
@@ -4881,6 +4925,1366 @@
           "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383"
         }
       ]
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-aix-ppc64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-aix-ppc64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-aix-ppc64/-/typescript-aix-ppc64-7.0.2.tgz",
+      "integrity": "sha512-MTKKkWB7p/0E9xi1d1tHtZ5PiLkGEMIq88pK2CubZjOsLtYTLqhgIgi6zepFa+9GHZ6h05NMCkQxGKiPXMxXtQ==",
+      "archiveSha256": "b6e558bbdc9206b7b99f6f4f4ce4fa4f6157640ab580cc7d563703767d43d8cc",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "aix"
+      ],
+      "cpu": [
+        "ppc64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-aix-ppc64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-aix-ppc64/-/typescript-aix-ppc64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-aix-ppc64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-aix-ppc64/-/typescript-aix-ppc64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-darwin-arm64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-darwin-arm64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-darwin-arm64/-/typescript-darwin-arm64-7.0.2.tgz",
+      "integrity": "sha512-gowzar9MwS/aRWp6f3a4KUqzRjAZjOsmGNCM6LcTgXum+dBfgsBVMN+AgvOCCbguXyick6LJhpBszxMebJ8syA==",
+      "archiveSha256": "902e2fe1cf0799198ef902c6b8c310a450fef629a6baba41d45641ef75c04ebd",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-darwin-arm64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-darwin-arm64/-/typescript-darwin-arm64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-darwin-arm64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-darwin-arm64/-/typescript-darwin-arm64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-darwin-x64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-darwin-x64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-darwin-x64/-/typescript-darwin-x64-7.0.2.tgz",
+      "integrity": "sha512-SZ9xZInqApNlNGc9s0W1VSsktYSOe9cFqNOIqmN1Gs8SmkjKZYFt017G4VwPxASInODuAdbTW7sXiFUf893RgA==",
+      "archiveSha256": "eba158cb54050f723d5ff781438f33de5640054440bb4f2bd170cfe9bc2eb551",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "darwin"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-darwin-x64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-darwin-x64/-/typescript-darwin-x64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-darwin-x64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-darwin-x64/-/typescript-darwin-x64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-freebsd-arm64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-freebsd-arm64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-freebsd-arm64/-/typescript-freebsd-arm64-7.0.2.tgz",
+      "integrity": "sha512-W5NH4y/J0plIIS5b2xvTEkU7JFxyqdMAOgf+Ilhl0vHQXKO5dZoxd+C/jEtq56c4F3wk71RB4BMRQ2XdI+bwYQ==",
+      "archiveSha256": "42d23a91be92d7e761cc808b10c34430f1f5f6cb6dc9c594e832fdf7d65d4c5b",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "freebsd"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-freebsd-arm64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-freebsd-arm64/-/typescript-freebsd-arm64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-freebsd-arm64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-freebsd-arm64/-/typescript-freebsd-arm64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-freebsd-x64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-freebsd-x64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-freebsd-x64/-/typescript-freebsd-x64-7.0.2.tgz",
+      "integrity": "sha512-UMGDx5sTpzNw3WiPebH7l90IWfJggEd+egHt/q6p7/Cm3zqoV7VxkGXt+3DxPIw8CcmvAB0j3sVVfbhX+M4Tpw==",
+      "archiveSha256": "d982b0db967346becc4ccbc8cdac69e0335995c419bf129616e18a87832edb8c",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "freebsd"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-freebsd-x64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-freebsd-x64/-/typescript-freebsd-x64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-freebsd-x64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-freebsd-x64/-/typescript-freebsd-x64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-linux-arm",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-linux-arm",
+      "source": "https://registry.npmjs.org/@typescript/typescript-linux-arm/-/typescript-linux-arm-7.0.2.tgz",
+      "integrity": "sha512-gffT3xPz9sR7j/YJExkyPntrI0P2EP9XbOyWzth2/Gs0RstK+90RBcO0ncXoXy/beYll1SXw846Nf2zdnEz0QQ==",
+      "archiveSha256": "33a15a7badb207a38957373c410b970319baac8960109232ab64502497caea06",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "arm"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-arm/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-arm/-/typescript-linux-arm-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-arm/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-arm/-/typescript-linux-arm-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-linux-arm64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-linux-arm64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-linux-arm64/-/typescript-linux-arm64-7.0.2.tgz",
+      "integrity": "sha512-Qh4eU4/y3yDjnfjjyPYihMj5/ODIlmt+Bzu17OI+fiSRDW57QmU5SiN63exPRNJPKUzcc1INa1NXdrJ+MqHjUQ==",
+      "archiveSha256": "c83d931ac9dd7549cde6e71246aa9d6a9812843023df3e277fe3b5dcf41dd0ea",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-arm64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-arm64/-/typescript-linux-arm64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-arm64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-arm64/-/typescript-linux-arm64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-linux-loong64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-linux-loong64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-linux-loong64/-/typescript-linux-loong64-7.0.2.tgz",
+      "integrity": "sha512-uEHck9i8hoAzXPiYRib1O7miOnz23SxIeVl6F4LXox+qov1K35jHcEW6VHKvZI+pyvl7fZEP4MCU5LYvIq1GuQ==",
+      "archiveSha256": "4d0a2d19f0563df4d12b1e4197a5aefc9827b2977aa48282e7647926085d3c1f",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "loong64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-loong64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-loong64/-/typescript-linux-loong64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-loong64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-loong64/-/typescript-linux-loong64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-linux-mips64el",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-linux-mips64el",
+      "source": "https://registry.npmjs.org/@typescript/typescript-linux-mips64el/-/typescript-linux-mips64el-7.0.2.tgz",
+      "integrity": "sha512-R4KvAMnE43W5Qeqb0Ly56O3mWMWIAgsMyz36DCaycd5nbg/9kzm0liw3JocfRqyJY0KPmzFjbswozXyW0DnIYA==",
+      "archiveSha256": "6743a786c65e33b5b17d34bd9f2a66446dce95dc028cf21b6e6a975e7f576352",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "mips64el"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-mips64el/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-mips64el/-/typescript-linux-mips64el-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-mips64el/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-mips64el/-/typescript-linux-mips64el-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-linux-ppc64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-linux-ppc64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-linux-ppc64/-/typescript-linux-ppc64-7.0.2.tgz",
+      "integrity": "sha512-DORx5b3sd/4S7eayxm4FQv+A7CrkUIGRaHiwI8oiHTAI1fAPWhF4J0vAlkC8biAlHSVVwxMQ3tjZ2/DVbnQiiA==",
+      "archiveSha256": "8c30ad95ff40cff8bba2ab294abde3bfee6fa12b2b649f80ec90ef3188842db1",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "ppc64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-ppc64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-ppc64/-/typescript-linux-ppc64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-ppc64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-ppc64/-/typescript-linux-ppc64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-linux-riscv64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-linux-riscv64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-linux-riscv64/-/typescript-linux-riscv64-7.0.2.tgz",
+      "integrity": "sha512-wf0jqEDOjrPRnKwYRyyJDRo11KMbvMFrU+q4zqKyChODBzvlkbhNQfKvLxQCcwTpdDaXSHZTVuh0JoCrKCUMHQ==",
+      "archiveSha256": "b5afba89cef6c1c9e6142893018fdbd04183abe1e281a710fe31bb9578d2dc72",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "riscv64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-riscv64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-riscv64/-/typescript-linux-riscv64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-riscv64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-riscv64/-/typescript-linux-riscv64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-linux-s390x",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-linux-s390x",
+      "source": "https://registry.npmjs.org/@typescript/typescript-linux-s390x/-/typescript-linux-s390x-7.0.2.tgz",
+      "integrity": "sha512-IkwJc3L7yhytWd/ewjyxNDfOmswCm9GWMJT/ue/dU4aZNbwZeYAetq42VyLmsmSjvoX7z74X6ZaYCtzAr0EuGw==",
+      "archiveSha256": "badc50ce68cd84c462fcbddfe0c8a7acf9b16a334397cc73e889f6e783f1903d",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "s390x"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-s390x/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-s390x/-/typescript-linux-s390x-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-s390x/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-s390x/-/typescript-linux-s390x-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-linux-x64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-linux-x64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-linux-x64/-/typescript-linux-x64-7.0.2.tgz",
+      "integrity": "sha512-EYdf2cNg7rgCWJnxCdJ+F3V39O8ihb37eHAu1LK8oAFizgTQbPOK7zHHXbPt8rX24COqODXeI3sIf0fCXG7H/A==",
+      "archiveSha256": "7ecad6f67377e831856367ab062ef394f21506a611405bf8ac0ff039348637d3",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "linux"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-x64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-x64/-/typescript-linux-x64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-linux-x64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-linux-x64/-/typescript-linux-x64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-netbsd-arm64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-netbsd-arm64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-netbsd-arm64/-/typescript-netbsd-arm64-7.0.2.tgz",
+      "integrity": "sha512-+polYF4MF04aPpO5FTkHran9yUQDSXqy5GiSDKpsll5jy3l3+g9QLhpf39T+ePtefhXLOGrLl0QIjkQP6VnelA==",
+      "archiveSha256": "afc662ba78fe126f96209b39d6c64c08088ff12b6df363c4bae04a6b79a26000",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "netbsd"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-netbsd-arm64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-netbsd-arm64/-/typescript-netbsd-arm64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-netbsd-arm64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-netbsd-arm64/-/typescript-netbsd-arm64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-netbsd-x64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-netbsd-x64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-netbsd-x64/-/typescript-netbsd-x64-7.0.2.tgz",
+      "integrity": "sha512-8YIT0EHM/3dq10ZOVF/A7pc/YSMtbcecct4rWtexrnSCHOPcpC2KTLXfTCR6vDpnSiY12heNb1GiN/wu+T/FyA==",
+      "archiveSha256": "9eb8b25b298b61912cb821e598d883742fa24778267fa88dc94b86acfe3edfe7",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "netbsd"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-netbsd-x64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-netbsd-x64/-/typescript-netbsd-x64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-netbsd-x64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-netbsd-x64/-/typescript-netbsd-x64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-openbsd-arm64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-openbsd-arm64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-openbsd-arm64/-/typescript-openbsd-arm64-7.0.2.tgz",
+      "integrity": "sha512-APT8+ClYnuYm1u9+kgGXoMj2VzWzcymwh2gNSQVySHfkRDGOTVkoWLjCmOQSaO+PoqQ57B0flRp9SA+7GnnkzQ==",
+      "archiveSha256": "c8729f2a2ea9a0f0efb0c36ea7b638ebdaad0eaf31943406a488ab3083e13b5a",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "openbsd"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-openbsd-arm64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-openbsd-arm64/-/typescript-openbsd-arm64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-openbsd-arm64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-openbsd-arm64/-/typescript-openbsd-arm64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-openbsd-x64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-openbsd-x64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-openbsd-x64/-/typescript-openbsd-x64-7.0.2.tgz",
+      "integrity": "sha512-yX7s+Q0Dln0Dt9tEzZsAjXXR/+ytBM7AlglaqyeMPxQszJ1JhlJdZ6jLA+IzldHtflX81em7lDao1xXu+aRRkg==",
+      "archiveSha256": "90aeadb743517361f902c6e7ef1e57113175aaf483fb5f2abc1701c8246c66a4",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "openbsd"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-openbsd-x64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-openbsd-x64/-/typescript-openbsd-x64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-openbsd-x64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-openbsd-x64/-/typescript-openbsd-x64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-sunos-x64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-sunos-x64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-sunos-x64/-/typescript-sunos-x64-7.0.2.tgz",
+      "integrity": "sha512-dLJDGaLZ1D4HPQn62u1n8mBDkJREwMsAkCdkwd4Ieqw+x3TUyTsqY0YiBCtE6H6OzzgGk3iuZ3vFWRS+E8/d1g==",
+      "archiveSha256": "a625970be8f04944de633929eb0777c2c60c6c242590b79fc37750cf4a577e85",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "sunos"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-sunos-x64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-sunos-x64/-/typescript-sunos-x64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-sunos-x64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-sunos-x64/-/typescript-sunos-x64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-win32-arm64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-win32-arm64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-win32-arm64/-/typescript-win32-arm64-7.0.2.tgz",
+      "integrity": "sha512-Gyl1Vy6OsWesLzmq+EP0Fb7b4Nid5232AvcA2SFcdYreldpNtYFFofPjnt62y9hQy7VTaZp65ICJjuAQRaVcIQ==",
+      "archiveSha256": "0a73534e6ee50cdbb2a29ac48657ca0ad13cf0f424cf63808e4df7baeb87b8be",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "win32"
+      ],
+      "cpu": [
+        "arm64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-win32-arm64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-win32-arm64/-/typescript-win32-arm64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-win32-arm64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-win32-arm64/-/typescript-win32-arm64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
+      "ecosystem": "npm",
+      "name": "@typescript/typescript-win32-x64",
+      "version": "7.0.2",
+      "lockPath": "node_modules/@typescript/typescript-win32-x64",
+      "source": "https://registry.npmjs.org/@typescript/typescript-win32-x64/-/typescript-win32-x64-7.0.2.tgz",
+      "integrity": "sha512-0BQ3HkAHHlKLSp1qRvf3SUhGpGsDuhB/jgFw75guyqbxJqEaS0Cw/VFO8i2nHglJUzQCRtMMR/IBAKE3ETMC4g==",
+      "archiveSha256": "61fc4e141d2bc687db580e71bbfa63b9c209f0310645d82ca1b457eb3a24fd19",
+      "repository": "https://github.com/microsoft/TypeScript.git",
+      "scope": [
+        "development/build/test"
+      ],
+      "optional": true,
+      "os": [
+        "win32"
+      ],
+      "cpu": [
+        "x64"
+      ],
+      "declaredLicense": "Apache-2.0",
+      "upstreamLicense": "Apache-2.0",
+      "selectedLicense": "Apache-2.0",
+      "notices": [
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-win32-x64/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-win32-x64/-/typescript-win32-x64-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/@typescript/typescript-win32-x64/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/@typescript/typescript-win32-x64/-/typescript-win32-x64-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
+          "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+        }
+      ],
+      "noticeEvidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
     },
     {
       "ecosystem": "npm",
@@ -8262,11 +9666,11 @@
     {
       "ecosystem": "npm",
       "name": "typescript",
-      "version": "5.9.3",
+      "version": "7.0.2",
       "lockPath": "node_modules/typescript",
-      "source": "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz",
-      "integrity": "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==",
-      "archiveSha256": "10e108c9cf7d5f2879053dff18515fb405abf2ccef63eaaf017d9c571687a1d3",
+      "source": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz",
+      "integrity": "sha512-8FYau96o3NKOhbjKi/qNvG/W5jhzxkbdm5sj9AbZ/5T5sWqn3hJgLfGx27sRKZWTvyzCP8dLRBTf5tBTSRVUNA==",
+      "archiveSha256": "da2513f4b95176d6dde8b51aab7afe8a927656c9d277369793f77f7e59371c08",
       "repository": "https://github.com/microsoft/TypeScript.git",
       "scope": [
         "development/build/test"
@@ -8279,12 +9683,37 @@
       "selectedLicense": "Apache-2.0",
       "notices": [
         {
-          "path": "licenses/texts/npm/typescript/5.9.3/LICENSE.txt",
-          "sourcePath": "LICENSE.txt",
-          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-5.9.3.tgz#package/LICENSE.txt",
+          "path": "licenses/texts/npm/typescript/7.0.2/LICENSE",
+          "sourcePath": "LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/LICENSE",
           "sha256": "a7d00bfd54525bc694b6e32f64c7ebcf5e6b7ae3657be5cc12767bce74654a47"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/vendor/vscode-jsonrpc/License.txt",
+          "sourcePath": "vendor/vscode-jsonrpc/License.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/vendor/vscode-jsonrpc/License.txt",
+          "sha256": "ec9ee83580841e8eb687aca9867f221503809ba6426c7f876ede17d91b9fcfd0"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/NOTICE.txt",
+          "sourcePath": "NOTICE.txt",
+          "sourceUrl": "https://registry.npmjs.org/typescript/-/typescript-7.0.2.tgz#package/NOTICE.txt",
+          "sha256": "f5c708b59114507b8b27b48181b6883d106bbca0c1634bbee45b5e344237b66b"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/LICENSE",
+          "sourcePath": "upstream/golang/LICENSE",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE",
+          "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+        },
+        {
+          "path": "licenses/texts/npm/typescript/7.0.2/upstream/golang/PATENTS",
+          "sourcePath": "upstream/golang/PATENTS",
+          "sourceUrl": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS",
+          "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
         }
-      ]
+      ],
+      "noticeEvidence": "Preserve the native compiler's complete LICENSE, NOTICE.txt and nested vscode-jsonrpc MIT grant. Published gitHead 2bd066d87f5bafd315be9f40889d0a60b9e58e0b resolves in microsoft/typescript-go, whose go.mod matches NOTICE's x/sync 0.21.0, x/sys 0.46.0, x/term 0.44.0 and x/text 0.38.0. All four upstream tags carry identical Go LICENSE/PATENTS blobs; retain those original terms from the immutable x/sync 0.21.0 commit because NOTICE lists the grants without their full text. This does not certify redistribution of a complete prebuilt Go toolchain."
     },
     {
       "ecosystem": "npm",

@@ -1,7 +1,7 @@
 /** Enforces test placement, tracked-artifact privacy and existing architecture imports. */
 import { lstat, readFile } from 'node:fs/promises';
 import { resolve, posix, isAbsolute } from 'node:path';
-import ts from 'typescript';
+import { staticString, visitSource } from './source-ast.mjs';
 import { execute, isEntryPoint, parseOptions } from './evidence.mjs';
 
 const humanReview = ['correctness', 'fixture_isolation', 'privacy_allowlist', 'trace_causality', 'native_observations'];
@@ -11,14 +11,14 @@ const repositoryPath = path => typeof path === 'string' && !isAbsolute(path) && 
 
 function imports(path, source) {
   const dependencies = [];
-  const tree = ts.createSourceFile(path, source, ts.ScriptTarget.Latest, true);
-  function visit(node) {
-    if ((ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) && node.moduleSpecifier && ts.isStringLiteralLike(node.moduleSpecifier)) dependencies.push(node.moduleSpecifier.text);
-    if (ts.isImportTypeNode(node) && ts.isLiteralTypeNode(node.argument) && ts.isStringLiteralLike(node.argument.literal)) dependencies.push(node.argument.literal.text);
-    if (ts.isCallExpression(node) && (node.expression.kind === ts.SyntaxKind.ImportKeyword || (ts.isIdentifier(node.expression) && node.expression.text === 'require'))) dependencies.push(node.arguments[0] && ts.isStringLiteralLike(node.arguments[0]) ? node.arguments[0].text : null);
-    ts.forEachChild(node, visit);
-  }
-  visit(tree);
+  visitSource(path, source, node => {
+    if (['ImportDeclaration', 'ExportNamedDeclaration', 'ExportAllDeclaration', 'TSImportType'].includes(node.type) && node.source) {
+      const dependency = staticString(node.source);
+      if (dependency !== null) dependencies.push(dependency);
+    }
+    if (node.type === 'ImportExpression') dependencies.push(staticString(node.source));
+    if (node.type === 'CallExpression' && node.callee.type === 'Identifier' && node.callee.name === 'require') dependencies.push(staticString(node.arguments[0]));
+  });
   return dependencies;
 }
 
@@ -110,7 +110,10 @@ export async function checkPolicy({ root = process.cwd(), trackedFiles } = {}) {
     const boundary = path.startsWith('src/contracts/') ? 'contract_dependency'
       : path.startsWith('src/ui/') ? 'ui_dependency'
         : path.startsWith('src/platform/') ? 'platform_dependency' : null;
-    for (const dependency of imports(path, source)) {
+    let dependencies;
+    try { dependencies = imports(path, source); }
+    catch { add('source_unavailable', path); continue; }
+    for (const dependency of dependencies) {
       if (dependency === null) {
         if (boundary || sourceFeature || path.startsWith('src/app/')) add('dynamic_dependency', path);
         continue;

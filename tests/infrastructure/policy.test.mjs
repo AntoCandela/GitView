@@ -132,6 +132,40 @@ test('inline import types obey feature and shared-layer boundaries', async t => 
   assert.deepEqual(result.violations.map(item => item.rule), ['feature_dependency', 'ui_dependency']);
 });
 
+test('static module forms and nested TSX imports retain architecture enforcement', async t => {
+  const result = await checkPolicy(await fixture(t, {
+    'src/contracts/model.ts': [
+      "import 'react';", "export * from 'react';", "export * as UI from 'react';",
+      "import type { ReactNode } from 'react';", "export type { ReactNode as Node } from 'react';",
+      "type Nested = import('react').JSX.Element;", "type Module = typeof import('react');",
+      "require(`react`);", "require?.('re\\u0061ct');", "import(`react`, { with: { type: 'json' } });",
+    ].join('\n'),
+    'src/ui/Control.jsx': "const view = <button onClick={() => import('../app')}>require('react')</button>;",
+  }));
+  assert.deepEqual(result.violations.map(item => item.rule), [
+    'contract_dependency', 'contract_dependency', 'contract_dependency', 'contract_dependency',
+    'contract_dependency', 'contract_dependency', 'contract_dependency', 'contract_dependency',
+    'contract_dependency', 'contract_dependency', 'ui_dependency',
+  ]);
+});
+
+test('dynamic dependency expressions remain unavailable rather than becoming literal authority', async t => {
+  const result = await checkPolicy(await fixture(t, {
+    'src/contracts/model.ts': [
+      'require(name);', 'require();', 'require(`react/${name}`);', "require('re' + 'act');",
+      "require(('react'));", 'import(name);', 'import(`react/${name}`);', "import('re' + 'act');",
+    ].join('\n'),
+  }));
+  assert.deepEqual(result.violations.map(item => item.rule), Array(8).fill('dynamic_dependency'));
+});
+
+test('malformed source fails closed without exposing parser diagnostics or private filenames', async t => {
+  const result = await checkPolicy(await fixture(t, { 'src/contracts/Überblick.ts': "export const private_customer = ('SECRET_TOKEN';" }));
+  assert.equal(result.passed, false);
+  assert.deepEqual(result.violations, [{ rule: 'source_unavailable', file: 'omitted_private_filename' }]);
+  assert.doesNotMatch(JSON.stringify(result), /private_customer|SECRET_TOKEN|Überblick/);
+});
+
 test('aliased native crates remain restricted to host', async t => {
   const result = await checkPolicy(await fixture(t, {
     'src-tauri/src/history/reader.rs': 'use tauri as desktop;',

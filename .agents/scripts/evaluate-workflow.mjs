@@ -28,7 +28,7 @@ async function localFile(directory, name, limit = 65536) {
 async function binding(root) {
   const revision = await execute('git', ['rev-parse', 'HEAD'], { cwd: root, signal: AbortSignal.timeout(10000) });
   if (revision.code !== 'ok' || !/^[a-f0-9]{40,64}$/.test(revision.output.trim())) fail('revision_unavailable');
-  const paths = ['scripts/evidence.mjs', 'scripts/verify.mjs', 'src-tauri/Cargo.toml', 'src-tauri/Cargo.lock',
+  const paths = ['scripts/evidence.mjs', 'scripts/verify.mjs', 'scripts/source-ast.mjs', 'package.json', 'package-lock.json', 'src-tauri/Cargo.toml', 'src-tauri/Cargo.lock',
     'src-tauri/build.rs', 'src-tauri/tauri.conf.json',
     ...(await sourceFiles(root, 'src-tauri/capabilities')),
     ...(await sourceFiles(root, 'src-tauri/icons')),

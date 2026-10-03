@@ -11,6 +11,29 @@
   ],
   "rules": [
     {
+      "ecosystem": "npm",
+      "name": "typescript",
+      "version": "7.0.2",
+      "evidence": "Preserve the native compiler's complete LICENSE, NOTICE.txt and nested vscode-jsonrpc MIT grant. Published gitHead 2bd066d87f5bafd315be9f40889d0a60b9e58e0b resolves in microsoft/typescript-go, whose go.mod matches NOTICE's x/sync 0.21.0, x/sys 0.46.0, x/term 0.44.0 and x/text 0.38.0. All four upstream tags carry identical Go LICENSE/PATENTS blobs; retain those original terms from the immutable x/sync 0.21.0 commit because NOTICE lists the grants without their full text. This does not certify redistribution of a complete prebuilt Go toolchain.",
+      "sources": [
+        {
+          "path": "upstream/golang/LICENSE",
+          "url": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/LICENSE"
+        },
+        {
+          "path": "upstream/golang/PATENTS",
+          "url": "https://raw.githubusercontent.com/golang/sync/5071ed6a9f1617117556b66384f765c934de3698/PATENTS"
+        }
+      ]
+    },
+    {
+      "ecosystem": "npm",
+      "namePrefix": "@typescript/typescript-",
+      "version": "7.0.2",
+      "referenceParent": "typescript",
+      "evidence": "Keep each authenticated native archive's own Apache LICENSE and complete NOTICE.txt, supplemented by the same-version parent notices and original Go BSD/PATENTS terms. The exact native family shares the compiler source revision recorded by the parent rule; no metadata-only waiver or complete embedded-toolchain clearance is asserted."
+    },
+    {
       "ecosystem": "cargo",
       "name": "vswhom-sys",
       "version": "0.1.3",
