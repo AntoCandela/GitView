@@ -361,7 +361,9 @@ async function supplementalNotices(packages) {
   }
 }
 async function legalTextHashes() {
-  return Object.fromEntries(await Promise.all((await files(join(root, 'licenses/texts'))).map(async path => [relative(root, path).replaceAll('\\', '/'), sha256(await readFile(path))])));
+  // Sort portable keys, not native paths: Windows otherwise orders gtk3-macros before gtk.
+  const paths = (await files(join(root, 'licenses/texts'))).map(path => relative(root, path).replaceAll('\\', '/')).sort();
+  return Object.fromEntries(await Promise.all(paths.map(async path => [path, sha256(await readFile(join(root, path)))])));
 }
 async function sourceHashes() {
   const paths = ['package.json', 'package-lock.json', 'src-tauri/Cargo.toml', 'src-tauri/Cargo.lock', 'scripts/check-licenses.mjs', 'scripts/fileIconThemes.ts', 'licenses/supplemental-sources.json', 'CODE_OF_CONDUCT.md', 'THIRD_PARTY_NOTICES.md'];
