@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a vulnerability privately
+    url: https://www.linkedin.com/in/tobiascandela/
+    about: Send Tobias a private LinkedIn message mentioning GitView security. Do not post vulnerability details publicly; LinkedIn messaging restrictions may apply.
+  - name: Report a conduct concern privately
+    url: https://www.linkedin.com/in/tobiascandela/
+    about: Send Tobias a private LinkedIn message mentioning GitView conduct. Do not post incident details publicly; LinkedIn messaging restrictions may apply.

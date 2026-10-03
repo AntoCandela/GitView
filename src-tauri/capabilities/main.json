@@ -1,0 +1,25 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "GitView repository commands are only available to the main window.",
+  "windows": ["main"],
+  "permissions": [
+    "allow-workspace-snapshot",
+    "allow-open-chosen-repository",
+    "allow-select-context",
+    "allow-rename-repository",
+    "allow-remove-repository",
+    "allow-refresh-entry-availability",
+    "allow-observe-selected-context",
+    "allow-review-file",
+    "allow-history-page",
+    "allow-list-contexts",
+    "allow-select-worktree",
+    "allow-commit-files",
+    "allow-review-commit-file",
+    "allow-list-repository-files",
+    "allow-review-repository-file",
+    "allow-record-renderer-diagnostic",
+    "allow-diagnostic-health"
+  ]
+}

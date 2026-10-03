@@ -1,0 +1,70 @@
+// Owns the portaled arrangement chooser and structural three-slot previews.
+
+@mixin styles {
+  .workbench-layout-positioner {
+    z-index: 20;
+  }
+  .workbench-layout-popup {
+    width: 336px;
+    max-width: calc(100vw - 16px);
+    max-height: var(--available-height);
+    padding: 8px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-panel);
+    background: var(--canvas);
+    color: var(--ink);
+    outline: none;
+
+    &:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+  }
+  .workbench-layout-title {
+    margin: 0;
+    padding: 4px 8px 8px;
+    font: 600 12px/1.4 var(--font-ui);
+  }
+  .workbench-layout-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+
+    .ui-radio-option {
+      padding: 8px 4px;
+    }
+    .ui-radio-content {
+      flex: 1;
+    }
+  }
+  .workbench-layout-diagram {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: 28px 32px;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-detail);
+    background: var(--border);
+  }
+  .workbench-layout-slot {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    background: var(--canvas);
+    color: var(--ink);
+    font: 500 10px/1.2 var(--font-ui);
+
+    &.is-top {
+      grid-column: 1 / -1;
+    }
+    &.is-comparison {
+      background: color-mix(in oklch, var(--primary) 12%, var(--canvas));
+    }
+    &.is-files {
+      background: var(--pill-bg);
+    }
+  }
+}

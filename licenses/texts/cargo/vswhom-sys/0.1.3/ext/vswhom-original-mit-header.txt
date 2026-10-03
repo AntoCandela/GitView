@@ -1,0 +1,15 @@
+//
+// Author:   Jonathan Blow
+// Version:  1
+// Date:     31 August, 2018
+//
+// This code is released under the MIT license, which you can find at
+//
+//          https://opensource.org/licenses/MIT
+//
+//
+//
+// See the comments for how to use this library just below the includes.
+//
+
+

@@ -1,0 +1,73 @@
+[package]
+name = "gitview"
+version = "0.1.0"
+edition = "2021"
+description = "GitView desktop host"
+license = "GPL-3.0-only"
+autotests = false
+default-run = "gitview"
+
+[lib]
+name = "gitview_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tempfile = "3"
+parking_lot = "0.12"
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tokio = { version = "1", features = ["process", "io-util", "time", "sync", "macros", "rt"] }
+rusqlite = { version = "0.38", features = ["bundled"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+tauri = { version = "2", features = ["test"] }
+tokio = { version = "1", features = ["test-util"] }
+
+# GTK3 requires GLib 0.18; audited source backports retain that API.
+# Exact upstream archives, patches and file hashes: vendor/patches.json.
+[patch.crates-io]
+glib = { path = "vendor/glib" }
+glib-macros = { path = "vendor/glib-macros" }
+gtk3-macros = { path = "vendor/gtk3-macros" }
+
+[[bin]]
+name = "gitview-diagnostics"
+path = "src/bin/gitview-diagnostics.rs"
+test = false
+
+[[example]]
+name = "journey_bridge"
+path = "tests/support/journey_bridge.rs"
+
+[[test]]
+name = "workspace"
+path = "tests/integration/workspace.rs"
+
+[[test]]
+name = "read_only_open"
+path = "tests/integration/read_only_open.rs"
+
+[[test]]
+name = "observation"
+path = "tests/integration/observation.rs"
+
+[[test]]
+name = "persistence"
+path = "tests/integration/persistence.rs"
+
+[[test]]
+name = "diagnostics"
+path = "tests/integration/diagnostics.rs"
+
+[[test]]
+name = "diagnostic_operations"
+path = "tests/integration/diagnostic_operations.rs"

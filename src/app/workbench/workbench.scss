@@ -1,0 +1,91 @@
+// Owns workbench geometry and pane placement; mixins retain the shared stylesheet cascade.
+
+@mixin styles {
+  .workbench {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, var(--workbench-left-width, 240px)) 5px minmax(0, 1fr);
+    grid-template-rows: minmax(0, var(--workbench-top-height, 45%)) 5px minmax(0, 1fr);
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+  .workbench-divider, .workbench-junction {
+    --divider-line: var(--border);
+    &:hover, &:focus-visible { --divider-line: color-mix(in oklch, var(--accent) 40%, var(--border)); }
+  }
+  .workbench-divider {
+    position: relative;
+    touch-action: none;
+    &.column-divider {
+      grid-area: columns;
+      cursor: col-resize;
+      background: linear-gradient(to right, transparent 2px, var(--divider-line) 2px, var(--divider-line) 3px, transparent 3px);
+      &::before { content: ""; position: absolute; inset: 0 -3px; }
+    }
+    &.row-divider {
+      grid-area: rows;
+      cursor: row-resize;
+      background: linear-gradient(to bottom, transparent 2px, var(--divider-line) 2px, var(--divider-line) 3px, transparent 3px);
+      &::before { content: ""; position: absolute; inset: -3px 0; }
+    }
+    &:focus-visible { outline: 1px solid color-mix(in oklch, var(--accent) 55%, var(--border)); outline-offset: -1px; }
+  }
+  .workbench-junction {
+    position: absolute;
+    left: calc(var(--workbench-left-width) + 2.5px);
+    top: calc(var(--workbench-top-height) + 2.5px);
+    z-index: 2;
+    width: 16px;
+    height: 16px;
+    transform: translate(-50%, -50%);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-detail);
+    background: transparent;
+    cursor: move;
+    touch-action: none;
+    &::before, &::after { content: ""; position: absolute; background: var(--divider-line); pointer-events: none; }
+    &::before { left: calc(50% - 0.5px); top: calc(50% - 0.5px); bottom: 0; width: 1px; }
+    &::after { left: 0; right: 0; top: calc(50% - 0.5px); height: 1px; }
+    &:focus-visible { outline: 1px solid color-mix(in oklch, var(--accent) 55%, var(--border)); outline-offset: 1px; }
+  }
+  .workbench.is-resizing {
+    &.resizing-width { cursor: col-resize; }
+    &.resizing-height { cursor: row-resize; }
+    &.resizing-both { cursor: move; }
+    user-select: none;
+    .workbench-divider, .workbench-junction {
+      --divider-line: color-mix(in oklch, var(--accent) 40%, var(--border));
+      outline: none;
+    }
+  }
+  .workbench-pane {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .file-sidebar { grid-area: files; }
+}
+
+@mixin panes {
+  .history-panel {
+    grid-area: history;
+    container-type: inline-size;
+    > .history-feature { flex: 1; min-height: 0; }
+  }
+  .comparison-panel {
+    grid-area: comparison;
+    > .file-review { flex: 1; min-height: 0; }
+  }
+  .comparison-empty {
+    display: grid;
+    place-items: center;
+    flex: 1;
+    padding: 8px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+}

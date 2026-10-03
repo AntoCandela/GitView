@@ -1,0 +1,136 @@
+// Owns compact review controls and aligned virtualized source panes.
+
+@mixin styles {
+  .file-review {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .diff-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    min-height: 36px;
+    padding: 4px 8px;
+    gap: 4px 12px;
+    border-bottom: 1px solid var(--border);
+    h2 {
+      flex: 1 1 160px;
+      min-width: 0;
+      margin: 0;
+      font: 500 11px var(--font-mono);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+  .diff-categories {
+    display: flex;
+    gap: 2px;
+    button {
+      padding: 3px 6px;
+      border: 0;
+      border-radius: var(--radius-detail);
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      &[aria-pressed="true"] { background: var(--pill-bg); color: var(--accent); }
+    }
+  }
+  .review-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .diff-state {
+    flex: none;
+    padding: 6px 8px;
+    h3 { margin: 0; font-size: 12px; font-weight: 500; }
+    p { margin: 2px 0 0; color: var(--muted); font-size: 11px; }
+    &.updating { display: flex; gap: 8px; align-items: baseline; h3 { color: var(--accent); font-size: 11px; } p { margin: 0; } }
+    &.unavailable, &.transport_unavailable, &.observation_unavailable { h3 { color: var(--error); } }
+  }
+  .diff-comparison {
+    display: grid;
+    grid-template-columns: var(--diff-columns);
+    grid-template-rows: auto minmax(0, 1fr);
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    &[hidden] { display: none; }
+    &:has(.diff-divider.is-resizing) { cursor: col-resize; user-select: none; }
+  }
+  .diff-divider { grid-column: 2; grid-row: 1 / 3; z-index: 1; }
+  .diff-source-headings {
+    display: grid;
+    grid-template-columns: var(--diff-columns);
+    grid-column: 1 / -1;
+    grid-row: 1;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font: 500 11px/26px var(--font-mono);
+    span { padding: 0 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    span + span { grid-column: 3; }
+  }
+  .diff-viewport {
+    --diff-note-font-size: 10px;
+    display: grid;
+    grid-template-columns: var(--diff-columns);
+    grid-column: 1 / -1;
+    grid-row: 2;
+    min-height: 0;
+    min-width: 0;
+    overflow: hidden;
+    font: 11px/22px var(--font-mono);
+    color: var(--code-ink);
+    background: var(--code-bg);
+    tab-size: 4;
+  }
+  .diff-source-pane {
+    min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: scroll;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    &.new { grid-column: 3; }
+    background: var(--code-bg);
+    &:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  }
+  .diff-source-content { position: relative; min-width: 100%; }
+  .diff-hunk, .diff-line, .diff-no-newline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    box-sizing: border-box;
+  }
+  .diff-hunk {
+    padding: 2px 8px;
+    color: var(--code-muted);
+    background: color-mix(in srgb, var(--code-bg) 85%, var(--pill-bg));
+    white-space: nowrap;
+  }
+  .diff-line {
+    display: grid;
+    grid-template-columns: 44px 20px minmax(0, 1fr);
+    &.addition { background: var(--code-add-bg); }
+    &.removal { background: var(--code-remove-bg); }
+    &.absent { background: color-mix(in srgb, var(--code-bg) 80%, var(--pill-bg)); }
+    code { align-self: start; min-width: 0; padding-right: 12px; font: inherit; font-variant-ligatures: none; white-space: pre; }
+  }
+  .diff-line-number { padding-right: 6px; color: var(--code-muted); text-align: right; user-select: none; }
+  .diff-line-sign { text-align: center; color: var(--code-ink); user-select: none; }
+  .diff-inline-change { background: var(--code-inline-add-bg); border-radius: 2px; }
+  .diff-line.removal .diff-inline-change { background: var(--code-inline-remove-bg); }
+  .diff-no-newline { padding-left: 64px; color: var(--code-muted); font-size: var(--diff-note-font-size); white-space: nowrap; }
+  .diff-viewport.is-wrapped {
+    .diff-source-pane { overflow-x: hidden; }
+    .diff-line code { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-all; }
+    .diff-no-newline span { display: block; white-space: normal; overflow-wrap: anywhere; }
+  }
+  .diff-reading-notice { flex: none; margin: 0; padding: 4px 8px; color: var(--accent); font-size: 11px; }
+  @media (max-width: 700px) {
+    .diff-heading { gap: 4px 8px; }
+    .diff-heading h2 { flex-basis: 100%; }
+  }
+}

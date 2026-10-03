@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "packages": [
+    {
+      "name": "why-is-node-running",
+      "version": "3.2.2",
+      "path": "vendor/why-is-node-running",
+      "source": "https://registry.npmjs.org/why-is-node-running/-/why-is-node-running-3.2.2.tgz",
+      "integrity": "sha512-NKUzAelcoCXhXL4dJzKIwXeR8iEVqsA0Lq6Vnd0UXvgaKbzVo4ZTHROF2Jidrv+SgxOQ03fMinnNhzZATxOD3A==",
+      "archiveSha256": "feaedd03cd2c28d3753f1bd0492c2ffe981677b1672331f607c59ce5f9aed9af",
+      "license": "MIT",
+      "files": {
+        "LICENSE": "6a134e51aa31496c15a741592fc5d782b2dbf8d8b6b8524e15c8520ae0cd6374",
+        "README.md": "9e36a93f2b40322588a52228cf1e2f83d522457790741659d9398f1d31856be5",
+        "cli.js": "0fcd62d798b42bc4a40006fd74bf485e386fa78a667e9c1720593cd45b3975ee",
+        "include.js": "b676d898a65c5ec0f6cdc4d54ed23e7147153321074898e154d32898ba7521bb",
+        "index.cjs": "fd54c423db3ec7581a350f12ade5ae997891564fc3c65367fbd6c7b393e0fe1b",
+        "index.d.ts": "6c0e0082473acc9f8c37110af01649c6d0532b40670db87e023a7649713652eb",
+        "index.js": "6daa0abe98665e2eec698b6fe89d7576829689351111095aa4b458e9e3df4880",
+        "package.json": "b5e59e9cccc8aee90b2f725b2e2b7b6c56eb619a63330b0ec8937c533152201d"
+      },
+      "patch": {
+        "rationale": "Vitest requires a callable CommonJS entry. Preserve the dependency-free maintained 3.2.2 implementation and ESM/CLI behavior; add a mechanically derived CommonJS entry instead of retaining stackback.",
+        "changedFiles": {
+          "package.json": {
+            "originalSha256": "9bb8b6e94af46b00cd951c4f7c8eb536803d1da08f6f0dea5b7d640b3fe80d9d",
+            "patchedSha256": "b5e59e9cccc8aee90b2f725b2e2b7b6c56eb619a63330b0ec8937c533152201d"
+          }
+        },
+        "derivedFiles": {
+          "index.cjs": {
+            "source": "index.js",
+            "originalSha256": "6daa0abe98665e2eec698b6fe89d7576829689351111095aa4b458e9e3df4880",
+            "patchedSha256": "fd54c423db3ec7581a350f12ade5ae997891564fc3c65367fbd6c7b393e0fe1b",
+            "transformation": "Replace the four node: ESM imports with equivalent require destructuring and export default function with module.exports = function; preserve all remaining bytes."
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+// Marks active center snaps without thickening divider strokes or their hit targets.
+
+@mixin styles {
+  .workbench.is-resizing {
+    .workbench-divider.is-snapped, .workbench-junction.is-snapped {
+      --divider-line: var(--accent);
+    }
+    .workbench-divider.is-snapped::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--accent);
+      pointer-events: none;
+    }
+    .column-divider.is-snapped::after { width: 11px; height: 1px; }
+    .row-divider.is-snapped::after { width: 1px; height: 11px; }
+  }
+}

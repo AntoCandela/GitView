@@ -1,0 +1,8 @@
+{
+  "project": "https://github.com/catppuccin/vscode-icons",
+  "version": "1.26.0",
+  "flavor": "latte",
+  "archive": "https://github.com/catppuccin/vscode-icons/releases/download/v1.26.0/catppuccin-vsc-icons-1.26.0.vsix",
+  "sha256": "57566136d0a8ba8d040eb6e5be866c88ccbb04f3d219d3a7e52a19978900ff3d",
+  "selection": "Default file/folder icons and icons referenced by fileNames, fileExtensions, folderNames and folderNamesExpanded; SVG bytes and association keys unchanged."
+}

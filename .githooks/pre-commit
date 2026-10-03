@@ -1,0 +1,5 @@
+#!/bin/sh
+# Verify the current worktree without staging, stashing or modifying source files.
+set -eu
+npm run policy
+exec npm run test:unit -- --output .verification/pre-commit

@@ -1,0 +1,21 @@
+// Owns the repository sidebar's bounded width and inset resize edge.
+
+@mixin styles {
+  .workspace-sidebar {
+    position: relative;
+    box-sizing: border-box;
+    padding-right: 5px;
+    border-right: 0;
+  }
+
+  .workspace-sidebar > .workspace-sidebar-divider {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 5px;
+    height: 100%;
+  }
+
+  @media (max-width: 720px) {
+    .workspace-sidebar { position: absolute; }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "name": "gitview",
+  "version": "0.1.0",
+  "private": true,
+  "license": "GPL-3.0-only",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 1420 --strictPort",
+    "build": "tsc --noEmit && vite build",
+    "smoke:browser": "node --experimental-strip-types scripts/browser-smoke.mjs",
+    "test": "vitest run",
+    "test:unit": "node scripts/verify.mjs --suite unit",
+    "test:integration": "node scripts/verify.mjs --suite integration",
+    "verify": "node scripts/verify.mjs --suite all",
+    "verify:unit": "node scripts/verify.mjs --suite unit",
+    "verify:integration": "node scripts/verify.mjs --suite integration",
+    "policy": "node scripts/check-policy.mjs",
+    "preview:evidence": "node scripts/preview-evidence.mjs",
+    "agents:docs": "node .agents/scripts/check-docs.mjs",
+    "agents:worker": "node .agents/scripts/worker.mjs",
+    "agents:evaluate": "node .agents/scripts/evaluate-workflow.mjs",
+    "hooks:install": "node scripts/install-hooks.mjs",
+    "prepare": "node scripts/install-hooks.mjs",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.8.0",
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/geist-mono": "^5.3.0",
+    "@tanstack/react-virtual": "^3.14.10",
+    "@tauri-apps/api": "^2.12.0",
+    "diff": "9.0.0",
+    "lucide-react": "^1.49.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "shiki": "4.0.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@tauri-apps/cli": "^2.12.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "jsdom": "^26.1.0",
+    "material-icon-theme": "5.39.0",
+    "sass": "^1.105.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.3.0",
+    "vitest": "^4.1.11",
+    "why-is-node-running": "file:vendor/why-is-node-running"
+  },
+  "overrides": {
+    "rollup": "4.62.2",
+    "why-is-node-running": "$why-is-node-running"
+  }
+}

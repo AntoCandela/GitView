@@ -1,0 +1,22 @@
+/** Names the app's icon vocabulary; callers mark decorative instances aria-hidden. */
+
+export {
+  CircleAlert as AlertIcon,
+  ChevronDown as ChevronDownIcon,
+  ChevronRight as ChevronRightIcon,
+  ChevronsDownUp as CollapseAllIcon,
+  ChevronsUpDown as ExpandAllIcon,
+  EllipsisVertical as EllipsisIcon,
+  File as FileIcon,
+  Folder as FolderIcon,
+  Palette as AppearanceIcon,
+  PanelsTopLeft as LayoutIcon,
+  PanelLeft as SidebarIcon,
+  Plus as PlusIcon,
+  Pencil as PencilIcon,
+  RotateCw as RefreshIcon,
+  RotateCcw as ResetLayoutIcon,
+  Search as SearchIcon,
+  Trash2 as TrashIcon,
+  X as CloseIcon,
+} from "lucide-react";

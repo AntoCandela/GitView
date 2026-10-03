@@ -1,0 +1,10 @@
+* text=auto eol=lf
+
+# Upstream legal texts and retained assets must remain byte-for-byte identical.
+LICENSE -text
+licenses/texts/** -text
+src/assets/** -text
+src-tauri/icons/** -text
+src-tauri/vendor/** -text
+vendor/** -text
+public/** -text

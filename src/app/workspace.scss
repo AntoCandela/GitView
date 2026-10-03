@@ -1,0 +1,340 @@
+// Owns the full-bleed workbench shell and compact repository disclosure controls.
+
+@mixin styles {
+  .workspace-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 320px;
+    overflow: hidden;
+  }
+
+  .workbench-toolbar {
+    flex: none;
+    position: relative;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: minmax(28px, 1fr) minmax(0, auto) minmax(64px, 1fr);
+    align-items: center;
+    gap: 4px;
+    height: 36px;
+    padding: 0 4px;
+    border-bottom: 1px solid var(--border);
+  }
+  .workspace-selectors {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    max-width: min(440px, calc(100vw - 108px));
+  }
+  .workspace-sidebar-toggle {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-detail);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    &:hover, &[aria-expanded="true"] { background: var(--pill-bg); color: var(--ink); }
+  }
+  .workspace-body { display: flex; position: relative; flex: 1; min-width: 0; min-height: 0; }
+  .workspace-sidebar {
+    display: flex;
+    flex-direction: column;
+    flex: 0 0 280px;
+    min-width: 0;
+    min-height: 0;
+    border-right: 1px solid var(--border);
+    background: var(--sidebar);
+    --tree-surface: var(--sidebar);
+    &[hidden] { display: none; }
+  }
+  .repository-files-pane { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; }
+  .repository-status-notice { margin: 0; padding: 8px; color: var(--muted); font-size: 11px; }
+  @media (max-width: 720px) {
+    .workspace-sidebar { position: absolute; z-index: 10; inset: 0 auto 0 0; width: min(280px, 100%); }
+  }
+  @media (max-width: 440px) {
+    .workspace-selectors { gap: 0; max-width: calc(100vw - 108px); }
+    .workspace-selectors .repository-selector { padding-inline: 4px; }
+  }
+  .repository-controls { position: relative; min-width: 0; max-width: 100%; }
+  .workbench-layout-control { flex: none; margin-left: auto; padding-left: 8px; }
+  .repository-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 30px;
+    max-width: 100%;
+    padding: 2px 6px;
+    border: 0;
+    border-radius: var(--radius-detail);
+    background: transparent;
+    color: var(--ink);
+    font-size: 12px;
+    cursor: pointer;
+    > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    &:hover, &[aria-expanded="true"] { background: var(--pill-bg); }
+    .lucide { width: 14px; height: 14px; }
+  }
+  .repository-disclosure {
+    position: absolute;
+    z-index: 20;
+    top: 34px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    width: min(320px, calc(100vw - 8px));
+    height: min(420px, calc(100dvh - 44px));
+    min-height: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    background: var(--canvas);
+  }
+
+  .repository-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 8px 6px;
+    border-bottom: 1px solid color-mix(in oklch, var(--border) 50%, transparent);
+  }
+  .repository-toolbar-actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .open-repository {
+    display: inline-flex;
+    align-self: flex-start;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 4px 12px;
+    min-height: 32px;
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-control);
+    background: var(--primary);
+    color: #020d26;
+    font: 600 12px var(--font-ui);
+    text-align: left;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: #23c7b2;
+    }
+    .lucide {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .repository-list {
+    flex: 1;
+    min-height: 0;
+    padding: 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .repository-list-content {
+    position: relative;
+    min-width: 0;
+  }
+  // The virtualizer owns vertical offsets; measured row heights allow wrapped metadata.
+  .repository-virtual-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    min-height: 40px;
+    padding: 2px 4px 2px 0;
+    border-radius: var(--radius-control);
+    transition: background-color 100ms ease;
+
+    &:hover:not(.is-selected),
+    &:has(.ui-kebab-trigger[data-popup-open]):not(.is-selected) {
+      background: color-mix(in oklch, var(--border) 24%, var(--sidebar));
+    }
+    &.is-selected {
+      background: color-mix(in oklch, var(--primary) 14%, var(--sidebar));
+
+      .repository-name,
+      .repository-name-editor input {
+        font-weight: 600;
+      }
+    }
+    > .ui-kebab-trigger {
+      align-self: start;
+      margin-top: 2px;
+    }
+  }
+  .empty-list {
+    margin: 16px 0;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .repository-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    min-height: 36px;
+    padding: 6px 8px;
+    color: var(--ink);
+
+    &.sidebar-row,
+    &.sidebar-row:hover,
+    &.sidebar-row.is-selected {
+      background: transparent;
+    }
+    .ui-pill {
+      padding: 2px 6px;
+      border-color: color-mix(in oklch, var(--border) 70%, transparent);
+      background: color-mix(in oklch, var(--canvas) 50%, transparent);
+      font-weight: 500;
+    }
+
+    .repository-summary {
+      display: flex;
+      width: 100%;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .repository-identity {
+      display: inline-flex;
+      max-width: 100%;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 8px;
+      > .lucide {
+        width: 14px;
+        height: 14px;
+        color: var(--accent);
+      }
+    }
+    .repository-name {
+      min-width: 0;
+      max-width: 100%;
+      font: 500 12px/20px var(--font-ui);
+      overflow-wrap: anywhere;
+    }
+    .repository-meta {
+      color: var(--muted);
+      font: 11px var(--font-mono);
+    }
+  }
+
+  .workspace-main {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .workspace-state {
+    padding: 8px;
+    font-size: 12px;
+    h2 { margin: 0; font-size: 12px; font-weight: 500; }
+    p { margin: 4px 0 0; color: var(--muted); }
+  }
+  .retry-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font: 600 12px var(--font-mono);
+    cursor: pointer;
+    .lucide {
+      width: 15px;
+      height: 15px;
+    }
+  }
+  .error-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    background: var(--error-bg);
+    color: var(--error);
+    font-size: 12px;
+    .lucide {
+      width: 16px;
+      height: 16px;
+    }
+    button {
+      display: grid;
+      place-items: center;
+      margin-left: auto;
+      padding: 8px;
+      border: 0;
+      background: none;
+      color: inherit;
+      cursor: pointer;
+    }
+  }
+  .persistence-warning {
+    align-items: flex-start;
+    margin-bottom: 0;
+    > .lucide {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+  }
+  .workspace-restoring {
+    margin: 0;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-family: var(--font-mono);
+  }
+
+  .repository-name-editor {
+    .repository-identity {
+      flex: 1 1 128px;
+      min-width: 0;
+    }
+    input {
+      width: 100%;
+      min-width: 0;
+      height: 20px;
+      padding: 0;
+      border: 0;
+      border-radius: var(--radius-control);
+      background: transparent;
+      color: var(--ink);
+      font: 500 12px/20px var(--font-ui);
+
+      &:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+    }
+    [role="alert"] {
+      margin: 4px 0 0;
+      color: var(--error);
+      font-size: 11px;
+      line-height: 1.4;
+    }
+  }
+
+}

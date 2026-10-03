@@ -1,0 +1,4 @@
+#!/bin/sh
+# CI still verifies the exact pushed revision; this gate checks the current worktree.
+set -eu
+exec npm run verify -- --output .verification/pre-push

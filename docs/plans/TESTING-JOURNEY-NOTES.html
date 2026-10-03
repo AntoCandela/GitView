@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GitView testing journeys</title>
+<style>
+:root {
+  --bg: #f7f6f3;
+  --surface: #ffffff;
+  --ink: #1a1a1a;
+  --ink-2: #3d3d3d;
+  --muted: #6b6b6b;
+  --line: #e5e3dd;
+  --line-2: #efedea;
+  --accent: #2563eb;
+  --accent-soft: #eff5ff;
+  --done: #15803d;
+  --warn: #b45309;
+  --warn-soft: #fffbeb;
+  --code-bg: #f3f1ec;
+  --date: #7c3aed;
+  --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.04);
+  --radius: 10px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 15.5px/1.65 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  transform: translateY(-150%);
+  background: var(--ink);
+  color: white;
+  padding: 0.45rem 0.7rem;
+  border-radius: 6px;
+  z-index: 10;
+}
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+.layout {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  max-width: 1240px;
+  margin: 0 auto;
+  gap: 2rem;
+  padding: 2rem;
+}
+@media (max-width: 920px) {
+  .layout { grid-template-columns: 1fr; padding: 1rem; gap: 1rem; }
+  nav.toc { position: static; max-height: none; border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem; }
+}
+nav.toc {
+  position: sticky;
+  top: 1.5rem;
+  align-self: start;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  font-size: 0.88rem;
+  padding: 1.25rem 1rem 1rem;
+}
+nav.toc h2 {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin: 0 0 0.85rem;
+  border: 0;
+  font-weight: 600;
+}
+nav.toc ul { list-style: none; padding: 0; margin: 0; }
+nav.toc > ul > li { margin-bottom: 0.15rem; }
+nav.toc ul ul { padding-left: 0; margin-top: 0.25rem; }
+nav.toc a {
+  color: var(--ink-2);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  transition: background 120ms, color 120ms;
+}
+nav.toc a:hover { color: var(--accent); background: var(--accent-soft); }
+nav.toc a:focus-visible,
+.totop:focus-visible,
+details.collapse summary:focus-visible,
+details.review-fold summary:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 2px;
+}
+nav.toc .toc-progress {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+nav.toc .ms-link { padding-left: 1.1rem; font-size: 0.85rem; }
+main { min-width: 0; }
+.hero,
+.section {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.hero {
+  padding: 2rem 2.25rem;
+  margin-bottom: 1.25rem;
+}
+.hero h1 {
+  font-size: 1.85rem;
+  margin: 0 0 0.5rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+}
+.hero .lede {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.hero-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--line-2);
+}
+.stat { flex: 1 1 130px; }
+.stat-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-top: 0.2rem;
+  font-variant-numeric: tabular-nums;
+}
+.section {
+  padding: 1.75rem 2rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.section.unframed {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+}
+.section > h2:first-child,
+.section > .ms-header:first-child { margin-top: 0; }
+h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0 0 1rem;
+  border: 0;
+  scroll-margin-top: 1rem;
+}
+.ms-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 0.4rem;
+  scroll-margin-top: 1rem;
+}
+.ms-header h2 { margin: 0; font-size: 1.2rem; }
+.ms-header .ms-num {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-right: 0.5rem;
+  font-weight: 500;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.badge.pending {
+  background: var(--warn-soft);
+  color: var(--warn);
+  border: 1px solid #fde68a;
+}
+.badge.pending::before { content: "○"; font-size: 0.72rem; }
+.badge.done {
+  background: #ecfdf5;
+  color: var(--done);
+  border: 1px solid #bbf7d0;
+}
+.badge.done::before {
+  content: "●";
+  font-size: 0.6rem;
+}
+.ms-progress {
+  height: 4px;
+  background: var(--line-2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0.4rem 0 1.25rem;
+}
+.ms-progress-bar {
+  height: 100%;
+  background: var(--done);
+  border-radius: 999px;
+}
+.goal { margin: 0 0 1.25rem; color: var(--ink-2); }
+.goal strong { font-weight: 600; color: var(--ink); }
+.subhead {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-weight: 600;
+  margin: 1.5rem 0 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.subhead::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line-2);
+}
+p { margin: 0.75rem 0; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code {
+  background: var(--code-bg);
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+  font: 0.84em ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: #1f2937;
+  word-break: break-word;
+}
+pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+}
+pre code { background: none; padding: 0; font-size: 0.86em; }
+ul { padding-left: 1.4rem; margin: 0.5rem 0; }
+li { margin: 0.3rem 0; }
+.acceptance ul {
+  list-style: none;
+  padding-left: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+.acceptance li {
+  position: relative;
+  padding: 0.6rem 0.85rem 0.6rem 2rem;
+  background: var(--bg);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin: 0;
+}
+.acceptance li::before {
+  content: "✓";
+  position: absolute;
+  left: 0.7rem;
+  top: 0.55rem;
+  color: var(--done);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.checklist ul { list-style: none; padding-left: 0; }
+.checklist li {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: flex-start;
+  column-gap: 0.65rem;
+  row-gap: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  margin: 0.1rem 0;
+  transition: background 120ms;
+}
+.checklist li:hover { background: var(--bg); }
+.checklist .task-text {
+  grid-column: 2;
+  min-width: 0;
+}
+.checklist li > details.collapse {
+  grid-column: 2;
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+input[type="checkbox"] {
+  grid-column: 1;
+  appearance: none;
+  width: 16px; height: 16px;
+  border: 1.5px solid #c7c5bf;
+  border-radius: 4px;
+  flex-shrink: 0;
+  margin-top: 0.32em;
+  position: relative;
+  background: var(--surface);
+  cursor: default;
+}
+input[type="checkbox"]:checked { background: var(--done); border-color: var(--done); }
+input[type="checkbox"]:checked::after {
+  content: "✓";
+  color: white;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+.timeline {
+  list-style: none;
+  padding: 0.5rem 0 0;
+  margin: 0;
+  position: relative;
+}
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 0;
+  bottom: 0.5rem;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--line), var(--line-2));
+}
+.timeline li {
+  position: relative;
+  padding: 0.25rem 0 0.85rem 2rem;
+  margin: 0;
+  font-size: 0.94rem;
+  color: var(--ink-2);
+}
+.timeline li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 0.55rem;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 0 3px var(--surface);
+}
+.timeline .date {
+  display: inline-block;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.78rem;
+  color: var(--date);
+  font-weight: 600;
+  margin-right: 0.55rem;
+  background: #f5f3ff;
+  padding: 0.05rem 0.4rem;
+  border-radius: 4px;
+}
+details.review-fold {
+  border-top: 1px solid var(--line-2);
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+}
+details.review-fold summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+details.review-fold summary::marker { color: var(--muted); }
+details.collapse { display: inline; }
+details.collapse summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 0.88rem;
+  list-style: none;
+  display: inline;
+}
+details.collapse summary::-webkit-details-marker { display: none; }
+details.collapse summary::before {
+  content: "▸ ";
+  display: inline-block;
+  transition: transform 150ms;
+}
+details.collapse[open] summary::before { content: "▾ "; }
+details.collapse[open] summary { display: block; margin-bottom: 0.4rem; }
+details.collapse pre {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.totop {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  width: 40px; height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  text-decoration: none;
+  box-shadow: var(--shadow);
+  font-size: 1.1rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms;
+}
+.totop.show { opacity: 1; pointer-events: auto; }
+.totop:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<div class="layout">
+<nav class="toc">
+  <h2>Contents</h2>
+  <ul>
+    <li><a href="#status"><span>Status</span><span class="toc-progress" data-status-count>8</span></a></li>
+    <li><a href="#milestones"><span>Milestones</span><span class="toc-progress" data-total-progress>27/27</span></a></li>
+    <li>
+      <ul>
+        <li><a class="ms-link" href="#ms-1"><span>M1 - Journey contracts</span><span class="toc-progress" data-ms-progress="ms-1">4/4</span></a></li><li><a class="ms-link" href="#ms-2"><span>M2 - User journeys</span><span class="toc-progress" data-ms-progress="ms-2">7/7</span></a></li><li><a class="ms-link" href="#ms-3"><span>M3 - Presentation</span><span class="toc-progress" data-ms-progress="ms-3">5/5</span></a></li><li><a class="ms-link" href="#ms-4"><span>M4 - Failure boundaries</span><span class="toc-progress" data-ms-progress="ms-4">5/5</span></a></li><li><a class="ms-link" href="#ms-5"><span>M5 - Evidence</span><span class="toc-progress" data-ms-progress="ms-5">6/6</span></a></li>
+      </ul>
+    </li>
+  </ul>
+</nav>
+<main id="main">
+
+<header class="hero">
+  <h1>GitView testing journeys</h1>
+  <p class="lede">Proceed locally, step by step, using disjoint subagent work and one integration owner. The user explicitly deferred Auto-K and authorized this Markdown-led testing work. Preserve the current application's behavior and existing dirty changes; add missing consumer-visible coverage rather than duplicate tests. Repository/service, browser and packaged-native evidence remain separate. No claim of exhaustive input coverage or release certification is intended.</p>
+  <div class="hero-meta">
+    <div class="stat">
+      <div class="stat-label">Milestones</div>
+      <div class="stat-value" data-stat="milestones">5 / 5</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Tasks complete</div>
+      <div class="stat-value" data-stat="tasks">27 / 27</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Overall progress</div>
+      <div class="stat-value" data-stat="percent">100%</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Status updates</div>
+      <div class="stat-value" data-stat="status">8</div>
+    </div>
+  </div>
+</header>
+
+<section class="section" id="status">
+  <h2>Status</h2>
+  <ul class="timeline"><li><span class="date">2026-10-02</span>Discussion notes saved; Auto-K discovery failed without reading or mutating product items.</li><li><span class="date">2026-10-02</span>User deferred Auto-K. Local execution authorized; current baseline is ecf63412275509d02bc684b0f0f70b793c8e289c with substantial uncommitted application work. No managed workers were registered; unregistered sessions are not detectable from that registry.</li><li><span class="date">2026-10-02</span>Prior icon-tree checks and a 15/15 verifier pass are historical evidence only. A separate dark-syntax test failure remains unexplained. Previous restricted macOS launch did not prove native UI/picker/IPC; Windows/Linux native observations are unavailable.</li><li><span class="date">2026-10-02</span>Four implementation slices landed without production behavior changes: real-service transport/fixtures, seven real-Git UI journeys, five presentation cases, and seven bounded native invariant tests. Focused suites pass. Independent review found a secondary-worktree integrity blind spot; the fixture now checks its full tracked diff, and a negative mutation smoke detects changes in both secondary repositories.</li><li><span class="date">2026-10-02</span>First integrated manifest, .verification/testing-journeys/manifest.json: 14/15 checks passed; frontend build rejected three unsupported Testing Library query options. Corrected those test-only options. Final integrated manifest, .verification/testing-journeys-final/manifest.json: 15/15 required checks passed.</li><li><span class="date">2026-10-02</span>Chromium exercised all six arrangements at 1440×900 and 720×760, real Git content, inert hostile markup, external edits, persisted Full file/Wrap/explicit light syntax, session-layout reset, keyboard focus and pointer/keyboard resizing. A 10,000-line fixture retained line 9000 for 100 layout/reading-mode cycles in 26.1 seconds, with at most 48 mounted rows per pane. This is bounded repetition, not long-running native soak certification.</li><li><span class="date">2026-10-02</span>Accessibility scan: axe-core 4.13.0 reported one moderate best-practice finding, page-has-heading-one, in the selected-repository surface. Keyboard layout focus restoration and visible outline were observed; no native screen-reader result is claimed. License inventory has no drift after the test-only Cargo manifest fingerprint update; three existing publication-license blockers remain.</li><li><span class="date">2026-10-02</span>Local execution complete; archived Markdown/HTML under docs/plans. Built production assets rendered with all non-loopback network access denied: both Geist fonts, four file icons and the bundled highlighting worker loaded, with zero page errors. Both browser fixtures shut down cleanly. Native certification, long-running external fuzz/soak work and the recorded accessibility/publication findings remain separate unmet requirements.</li></ul>
+</section>
+
+<section class="section unframed" id="milestones"><h2>Milestones</h2>
+
+<article class="section" id="ms-1"><div class="ms-header"><h2><span class="ms-num">Milestone 1</span>Coverage contracts and isolated journey transport</h2><span class="badge done">Complete</span></div><div class="ms-progress"><div class="ms-progress-bar" style="width:100%"></div></div><p class="goal"><strong>Goal:</strong> Exercise the production frontend invocation adapter against the real RepositoryService and Git, without native-picker or packaged-WebView claims.</p><div class="subhead">Acceptance Criteria</div><div class="acceptance"><ul><li>The seven journey topics below have named tests or explicit evidence gaps; repository browsing is included because the current checkout exposes that user surface.</li><li>The test-only subprocess transport accepts fixed commands, owns disposable app/repository data, shuts down children and never accepts a user's repository path.</li><li>New tests remain in the existing Vitest/Cargo infrastructure; no production API or extra runtime dependency is introduced for testing.</li></ul></div><details class="review-fold"><summary>Checklist 4/4</summary><div class="checklist"><ul><li><input type="checkbox" disabled checked><span class="task-text">Map existing frontend and native tests to repository management, working-file review, external changes, committed review, branches/worktrees, presentation and recovery.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Add the test-only Rust JSON-lines bridge at src-tauri/tests/support/journey_bridge.rs and register it as a Cargo example for integration fixtures.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Add subprocess support at tests/support/nativeJourney.ts, reusing the production RepositoryClient command names and native serialization.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Independently review the bridge isolation and lifecycle contract before accepting its evidence.</span></li></ul></div></details></article><article class="section" id="ms-2"><div class="ms-header"><h2><span class="ms-num">Milestone 2</span>Repeatable user journeys</h2><span class="badge done">Complete</span></div><div class="ms-progress"><div class="ms-progress-bar" style="width:100%"></div></div><p class="goal"><strong>Goal:</strong> Protect meaningful cross-layer workflows with real Git data and explicit failure/recovery assertions.</p><div class="subhead">Acceptance Criteria</div><div class="acceptance"><ul><li>UI interactions through the production adapter display actual native Git results, not canned repository-client responses.</li><li>Restart restores intended app choices, and read-only journeys preserve controlled index, HEAD, refs and working-file bytes except explicit fixture mutations.</li><li>npm exec -- vitest run tests/integration/NativeJourneys.test.tsx passes after bridge compilation; the shared npm run verify executes this coverage too.</li></ul></div><details class="review-fold"><summary>Checklist 7/7</summary><div class="checklist"><ul><li><input type="checkbox" disabled checked><span class="task-text">Add repository open/switch/sidebar-label rename/removal/restart assertions in tests/integration/NativeJourneys.test.tsx.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Assert staged, unstaged and untracked review endpoints and content.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Assert same-status external edits refresh the selected comparison without changing the selected file.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Assert commit expansion and parent-specific review, history pagination and return to working changes.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Assert view-only branch browsing and linked-worktree selection without checkout.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Assert the current repository-file browsing surface reads unchanged files through issued native authority.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Assert unavailable repository recovery preserves user data and does not become an empty-success state.</span></li></ul></div></details></article><article class="section" id="ms-3"><div class="ms-header"><h2><span class="ms-num">Milestone 3</span>Presentation, accessibility and bounded resources</h2><span class="badge done">Complete</span></div><div class="ms-progress"><div class="ms-progress-bar" style="width:100%"></div></div><p class="goal"><strong>Goal:</strong> Protect preference transitions and keyboard continuity, then observe actual rendered behavior and resource bounds.</p><div class="subhead">Acceptance Criteria</div><div class="acceptance"><ul><li>The planned tests/integration/PresentationJourneys.test.tsx asserts selection/content continuity across layout and appearance changes, remount persistence and keyboard focus behavior.</li><li>Real Chromium observations cover wide/narrow layouts, loaded assets, scrolling/virtualization and keyboard navigation; DOM-only results are not labeled visual proof.</li><li>Resource observations name fixture size, repetition count and bounds; no arbitrary timing threshold or native soak certification is inferred.</li></ul></div><details class="review-fold"><summary>Checklist 5/5</summary><div class="checklist"><ul><li><input type="checkbox" disabled checked><span class="task-text">Add missing presentation and keyboard journey tests after inspecting existing AppearanceReview, FileTreeIcons and Workbench tests.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Run npm exec -- vitest run tests/integration/PresentationJourneys.test.tsx after all slices land.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Exercise the actual Workspace in Chromium against the real-service bridge at wide and narrow viewports.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Observe large-file rendering and repeated review/context transitions for bounded DOM and subprocess lifecycle.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Record unsupported native assistive-technology observations explicitly rather than deriving them from Chromium.</span></li></ul></div></details></article><article class="section" id="ms-4"><div class="ms-header"><h2><span class="ms-num">Milestone 4</span>Invariants, races and privacy</h2><span class="badge done">Complete</span></div><div class="ms-progress"><div class="ms-progress-bar" style="width:100%"></div></div><p class="goal"><strong>Goal:</strong> Add deterministic invariant coverage where example-based tests leave meaningful input or transition gaps.</p><div class="subhead">Acceptance Criteria</div><div class="acceptance"><ul><li>Parser/property cases use reproducible bounded inputs and assert semantic outcomes, not only no-panic behavior.</li><li>Existing race, process-cleanup and storage-failure scenarios are mapped to exact test owners; new cases target uncovered boundaries without sleeps or global environment mutation.</li><li>Hostile content remains inert, opaque authority stays context-bound, and packaged assets resolve offline in the exercised browser build.</li></ul></div><details class="review-fold"><summary>Checklist 5/5</summary><div class="checklist"><ul><li><input type="checkbox" disabled checked><span class="task-text">Extend bounded parser and identity invariants in src-tauri/tests/unit/diff.rs, status.rs and history.rs where gaps remain.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Map native concurrency, storage recovery and privacy tests in src-tauri/tests/integration to their protected invariants and add only missing deterministic cases within assigned ownership.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Exercise hostile content and invalid native identifiers through the journey boundary.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Run native library unit_tests:: and integration_tests:: through npm run verify after integration.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Exercise locally bundled production assets and run node scripts/check-licenses.mjs --inventory-only; distinguish inventory consistency from publication clearance.</span></li></ul></div></details></article><article class="section" id="ms-5"><div class="ms-header"><h2><span class="ms-num">Milestone 5</span>Platform evidence and integrated handoff</h2><span class="badge done">Complete</span></div><div class="ms-progress"><div class="ms-progress-bar" style="width:100%"></div></div><p class="goal"><strong>Goal:</strong> Record reproducible repository/browser evidence without converting unavailable native observations into passes.</p><div class="subhead">Acceptance Criteria</div><div class="acceptance"><ul><li>npm run verify -- --output .verification/testing-journeys records all required checks, with failed/skipped/not-run results preserved.</li><li>An independent review is reconciled and all introduced blocking findings are resolved before completion is claimed.</li><li>macOS arm64, Windows x64 and Ubuntu 24.04 x64 have explicit native-evidence status; missing human/platform prerequisites remain blocked.</li></ul></div><details class="review-fold"><summary>Checklist 6/6</summary><div class="checklist"><ul><li><input type="checkbox" disabled checked><span class="task-text">Run the consolidated shared verifier after all edits land and diagnose failures at their owning boundary.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Review the implemented tests, transport isolation, cleanup and evidence independently.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Record actual browser journey observations and remove owned throwaway smoke fixtures/services.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Assess available native artifact observations using the existing preview:evidence contract; never fabricate a human report.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Record missing platform installation/picker/IPC/secondary-window/assistive-technology observations and exact prerequisites.</span></li><li><input type="checkbox" disabled checked><span class="task-text">Update this tracker with test names, commands, outcomes and unresolved limitations.</span></li></ul></div></details></article>
+
+</section>
+</main>
+</div>
+<a href="#" class="totop" id="totop" title="Back to top" aria-label="Back to top">↑</a>
+<script>
+const totop = document.getElementById('totop');
+window.addEventListener('scroll', () => {
+  totop.classList.toggle('show', window.scrollY > 500);
+});
+
+function updateProgress() {
+  const milestones = [...document.querySelectorAll('#milestones > article.section[id]')];
+  let totalTasks = 0;
+  let doneTasks = 0;
+  let doneMilestones = 0;
+
+  milestones.forEach((milestone) => {
+    const boxes = [...milestone.querySelectorAll('.checklist input[type="checkbox"]')];
+    const done = boxes.filter((box) => box.checked).length;
+    const total = boxes.length;
+    const complete = total > 0 && done === total;
+    const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+
+    totalTasks += total;
+    doneTasks += done;
+    if (complete) doneMilestones += 1;
+
+    const progressBar = milestone.querySelector('.ms-progress-bar');
+    if (progressBar) progressBar.style.width = `${percent}%`;
+
+    const badge = milestone.querySelector('.badge');
+    if (badge) {
+      badge.textContent = complete ? 'Complete' : 'Pending';
+      badge.classList.toggle('done', complete);
+      badge.classList.toggle('pending', !complete);
+    }
+
+    const summary = milestone.querySelector('details.review-fold > summary');
+    if (summary) summary.textContent = `Checklist ${done}/${total}`;
+
+    const tocProgress = document.querySelector(`[data-ms-progress="${milestone.id}"]`);
+    if (tocProgress) {
+      tocProgress.textContent = `${done}/${total}`;
+      tocProgress.classList.toggle('done', complete);
+    }
+  });
+
+  const totalPercent = totalTasks === 0 ? 0 : Math.round((doneTasks / totalTasks) * 100);
+  const statusCount = document.querySelectorAll('#status .timeline li').length;
+
+  document.querySelector('[data-total-progress]').textContent = `${doneTasks}/${totalTasks}`;
+  document.querySelector('[data-total-progress]').classList.toggle('done', doneTasks === totalTasks && totalTasks > 0);
+  document.querySelector('[data-status-count]').textContent = String(statusCount);
+
+  document.querySelector('[data-stat="milestones"]').textContent = `${doneMilestones} / ${milestones.length}`;
+  document.querySelector('[data-stat="tasks"]').textContent = `${doneTasks} / ${totalTasks}`;
+  document.querySelector('[data-stat="percent"]').textContent = `${totalPercent}%`;
+  document.querySelector('[data-stat="status"]').textContent = String(statusCount);
+}
+
+updateProgress();
+window.setTimeout(() => {
+  window.location.reload();
+}, 30000);
+</script>
+</body>
+</html>

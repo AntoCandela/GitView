@@ -1,0 +1,139 @@
+// Owns interface palette tokens and global resets; feature and primitive rules are emitted below.
+
+@use "./ui/styles" as ui;
+@use "./app/workspace" as workspace;
+@use "./app/workbench/workbench" as workbench;
+@use "./ui/file-explorer/fileExplorer" as fileExplorer;
+@use "./features/changes/changes" as changes;
+@use "./features/diff/diff" as diff;
+@use "./features/history/history" as history;
+@use "./app/workbench/layoutMenu" as layoutMenu;
+@use "./app/sidebarResize" as sidebarResize;
+@use "./app/workbench/workbenchResize" as workbenchResize;
+
+:root {
+  font-family: "Geist Variable", sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  color-scheme: light;
+
+  --font-ui: "Geist Variable", sans-serif;
+  --font-mono: "Geist Mono Variable", monospace;
+  --canvas: #f8f4ec;
+  --sidebar: #f8f4ec;
+  --ink: #020d26;
+  --muted: #596071;
+  --accent: #0f766e;
+  --primary: #2dd4bf;
+  --pill-bg: #f0eee8;
+  --border: #cdc5b8;
+  --history-color-0: #1d4ed8;
+  --history-color-1: #0b625c;
+  --history-color-2: #7020b5;
+  --history-color-3: #854100;
+  --history-color-4: #a80f35;
+  --history-color-5: #0b6079;
+  --history-color-6: #45551a;
+  --history-color-7: #8c188f;
+  --radius-detail: 4px;
+  --radius-control: 6px;
+  --radius-panel: 8px;
+  --z-tooltip: 10000;
+  --error: #a73519;
+  --error-bg: #fce8db;
+  --diff-add-bg: #e0f1e9;
+  --diff-remove-bg: #f8e5db;
+  --diff-inline-add-bg: #b5dfc8;
+  --diff-inline-remove-bg: #efc1ac;
+}
+
+:root[data-appearance="paper"] {
+  --canvas: #ffffff; --sidebar: #f6f8fa; --ink: #24292e; --muted: #57606a;
+  --accent: #0969da; --primary: #79c0ff; --pill-bg: #eaeef2; --border: #afb8c1;
+  --error: #b42318; --error-bg: #fff0e9;
+  --diff-add-bg: #daf1de; --diff-remove-bg: #fce3df;
+  --diff-inline-add-bg: #a8dcaf; --diff-inline-remove-bg: #f4b9b1;
+}
+:root[data-appearance="mist"] {
+  --canvas: #eff1f5; --sidebar: #e6e9ef; --ink: #4c4f69; --muted: #5c5f77;
+  --accent: #6730a8; --primary: #ceb3f5; --pill-bg: #dce0e8; --border: #9ca0b0;
+  --error: #b02430; --error-bg: #f8e2e1;
+  --diff-add-bg: #d7eedc; --diff-remove-bg: #f6deda;
+  --diff-inline-add-bg: #a9d9b1; --diff-inline-remove-bg: #edb7ab;
+}
+:root[data-appearance="stone"] {
+  --canvas: #e8e9e8; --sidebar: #dcdfde; --ink: #242b2c; --muted: #50595a;
+  --accent: #205e6b; --primary: #83c5ca; --pill-bg: #d4d9d7; --border: #949e9c;
+  --error: #a42d25; --error-bg: #f6dbd6;
+  --diff-add-bg: #cee6db; --diff-remove-bg: #f1d8d0;
+  --diff-inline-add-bg: #a6d5ba; --diff-inline-remove-bg: #e3aa9d;
+}
+:root[data-appearance="graphite"] {
+  color-scheme: dark;
+  --canvas: #30363d; --sidebar: #262c33; --ink: #e6edf3; --muted: #b0bbc6;
+  --accent: #79c0ff; --primary: #79c0ff; --pill-bg: #404953; --border: #687684;
+  --error: #ff9b8c; --error-bg: #593b3c;
+  --diff-add-bg: #244938; --diff-remove-bg: #5a3439;
+  --diff-inline-add-bg: #32644a; --diff-inline-remove-bg: #794047;
+}
+:root[data-appearance="midnight"] {
+  color-scheme: dark;
+  --canvas: #0d1117; --sidebar: #161b22; --ink: #e6edf3; --muted: #a9b5c3;
+  --accent: #79c0ff; --primary: #56d4c1; --pill-bg: #242b35; --border: #485464;
+  --error: #ffa198; --error-bg: #45252a;
+  --diff-add-bg: #173b2d; --diff-remove-bg: #48262d;
+  --diff-inline-add-bg: #276044; --diff-inline-remove-bg: #783740;
+}
+
+:root[data-appearance="graphite"],
+:root[data-appearance="midnight"] {
+  --history-color-0: #79c0ff;
+  --history-color-1: #56d4c1;
+  --history-color-2: #c4a7ff;
+  --history-color-3: #ffbc70;
+  --history-color-4: #ff91aa;
+  --history-color-5: #76d7ea;
+  --history-color-6: #b5d880;
+  --history-color-7: #f0a1dd;
+}
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-width: 320px;
+  color: var(--ink);
+  background: var(--canvas);
+}
+button {
+  font: inherit;
+}
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.lucide {
+  flex: none;
+  stroke-width: 1.7;
+}
+
+// Emit the reset before primitives and feature rules, including responsive overrides.
+@include ui.styles;
+@include workspace.styles;
+@include sidebarResize.styles;
+@include workbench.styles;
+@include fileExplorer.toolbar;
+@include workbench.panes;
+@include changes.styles;
+@include fileExplorer.styles;
+@include workbenchResize.styles;
+@include diff.styles;
+@include history.styles;
+@include layoutMenu.styles;
+

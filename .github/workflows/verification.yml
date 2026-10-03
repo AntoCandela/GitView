@@ -1,0 +1,66 @@
+name: Repository verification
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: verification-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-14
+            platform: macos-arm64
+            architecture: arm64
+          - runner: windows-2022
+            platform: windows-x64
+            architecture: x64
+          - runner: ubuntu-24.04
+            platform: ubuntu-24.04-x64
+            architecture: x64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          architecture: ${{ matrix.architecture }}
+          cache: npm
+      - name: Install stable Rust
+        uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
+        with:
+          toolchain: stable
+      - name: Install Linux native prerequisites
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y build-essential libwebkit2gtk-4.1-dev libxdo-dev libssl-dev librsvg2-dev libayatana-appindicator3-dev patchelf git
+      - name: Check native runner architecture
+        env:
+          EXPECTED_ARCHITECTURE: ${{ matrix.architecture }}
+        run: node --input-type=module -e "if (process.arch !== process.env.EXPECTED_ARCHITECTURE) process.exit(1)"
+      - name: Install locked frontend dependencies
+        run: npm ci
+      - name: Run shared required verification
+        if: ${{ !cancelled() }}
+        run: node scripts/verify.mjs --suite all --output .verification/${{ matrix.platform }}
+      - name: Upload sanitized verification manifest only
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: verification-${{ matrix.platform }}-${{ github.sha }}
+          path: .verification/${{ matrix.platform }}/manifest.json
+          if-no-files-found: warn
+          retention-days: 14
+          include-hidden-files: true

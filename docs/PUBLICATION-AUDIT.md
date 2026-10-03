@@ -1,0 +1,66 @@
+# Source publication audit
+
+## Scope and owner decisions — 2026-10-03
+
+This report covers **preparation of the selected source for publication on `main`**, not an installer release or permission to push. Source preparation did not publish public refs or configure a hosted public repository.
+
+The owner selected a **clean, parentless initial `main` commit**, using their approved GitHub noreply identity. The cutover preserved prior history and four hooked remediation commits on the private backup branch `local/pre-publication-history`. The resulting `main` has one real commit and zero parents; its author and committer use the approved noreply identity. Publish only the reviewed `main` ref to public destinations: never the backup, unrelated branches, automation refs, reflogs, dangling objects or `.git`. The old history retains personal metadata, private-service bindings and earlier artwork whose rights were not established; replacing current files does not clear those historical objects for public disclosure.
+
+The current artwork is the user-selected original View V design and generated native exports described in [asset provenance](../licenses/asset-provenance.json). Selecting a new root commit excludes superseded artwork from outgoing history; this is not trademark clearance.
+
+The owner replaced the proposed email aliases with [private LinkedIn messages to Tobias Candela](https://www.linkedin.com/in/tobiascandela/). [SECURITY.md](../SECURITY.md), [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md), the README and issue-template links use that canonical profile. Browser inspection reached LinkedIn's sign-up/authentication wall; no message was sent and delivery or unrestricted access is not claimed. Policies disclose account/connection/platform restrictions and prohibit sensitive details in public posts, comments, issues or PRs.
+
+## Findings resolved in the selected source
+
+| Finding | Remedy and evidence |
+| --- | --- |
+| Inconsistent frontend integration verification | A normal full Vitest run reproduced two layout/appearance cases exceeding the unchanged 5-second deadline. Repeated document-wide accessibility queries traversed the full workspace and open menus. Scope queries to their toolbar, file list, history or dialog and await menu transitions; retain all original actions/assertions and concurrency. The corrected full Vitest run passed 299 tests in 31 files. Shared frontend integration subsequently passed all 113 tests. |
+| Missing LZMA and stackback license evidence | Select Rollup 4.62.2 without LZMA, and dependency-free why-is-node-running 3.2.2 with its original MIT grant. Preserve the diagnostic package's original ESM/CLI and add a mechanically verified CommonJS entry for Vitest. Neither removed package receives an invented grant. |
+| Unclear embedded GLSL rights | Replace the Shiki runtime GLSL module with Evan Wallace's independently licensed GLSLX grammar at `0517b580f47749ae9913c8db3d724b92b9be79c8`. Retain original XML and MIT license; allow only three identity changes in derived JSON. App, worker, development and test resolution use the same replacement. Do not redistribute raw Shiki archives as cleared app assets. |
+| Missing bundled notices | Collect `ThirdPartyNotices.txt` and `*.js.LICENSE` / `*.js.LICENSE.txt` alongside existing notice types. Preserve Playwright's third-party inventories and sidecars byte-for-byte. Remove notice files belonging only to superseded dependencies. |
+| GLib iterator unsoundness | Backport the exact upstream mutable-output-pointer fix to authenticated glib 0.18.5 source. An optimized original consumer terminated with a segmentation fault; the patched consumer passed forward/backward traversal, skipping, exhaustion, overflow, Unicode and empty-array checks. |
+| Unmaintained proc-macro-error | Migrate glib-macros and gtk3-macros to their existing syn 2 error APIs. Neither proc-macro-error nor its also-advised proc-macro-error2 fork remains selected. Positive Enum/Variant/closure consumers pass; seven rejected consumers retain intended messages/spans. A combined-error expression bug found by smoke was corrected with a block expression; both duplicate-watch locations are now reported without parser noise. |
+| Cargo path dependencies omitted by advisory scanners | Both license refresh and strict check independently authenticate original archives and verify complete local source trees, exact iterator edits, narrow manifest changes and reviewed macro-source digests. Self-consistent replacement hashes alone do not establish approval. The full shared verifier now requires this provenance/license check. |
+| Historical privacy/artwork selection | Owner-approved parentless source selection, with original history retained locally rather than erased or pushed. |
+| Publication branch and reporting configuration | Workflow push trigger is `main`; pull-request checks remain enabled. Both issue-template contact links resolve to the approved canonical LinkedIn URL. Hosted defaults/protections remain separate owner setup steps. |
+
+See [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) for exact original archive checksums, selected grants, source derivations, native backport scope and redistribution limits.
+
+## Executed verification
+
+| Check | Observed result |
+| --- | --- |
+| Locked npm installation | `npm ci` passed. |
+| Frontend test suite and production build | 299/299 Vitest tests passed; TypeScript/Vite build passed. |
+| License/source verifier regression checks | 20/20 targeted infrastructure checks passed. |
+| Final strict license/source gate | Passed after refresh: 262 npm packages, 442 Cargo packages, 1,080 retained notice references, no drift and no blockers. |
+| Shared required checks before final provenance refresh | 15/16 passed, including both builds, all frontend/native/infrastructure tests, executable documentation and policy. The license check correctly rejected inventory drift after the final macro correction/documentation update; a stale inventory is not clearance. |
+| Final full shared gate after refresh | `git hook run pre-push` passed all 16 required checks, including strict publication licensing and source provenance. |
+| Browser baseline and organization smoke | Both passed, including exact shader source, visible syntax/comment contrast, renderer-error checks, fixture safety and cleanup. Screenshots were inspected. Boundary: built Chromium renderer, production adapter and real disposable native service, not native Tauri IPC or a packaged WebView. |
+| Emitted grammar inspection | C++ and Ruby chunk dependency closures contain the exact approved grammar JSON. All 39 emitted JavaScript files were inspected for serialized original GLSL bodies; none was present. |
+| Optimized native dependency consumer | Final patched iterator, Enum, Variant and closure scenarios passed; seven negative macro consumers emitted intended diagnostics without macro panics. |
+| npm audit | No advisories reported. |
+| cargo-audit 0.22.2 | Exit 0, zero vulnerability entries and no warnings. Advisory database: 1,288 entries at `f8dee89e1b2f2f1eaf548312df7655fe5202a302`. Path-package source verification remains independently required. |
+| Independent review | Read-only runtime and legal/provenance reviews reported no remaining findings; the combined-diagnostic correction received a separate bounded review. |
+
+GLib development libraries were available on the macOS ARM64 host, enabling actual optimized dependency consumers. GTK3/WebKit development libraries and Linux/Windows native hosts were not available here. Compilation of the macro crates and metadata inspection do not establish a full Linux application build. Existing upstream compiler warnings were not suppressed or reformatted away.
+
+The shared runner has 16 required checks. Local ignored `.verification/pre-push/manifest.json` records the exact revision, dirty state and outcomes of its most recent run. Hooks inspect the worktree, not each historical partial commit. The final full run passed after inventory refresh; earlier failures describe superseded states and remain documented above. Re-run the gate on the final committed `main` before any separately authorized push.
+
+The initial orphan-commit attempt correctly failed the workflow-evaluation tests' committed-`HEAD` prerequisite. The cutover instead used a normal hooked amend with a temporary parentless graft, then removed the replacement ref. All hooks passed on that committed baseline; no test, hook or revision-binding requirement was disabled. Real parent count was checked with replacement objects disabled.
+
+A subsequent required run exposed two more integration failures in repeated layout transitions and icon preference/remount coverage. An isolated integration pass did not clear that failure; a normal full-suite diagnostic also reproduced an appearance-test timeout. Remaining document-wide queries in these three scenarios were scoped to their actual dialogs, trees and review controls, repeated layout actions reuse their mounted trigger, and icon-menu outside-click dismissal is explicitly awaited. All original actions, assertions, repetition counts, deadlines and concurrency remain. The corrected normal full suite passed 299/299 tests, and organization browser smoke passed all phases with fixture safety and cleanup. The archived 49-commit history was not changed by this later test-only stabilization.
+
+## Secret scanning and source boundary
+
+Use Gitleaks 8.30.1 from its official release with verified archive SHA-256. Scan the exact exported source tree and the selected outgoing `main` history independently, with built-in rules, full redaction, five decoding levels, no archive traversal, no size cutoff, no baseline/suppression file and no inline allow comments. Do not upload raw reports. Asset-hash findings must be independently compared with the corresponding same-revision bytes rather than suppressed.
+
+The selected source-tree export and the outgoing parentless `main` history were scanned independently after remediation. Each reported seven matches, all SHA-256 asset checksums in `licenses/inventory.json`; every value was independently verified against its corresponding same-revision asset bytes. No confirmed credential was found in these scopes. Both scans intentionally exited 1 for those findings; no suppression was added. The preserved backup and unrelated refs are outside this publication selection, not cleared for disclosure.
+
+The outgoing source excludes ignored connector/account configuration, environment credentials, application databases, diagnostics, screenshots, scanner material, caches, node_modules and build outputs. Do not broaden the publication selection to a checkout archive or all Git refs. Secret-pattern scanning is not exhaustive semantic privacy review, legal clearance or evidence that no external copy exists. Preserved upstream authorship/contact/license information is intentional third-party attribution, not GitView's reporting route.
+
+## Remaining hosted and release boundaries
+
+The local source selection does not identify or configure a GitHub destination. After separately authorizing upload, the owner must follow [GitHub setup](GITHUB-SETUP.md): confirm the intended target, publish only `main`, set its hosted default branch, inspect all three platform jobs, apply effective protections and enable available security controls. No target was guessed and no broader account access was requested.
+
+GitHub private vulnerability reporting remains optional and unconfigured here; the approved LinkedIn route is not evidence that GitHub reporting is enabled. Installer signing/notarization, native picker/window authorization, packaged resource inspection, target-specific runtime licenses and binary corresponding-source obligations remain outside this source-publication evidence. Do not describe this preparation as a certified public binary release.

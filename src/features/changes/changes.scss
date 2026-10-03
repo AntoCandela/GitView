@@ -1,0 +1,10 @@
+// Owns changed-file observation status presentation.
+
+@mixin styles {
+  .changes-state {
+    padding: 8px;
+    font-size: 12px;
+    h3 { margin: 0; font-size: 12px; font-weight: 500; }
+    p { margin: 4px 0 0; color: var(--muted); font-size: 11px; }
+  }
+}

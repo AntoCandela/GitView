@@ -1,0 +1,128 @@
+// Owns generic file-explorer controls and trees; separate mixins preserve their cascade positions.
+
+@mixin toolbar {
+  .files-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    flex: none;
+    min-height: 36px;
+    gap: 8px;
+    padding: 4px 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .files-count { color: var(--muted); white-space: nowrap; }
+  .files-view-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+  .files-expand, .files-view-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    height: 28px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    color: var(--accent);
+    background: transparent;
+    cursor: pointer;
+    &:hover:not(:disabled) { background: var(--pill-bg); }
+    &:disabled { opacity: 0.45; cursor: default; }
+  }
+  .files-expand { width: 28px; }
+  .files-view-toggle {
+    gap: 4px;
+    padding: 0 4px;
+    font: inherit;
+    color: var(--ink);
+    .lucide { color: var(--accent); }
+  }
+}
+
+@mixin styles {
+  .changes-tree {
+    flex: 1;
+    min-height: 0;
+    margin: 0;
+    padding: 0 4px 4px;
+    list-style: none;
+    overflow: auto;
+    overscroll-behavior: contain;
+    font-size: 12px;
+    --tree-indent: 18px;
+    .lucide { width: 14px; height: 14px; color: var(--accent); }
+  }
+  .changes-tree-content {
+    position: relative;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-anchor: none;
+  }
+  .changes-tree-external { flex: none; overflow: visible; padding: 0; }
+  .change-virtual-row {
+    position: absolute;
+    left: calc(var(--row-depth) * var(--tree-indent));
+    right: 0;
+    height: 28px;
+    > button, > .change-file-name { height: 28px; box-sizing: border-box; }
+  }
+  .directory-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    min-height: 28px;
+    padding: 2px 4px;
+    border: 0;
+    border-radius: var(--radius-detail);
+    background: transparent;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    &:hover { background: var(--pill-bg); }
+    span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  }
+  // One interactive header per directory; its logical subtree bounds the virtual sticky position.
+  .changes-tree-hierarchy:not(.changes-tree-external) .directory-toggle {
+    background: var(--tree-surface, var(--canvas));
+    border-radius: 0;
+    &:hover { background: var(--pill-bg); }
+  }
+  .change-file-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    min-height: 28px;
+    padding: 2px 4px;
+    border: 0;
+    border-radius: var(--radius-detail);
+    background: transparent;
+    color: var(--ink);
+    text-align: left;
+    cursor: pointer;
+    > span:not(.change-marker) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    &:hover { background: var(--pill-bg); }
+    &[aria-pressed="true"] { background: color-mix(in oklch, var(--primary) 14%, var(--canvas)); }
+  }
+  .change-file-name:not(button) {
+    cursor: default;
+    &:hover { background: transparent; }
+  }
+  .change-marker {
+    flex: none;
+    margin-left: auto;
+    color: var(--accent);
+    font: 10px var(--font-mono);
+    &.unsupported { color: var(--error); }
+  }
+  @media (max-width: 440px) {
+    .changes-tree { --tree-indent: 8px; }
+  }
+}

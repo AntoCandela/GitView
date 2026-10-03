@@ -1,0 +1,39 @@
+// Owns the View V lockup and its compact toolbar presentation.
+.gitview-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+  color: var(--ink);
+}
+.gitview-brand-mark { display: block; width: 56px; height: 56px; flex: none; }
+.gitview-brand-frame { color: var(--ink); }
+.gitview-brand-branch { color: var(--accent); }
+.gitview-brand-wordmark {
+  font-family: var(--font-ui);
+  font-size: 32px;
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: -1.2px;
+}
+.gitview-brand--compact {
+  margin-inline: 4px 8px;
+  .gitview-brand-mark { width: 24px; height: 24px; }
+}
+.workbench-identity { display: flex; align-items: center; min-width: 0; }
+.workbench-toolbar.workbench-toolbar--branded {
+  grid-template-columns: minmax(64px, 1fr) minmax(0, auto) minmax(64px, 1fr);
+  .workspace-selectors { max-width: min(440px, calc(100vw - 144px)); }
+  .workbench-layout-control { display: flex; align-items: center; padding-left: 0; }
+}
+.workspace-state.workspace-state--branded {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  .gitview-brand { margin-bottom: 24px; }
+  .brand-description { max-width: 320px; margin: 8px 0 0; color: var(--muted); line-height: 1.6; }
+}
