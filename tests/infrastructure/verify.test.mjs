@@ -65,6 +65,32 @@ test('Rust failure locations resolve through module paths without retaining outs
   assert.doesNotMatch(await readFile(join(root, '.verification/manifest.json'), 'utf8'), /SECRET_TOKEN|customer\.rs|private payload/);
 });
 
+test('a nested Rust harness cannot hide ignored tests in its enclosing harness', async t => {
+  const root = await fixture(t);
+  const source = join(root, 'nested.rs');
+  const executable = join(root, process.platform === 'win32' ? 'nested.exe' : 'nested');
+  await writeFile(source, `
+    #[test]
+    fn parent() {
+        let child = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "nested_child", "--ignored", "--nocapture"]).output().unwrap();
+        assert!(child.status.success());
+        print!("{}", String::from_utf8(child.stdout).unwrap());
+    }
+    #[test]
+    #[ignore]
+    fn nested_child() { println!("private-nested-payload"); }
+  `);
+  const compiled = await execute('rustc', ['--test', source, '-o', executable], { cwd: root });
+  assert.equal(compiled.exitCode, 0);
+  const checks = [{ id: 'nested', boundary: 'unit', executable, args: ['--nocapture'], invocation: ['owned-rust-fixture'], reporter: 'rust' }];
+  const result = await runVerification({ root, checks, metadata, allowedIdentifiers: ['parent', 'nested_child'] });
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.manifest.checks[0].code, 'required_tests_skipped');
+  assert.deepEqual(result.manifest.checks[0].summary, { passed: 1, failed: 0, ignored: 1 });
+  assert.doesNotMatch(await readFile(join(root, '.verification/manifest.json'), 'utf8'), /private-nested-payload/);
+});
+
 test('documentation failure evidence cannot certify success or publish unknown process data', async t => {
   const root = await fixture(t);
   const failure = { error: 'doc_examples_failed', stage: 'driver_run', processCode: 'check_failed', exitCode: 3221225785, compilerCodes: [] };

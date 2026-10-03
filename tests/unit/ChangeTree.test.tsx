@@ -7,13 +7,13 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ChangeTree, changeDirectoryId, type ChangeTreeDirectory, type ChangeTreeFile } from "../../src/ui/file-explorer/ChangeTree";
 import { FileExplorer } from "../../src/ui/file-explorer/FileExplorer";
+import { installVirtualLayout } from "../support/virtualLayout";
 
+let restoreLayout: () => void;
 beforeEach(() => {
-  vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockReturnValue(280);
-  vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(280);
-  vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(320);
+  restoreLayout = installVirtualLayout({ viewportHeight: 280, viewportWidth: 320 });
 });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); restoreLayout(); vi.restoreAllMocks(); });
 
 function filesIn(directory: string[], count: number): ChangeTreeFile[] {
   return Array.from({ length: count }, (_, index) => {
@@ -24,14 +24,7 @@ function filesIn(directory: string[], count: number): ChangeTreeFile[] {
 
 function scrollerFor(label = "Files") {
   const list = screen.getByRole("list", { name: label });
-  const scroller = list.parentElement!;
-  // jsdom has no scroll layout; preserve browser scroll events without replacing the virtualizer.
-  Object.defineProperty(scroller, "scrollHeight", { configurable: true, get: () => Number.parseFloat(list.style.height) });
-  Object.defineProperty(scroller, "scrollTo", { configurable: true, value: (options: ScrollToOptions) => {
-    scroller.scrollTop = options.top ?? scroller.scrollTop;
-    scroller.dispatchEvent(new Event("scroll"));
-  } });
-  return scroller;
+  return list.parentElement!;
 }
 
 function scroll(scroller: HTMLElement, top: number) {

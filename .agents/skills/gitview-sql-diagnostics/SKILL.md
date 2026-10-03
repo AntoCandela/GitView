@@ -99,6 +99,7 @@ Direct SQL bypasses the CLI's per-row decoder. Treat unexpected values as untrus
 - Process cleanup has separate facts. A cancelled request does not prove its child was reaped.
 - Nonzero Git exit status can be expected. Prefer the Git/application classification over guessing from exit status.
 - Accepted submissions may be queued, not committed. Queue overflow/storage failure means capture is incomplete; report dropped counts.
+- The writer drains at most 64 immediately queued records per full-synchronous transaction and stops before flush/shutdown barriers. Written counts advance only after commit; failed batches roll back rows and retention changes and count all consumed records as dropped.
 - Retention is bounded to 20,000 events/seven days at write time. Do not claim complete historical coverage.
 
 ## 3. Add a diagnostic fact, not a generic logger

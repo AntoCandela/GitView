@@ -35,6 +35,8 @@ The utility reports recorded status and safe counts/check IDs, omits raw descrip
 
 The shared runner's `failures` may include `source:` identifiers for catalogued test files and in-range source lines, bounded reported test durations, fixed timeout/assertion classifications, closed documentation stage/process facts, and bounded `compiler:` diagnostic identifiers from failed documentation builds. These add context when parameterized names must be omitted; they never contain parameter values, raw stacks or runtime filesystem locations. Several identifiers can describe one failed case: use the framework summary for test counts. The report utility still omits these supplied descriptions rather than trusting them as current source evidence.
 
+Rust subprocess regressions can print nested harness results. The runner uses the last complete, line-anchored count summary from the enclosing harness, so a successful child cannot hide ignored or failed enclosing cases. Nonzero process status still takes precedence over reported success.
+
 Exit `0` means the supplied report records a pass; `1` a recorded failure; `2` invalid/unreadable evidence or arguments. An invalid report is not a pass. Manifest dates/revision/dirty state describe the original run; compare that context with the change being reviewed.
 
 For a failure:

@@ -157,8 +157,10 @@ function extractEvidence(output, reporter, allowed, root, sources) {
     reporterValid = /test result: (?:ok|FAILED)\./.test(output);
     for (const match of output.matchAll(/^test ([A-Za-z0-9_:]+) \.\.\. FAILED\s*$/gm)) retain(match[1].split('::').at(-1));
     for (const match of output.matchAll(/panicked at ([^\r\n]+):(\d+):\d+:/g)) retainSource(match[1], match[2]);
-    const counts = output.match(/test result: (?:ok|FAILED)\. (\d+) passed; (\d+) failed; (\d+) ignored/);
-    if (counts) summary = { passed: Number(counts[1]), failed: Number(counts[2]), ignored: Number(counts[3]) };
+    // Enclosing counts, not a self-spawned child's counts, govern required coverage.
+    for (const counts of output.matchAll(/^test result: (?:ok|FAILED)\. (\d+) passed; (\d+) failed; (\d+) ignored/gm)) {
+      summary = { passed: Number(counts[1]), failed: Number(counts[2]), ignored: Number(counts[3]) };
+    }
   }
   if (reporter === 'tap') {
     reporterValid = /^# tests \d+$/m.test(output);
