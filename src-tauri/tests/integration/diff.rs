@@ -243,8 +243,20 @@ async fn cancelled_review_reaps_git_and_retains_safe_causal_failure_evidence() {
     tokio::time::resume();
     test_support::wait_for_reaped_child(temp.path()).await;
     service.shutdown().await;
-    store.flush(Duration::from_secs(5)).unwrap();
-    let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(id), ..Default::default() }).unwrap();
+    // OS disappearance can precede the detached reaper's diagnostic submission.
+    let rows = tokio::time::timeout(Duration::from_secs(5), async {
+        loop {
+            store.flush(Duration::from_secs(5)).unwrap();
+            let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query {
+                operation_id: Some(id), limit: 200, ..Default::default()
+            }).unwrap();
+            assert!(!rows.has_more);
+            if rows.events.iter().any(|row| row.component == Component::Process && row.event == Event::CleanupCompleted) {
+                break rows;
+            }
+            tokio::task::yield_now().await;
+        }
+    }).await.expect("reaped review must submit its cleanup evidence");
     assert!(rows.events.iter().any(|row| row.component == Component::Application && row.event == Event::Cancelled));
     assert!(rows.events.iter().any(|row| row.component == Component::Process && row.event == Event::CleanupCompleted));
     assert!(rows.events.iter().all(|row| row.operation_kind == OperationKind::ReviewFile));

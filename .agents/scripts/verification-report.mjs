@@ -43,7 +43,7 @@ export async function summarizeVerification(manifest) {
         summary[key] = count;
       }
     }
-    if (check.status === 'passed' && spec.reporter !== 'none' && spec.reporter !== 'policy') {
+    if (check.status === 'passed' && spec.reporter !== 'none' && spec.reporter !== 'policy' && spec.reporter !== 'documentation') {
       const required = spec.reporter === 'rust' ? ['passed', 'failed', 'ignored']
         : spec.reporter === 'vitest' ? ['numPassedTests', 'numFailedTests', 'numPendingTests', 'numTotalTests']
         : ['total', 'passed', 'failed', 'skipped', 'todo'];

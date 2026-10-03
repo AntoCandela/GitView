@@ -1,7 +1,7 @@
 /** Exercises run outcomes and privacy using isolated child processes. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { access, mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -30,6 +30,56 @@ test('named failure remains actionable without leaking private stdout or environ
   assert.deepEqual(result.manifest.checks[0].rerun, ['node', 'fixture.mjs']);
   assert.equal(result.manifest.checks[0].details, 'omitted_private_payloads');
   assert.doesNotMatch(persisted, /SECRET_TOKEN|private\/customer|<html>|console\.log/);
+});
+
+test('parameterized failures retain only source-owned locations and bounded timing facts', async t => {
+  const root = await fixture(t);
+  await mkdir(join(root, 'tests/unit'), { recursive: true });
+  const source = join(root, 'tests/unit/Scenario.test.ts');
+  await writeFile(source, "test.each(['one', 'two'])('keeps %s isolated', () => {\n  throw new Error('fixture');\n});\n");
+  const report = { numPassedTests: 0, numFailedTests: 2, numPendingTests: 0, numTotalTests: 2, testResults: [{
+    name: source,
+    assertionResults: [
+      { title: 'keeps private_customer isolated', status: 'failed', location: { line: 2 }, duration: 5001.6,
+        failureMessages: [`AssertionError: SECRET_TOKEN\n    at scenario (${pathToFileURL(source).href}:2:5)\n    at outside (/private/customer.ts:1:1)\n    at invalid (${source}:99999:1)`, 'Error: Test timed out in 5000ms.\nprivate DOM bytes'] },
+      { title: 'private_variant', status: 'failed', location: { line: 0 }, duration: Number.MAX_SAFE_INTEGER },
+    ],
+  }] };
+  const result = await runVerification({ root, checks: [child('frontend', `console.log(JSON.stringify(${JSON.stringify(report)})); process.exitCode = 1`, 'vitest')], metadata });
+  const failures = result.manifest.checks[0].failures;
+  assert.equal(result.exitCode, 1);
+  assert.equal(result.manifest.checks[0].omittedFailures, true);
+  assert.deepEqual(failures, ['reported_assertion_failure', 'reported_test_timeout', 'source:tests:unit:Scenario.test.ts', 'source:tests:unit:Scenario.test.ts:2', 'source:tests:unit:Scenario.test.ts:duration_ms:5002']);
+  const persisted = await readFile(join(root, '.verification/manifest.json'), 'utf8');
+  assert.doesNotMatch(persisted, /SECRET_TOKEN|private_customer|private_variant|private DOM|99999|9007199254740991/);
+  assert.equal(persisted.includes(JSON.stringify(root).slice(1, -1)), false);
+});
+
+test('Rust failure locations resolve through module paths without retaining outside paths or payloads', async t => {
+  const root = await fixture(t);
+  await mkdir(join(root, 'src-tauri/tests/integration'), { recursive: true });
+  await writeFile(join(root, 'src-tauri/tests/integration/scenario.rs'), 'fn retains_authority() {\n    panic!("fixture");\n}\n');
+  const output = "test module::retains_authority ... FAILED\nthread 'case' panicked at src/domain/../../tests/integration/scenario.rs:2:5:\nSECRET_TOKEN\nthread 'private' panicked at /private/customer.rs:2:1:\nprivate payload\ntest result: FAILED. 0 passed; 1 failed; 0 ignored;\n";
+  const result = await runVerification({ root, checks: [child('native', `console.log(${JSON.stringify(output)}); process.exitCode = 1`, 'rust')], metadata });
+  assert.deepEqual(result.manifest.checks[0].failures, ['retains_authority', 'source:src-tauri:tests:integration:scenario.rs:2']);
+  assert.doesNotMatch(await readFile(join(root, '.verification/manifest.json'), 'utf8'), /SECRET_TOKEN|customer\.rs|private payload/);
+});
+
+test('documentation failure evidence cannot certify success or publish unknown process data', async t => {
+  const root = await fixture(t);
+  const failure = { error: 'doc_examples_failed', stage: 'driver_run', processCode: 'check_failed', exitCode: 3221225785 };
+  const privateFailure = { ...failure, stage: 'private_customer', output: 'SECRET_TOKEN' };
+  const success = { status: 'passed', documents: 1, links: 1, skills: 1, examples: { rust: 2, sql: 3, reader: 'passed', cli: 'passed', privacy: 'passed' } };
+  const checks = [child('startup', `console.log(JSON.stringify(${JSON.stringify(failure)}))`, 'documentation'), child('private', `console.log(JSON.stringify(${JSON.stringify(privateFailure)}))`, 'documentation')];
+  checks.push(child('contradictory', `console.log(JSON.stringify(${JSON.stringify({ ...success, ...failure })}))`, 'documentation'));
+  checks.push(child('complete', `console.log(JSON.stringify(${JSON.stringify(success)}))`, 'documentation'));
+  const result = await runVerification({ root, checks, metadata, allowedIdentifiers: [] });
+  assert.equal(result.manifest.checks[0].code, 'check_failed');
+  assert.deepEqual(result.manifest.checks[0].failures, ['doc_examples_failed', 'documentation:driver_run', 'process:check_failed', 'process_exit:3221225785']);
+  assert.equal(result.manifest.checks[1].code, 'missing_required_evidence');
+  assert.equal(result.manifest.checks[2].code, 'missing_required_evidence');
+  assert.equal(result.manifest.checks[3].status, 'passed');
+  assert.doesNotMatch(await readFile(join(root, '.verification/manifest.json'), 'utf8'), /private_customer|SECRET_TOKEN/);
 });
 
 test('start failure is failed and does not prevent other required checks', async t => {

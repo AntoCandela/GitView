@@ -33,6 +33,8 @@ node .agents/scripts/verification-report.mjs --manifest .verification/pre-push/m
 
 The utility reports recorded status and safe counts/check IDs, omits raw descriptions and regenerates current rerun commands from the shared runner. It does not execute supplied manifest commands or certify freshness. Paths in these examples are relative to the repository root, not this skill directory.
 
+The shared runner's `failures` may include `source:` identifiers for catalogued test files and in-range source lines, bounded reported test durations, fixed timeout/assertion classifications, and closed documentation stage/process facts. These add context when parameterized names must be omitted; they never contain parameter values, raw stacks or runtime filesystem locations. Several identifiers can describe one failed case: use the framework summary for test counts. The report utility still omits these supplied descriptions rather than trusting them as current source evidence.
+
 Exit `0` means the supplied report records a pass; `1` a recorded failure; `2` invalid/unreadable evidence or arguments. An invalid report is not a pass. Manifest dates/revision/dirty state describe the original run; compare that context with the change being reviewed.
 
 For a failure:
