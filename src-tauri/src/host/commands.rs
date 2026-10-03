@@ -34,7 +34,7 @@ pub(super) async fn workspace_snapshot<R: tauri::Runtime>(
 ) -> Result<WorkspaceSnapshot, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::WorkspaceSnapshot, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.snapshot()).await)
+    traced_ipc(&service, context, service.snapshot()).await
 }
 
 #[tauri::command]
@@ -46,7 +46,7 @@ pub(super) async fn open_chosen_repository<R: tauri::Runtime>(
 ) -> Result<OpenOutcome, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::OpenRepository, operation_id.as_deref())?;
-    Ok(traced_ipc(context, async {
+    traced_ipc(&service, context, async {
         let (send, receive) = oneshot::channel();
         window
             .dialog()
@@ -67,7 +67,7 @@ pub(super) async fn open_chosen_repository<R: tauri::Runtime>(
             Err(_) => return service.rejected(GitError::UnsupportedPathEncoding).await,
         };
         service.open_chosen(&selected).await
-    }).await)
+    }).await
 }
 
 #[tauri::command]
@@ -79,7 +79,7 @@ pub(super) async fn select_context<R: tauri::Runtime>(
 ) -> Result<SelectOutcome, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::SelectContext, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.select(&entry_id)).await)
+    traced_ipc(&service, context, service.select(&entry_id)).await
 }
 
 #[tauri::command]
@@ -92,7 +92,7 @@ pub(super) async fn rename_repository<R: tauri::Runtime>(
 ) -> Result<MutationOutcome, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::RenameRepository, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.rename(&entry_id, &display_name)).await)
+    traced_ipc(&service, context, service.rename(&entry_id, &display_name)).await
 }
 
 #[tauri::command]
@@ -104,7 +104,7 @@ pub(super) async fn remove_repository<R: tauri::Runtime>(
 ) -> Result<MutationOutcome, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::RemoveRepository, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.remove(&entry_id)).await)
+    traced_ipc(&service, context, service.remove(&entry_id)).await
 }
 
 #[tauri::command]
@@ -116,7 +116,7 @@ pub(super) async fn refresh_entry_availability<R: tauri::Runtime>(
 ) -> Result<WorkspaceSnapshot, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::RefreshAvailability, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.refresh(&entry_id)).await)
+    traced_ipc(&service, context, service.refresh(&entry_id)).await
 }
 
 #[tauri::command]
@@ -128,7 +128,7 @@ pub(super) async fn observe_selected_context<R: tauri::Runtime>(
 ) -> Result<ObservationSnapshot, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::ObserveContext, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.observe_selected_context(&entry_id)).await)
+    traced_ipc(&service, context, service.observe_selected_context(&entry_id)).await
 }
 
 #[tauri::command]
@@ -143,7 +143,7 @@ pub(super) async fn review_file<R: tauri::Runtime>(
 ) -> Result<ReviewResult, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::ReviewFile, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.review_file(&entry_id, observation_revision, &path_id, category)).await)
+    traced_ipc(&service, context, service.review_file(&entry_id, observation_revision, &path_id, category)).await
 }
 
 #[tauri::command]
@@ -157,7 +157,7 @@ pub(super) async fn history_page<R: tauri::Runtime>(
 ) -> Result<HistoryPageResult, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::HistoryPage, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.history_page(&entry_id, cursor.as_deref(), branch.as_deref())).await)
+    traced_ipc(&service, context, service.history_page(&entry_id, cursor.as_deref(), branch.as_deref())).await
 }
 
 #[tauri::command]
@@ -167,7 +167,7 @@ pub(super) async fn list_contexts<R: tauri::Runtime>(
 ) -> Result<ContextOptionsResult, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::ListContexts, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.list_contexts(&entry_id)).await)
+    traced_ipc(&service, context, service.list_contexts(&entry_id)).await
 }
 
 #[tauri::command]
@@ -177,7 +177,7 @@ pub(super) async fn select_worktree<R: tauri::Runtime>(
 ) -> Result<MutationOutcome, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::SelectWorktree, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.select_worktree(&entry_id, &worktree_id)).await)
+    traced_ipc(&service, context, service.select_worktree(&entry_id, &worktree_id)).await
 }
 
 #[tauri::command]
@@ -187,7 +187,7 @@ pub(super) async fn commit_files<R: tauri::Runtime>(
 ) -> Result<CommitFilesResult, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::CommitFiles, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.commit_files(&entry_id, &commit_oid, parent_oid.as_deref())).await)
+    traced_ipc(&service, context, service.commit_files(&entry_id, &commit_oid, parent_oid.as_deref())).await
 }
 
 #[tauri::command]
@@ -198,7 +198,7 @@ pub(super) async fn review_commit_file<R: tauri::Runtime>(
 ) -> Result<CommitReviewResult, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::ReviewCommitFile, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.review_commit_file(&entry_id, &commit_oid, parent_oid.as_deref(), &file_id)).await)
+    traced_ipc(&service, context, service.review_commit_file(&entry_id, &commit_oid, parent_oid.as_deref(), &file_id)).await
 }
 
 #[tauri::command]
@@ -208,7 +208,7 @@ pub(super) async fn list_repository_files<R: tauri::Runtime>(
 ) -> Result<RepositoryFilesResult, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::ListRepositoryFiles, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.list_repository_files(&entry_id, request)).await)
+    traced_ipc(&service, context, service.list_repository_files(&entry_id, request)).await
 }
 
 #[tauri::command]
@@ -218,7 +218,7 @@ pub(super) async fn review_repository_file<R: tauri::Runtime>(
 ) -> Result<RepositoryFileResult, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::ReviewRepositoryFile, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.review_repository_file(&entry_id, &listing_id, &file_id)).await)
+    traced_ipc(&service, context, service.review_repository_file(&entry_id, &listing_id, &file_id)).await
 }
 
 #[tauri::command]

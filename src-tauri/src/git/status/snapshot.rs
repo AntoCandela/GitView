@@ -49,7 +49,7 @@ impl StatusSnapshot {
             if absent.status.code() != Some(1) || !absent.stderr.is_empty() { return Err(StatusError::Inaccessible); }
             b"ref: refs/heads/gitview-unborn\n".to_vec()
         };
-        let task = tokio::task::spawn_blocking(move || {
+        let task = crate::native_work::spawn_blocking(move || {
             let directory = tempfile::tempdir().map_err(|_| StatusError::Inaccessible)?;
             let git_dir = directory.path();
             std::fs::create_dir_all(git_dir.join("objects/info")).map_err(|_| StatusError::Inaccessible)?;

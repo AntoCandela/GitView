@@ -29,6 +29,7 @@ fn operation_id(value: &str) -> Result<Uuid, &'static str> {
 }
 
 fn ipc_context(service: &RepositoryService, kind: OperationKind, metadata: Option<&str>) -> Result<OperationContext, &'static str> {
+    if service.is_shutting_down() { return Err(crate::native_work::SHUTTING_DOWN); }
     let id = metadata.map(operation_id).transpose()?;
     let context = OperationContext::new(service.diagnostic_sink(), id, None).with_kind(kind);
     if id.is_some() {
@@ -37,16 +38,19 @@ fn ipc_context(service: &RepositoryService, kind: OperationKind, metadata: Optio
     Ok(context)
 }
 
-fn traced_ipc<T: DiagnosticOutcome>(context: OperationContext, future: impl Future<Output = T>) -> impl Future<Output = T> {
+fn traced_ipc<'a, T: DiagnosticOutcome + 'a>(
+    service: &'a RepositoryService, context: OperationContext, future: impl Future<Output = T> + 'a,
+) -> impl Future<Output = Result<T, &'static str>> + 'a {
     // Box before constructing the async state machine; an async fn would retain the
     // concrete future in its arguments and multiply it through nested tracing/IPC frames.
     let future = Box::pin(future);
     async move {
+        let request = service.admit_native_request()?;
         context.scope(async {
             let mut trace = OperationTrace::new(context.clone(), Component::Ipc);
-            let outcome = future.await;
-            trace.outcome(&outcome);
-            outcome
+            let result = request.run(future).await;
+            if let Ok(outcome) = &result { trace.outcome(outcome); }
+            result
         }).await
     }
 }
@@ -116,6 +120,9 @@ pub fn run() {
         .build(app_context())
         .expect("failed to start GitView");
     app.run(|app, event| {
+        if matches!(event, tauri::RunEvent::ExitRequested { .. }) {
+            app.state::<RepositoryService>().begin_shutdown();
+        }
         if matches!(event, tauri::RunEvent::Exit) {
             tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
             if let Err(code) = app.state::<DiagnosticStore>().shutdown(Duration::from_secs(2)) {

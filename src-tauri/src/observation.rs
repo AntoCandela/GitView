@@ -278,7 +278,7 @@ impl ObservationController {
         let reader = self.reader.clone();
         let parent = OperationContext::current()
             .or_else(|| diagnostic_operation::context(&self.diagnostics, OperationKind::ScanContext));
-        let task = tokio::spawn(async move {
+        let task = tokio::spawn(crate::native_work::inherit(async move {
             if let Some(previous) = previous {
                 // Observe cancellation before starting another scan; the adapter has requested kill/reap.
                 // The cancelled generation cannot publish and has no remaining outcome to surface.
@@ -311,7 +311,7 @@ impl ObservationController {
                 // Sleep after completion: a slow scan cannot accumulate ticks or queued subprocesses.
                 tokio::time::sleep(SCAN_INTERVAL).await;
             }
-        });
+        }));
         *self.task.lock() = Some(task);
     }
 

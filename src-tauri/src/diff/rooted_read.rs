@@ -19,7 +19,7 @@ async fn read_with_policy(context: &SelectedContext, path: &Path, deadline: Prob
         let root = context.root.clone();
         let expected = context.identity.root.clone();
         let path = path.to_owned();
-        let task = tokio::task::spawn_blocking(move || read_blocking(&root, &path, &expected, deadline, reject_nested_git));
+        let task = crate::native_work::spawn_blocking(move || read_blocking(&root, &path, &expected, deadline, reject_nested_git));
         tokio::time::timeout_at(deadline.instant(), task).await
             .map_err(|_| unavailable(ReviewErrorCode::Timeout))?
             .map_err(|_| unavailable(ReviewErrorCode::Inaccessible))?

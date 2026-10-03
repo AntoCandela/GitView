@@ -8,6 +8,7 @@ pub mod diff;
 pub mod git;
 pub mod history;
 mod host;
+mod native_work;
 pub mod inspection;
 pub mod observation;
 pub mod workspace;

@@ -51,7 +51,7 @@ pub(crate) async fn verify_context(process: &GitProcess, context: &SelectedConte
         else { required(process, &context.root, &["rev-parse", "--show-toplevel"], None, deadline).await? };
     let root = output_path(&root)?;
     let git_dir = output_path(&git_dir)?;
-    let task = tokio::task::spawn_blocking(move || Ok::<_, HistoryErrorCode>((
+    let task = crate::native_work::spawn_blocking(move || Ok::<_, HistoryErrorCode>((
         std::fs::canonicalize(root).map_err(|_| HistoryErrorCode::Inaccessible)?,
         std::fs::canonicalize(git_dir).map_err(|_| HistoryErrorCode::Inaccessible)?,
     )));
@@ -70,7 +70,7 @@ fn output_path(bytes: &[u8]) -> Result<PathBuf, HistoryErrorCode> {
 async fn verify_identity(context: &SelectedContext, deadline: ProbeDeadline) -> Result<(), HistoryErrorCode> {
     let root = context.root.clone();
     let git_dir = context.git_dir.clone();
-    let task = tokio::task::spawn_blocking(move || NativeIdentity::capture(&root, &git_dir));
+    let task = crate::native_work::spawn_blocking(move || NativeIdentity::capture(&root, &git_dir));
     let identity = tokio::time::timeout_at(deadline.instant(), task).await.map_err(|_| HistoryErrorCode::Timeout)?
         .map_err(|_| HistoryErrorCode::Inaccessible)?.map_err(|_| HistoryErrorCode::Inaccessible)?;
     if identity != context.identity { return Err(HistoryErrorCode::Inaccessible); }

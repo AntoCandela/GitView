@@ -17,6 +17,7 @@ use crate::git::{GitError, GitProbe};
 use crate::history::{self, HistoryController, HistoryErrorCode, HistoryPageResult};
 use crate::inspection::{self, CommitFilesResult, ContextController, ContextOptionsResult};
 use crate::observation::{ObservationController, ObservationSnapshot};
+use crate::native_work::{NativeWork, WorkPermit};
 use crate::git::process::{GitProcess, ProbeDeadline};
 use crate::workspace::{MutationOutcome, NativeIdentity, OpenOutcome, RefreshPublication, RefreshTicket, SelectOutcome, WorkspaceRejectionCode, WorkspaceSnapshot, WorkspaceStore};
 use crate::workspace::persistence::{self, PersistenceError};
@@ -38,6 +39,8 @@ pub struct RepositoryService {
     restoration: OwnedTask,
     recovery: Arc<RecoveryController>,
     diagnostics: DiagnosticSink,
+    native_work: NativeWork,
+    shutdown: tokio::sync::Mutex<bool>,
 }
 
 struct WorkspacePersistence {
@@ -93,7 +96,7 @@ impl RecoveryController {
         });
         let selected_id = entry_id.clone();
         let parent = OperationContext::current();
-        let task = tokio::spawn(async move {
+        let task = tokio::spawn(crate::native_work::inherit(async move {
             if let Some(previous) = previous {
                 // Cancellation drops the probe and delegates its child reap to the native adapter.
                 let _ = previous.await;
@@ -125,7 +128,7 @@ impl RecoveryController {
                 // Completion-based retries coalesce slow probes rather than queueing ticks.
                 tokio::time::sleep(Duration::from_secs(1)).await;
             }
-        });
+        }));
         *current = Some((entry_id, task));
     }
 }
@@ -211,6 +214,8 @@ impl RepositoryService {
             restoration: OwnedTask::default(),
             recovery: Arc::default(),
             diagnostics,
+            native_work: NativeWork::default(),
+            shutdown: tokio::sync::Mutex::new(false),
         }
     }
 
@@ -220,27 +225,49 @@ impl RepositoryService {
         &self, kind: OperationKind, future: impl Future<Output = T>,
     ) -> T {
         let context = diagnostic_operation::context(&self.diagnostics, kind);
-        diagnostic_operation::scoped(context.as_ref(), async {
+        self.native_work.scope(diagnostic_operation::scoped(context.as_ref(), async {
             let mut trace = context.as_ref().map(|context| OperationTrace::new(context.clone(), Component::Application));
             let outcome = future.await;
             if let Some(trace) = &mut trace { trace.outcome(&outcome); }
             outcome
-        }).await
+        })).await
     }
 
-    /// Stops and awaits owned producers before the host drains accepted diagnostics.
-    /// Accepted choice writes finish before capture is drained, even if their requester cancelled.
-    /// Detached child-reap evidence remains best effort at runtime exit, never a durability promise.
+    pub(crate) fn begin_shutdown(&self) { self.native_work.close(); }
+
+    pub(crate) fn is_shutting_down(&self) -> bool { self.native_work.is_closing() }
+
+    pub(crate) fn admit_native_request(&self) -> Result<WorkPermit, &'static str> {
+        self.native_work.admit()
+    }
+
+    /// Seals native admission, cancels requests/producers, and awaits cleanup before diagnostic drain.
+    /// Accepted choice writes finish even if their requester cancelled. Repeated callers share the drain.
     pub async fn shutdown(&self) {
+        self.begin_shutdown();
+        let mut completed = self.shutdown.lock().await;
+        if *completed { return; }
+        self.native_work.drain().await;
         let restoration = self.restoration.0.lock().take();
         let recovery = self.recovery.task.lock().take().map(|(_, task)| task);
         let observation = self.observation.stop();
         let tasks = [restoration, recovery, observation];
-        // Stop every producer before awaiting any handle, and never await while its mutex is held.
         for task in tasks.iter().flatten() { task.abort(); }
         for task in tasks.into_iter().flatten() { let _ = task.await; }
-        let persistence = self.persistence.as_ref().and_then(|persistence| persistence.task.lock().take());
-        if let Some(task) = persistence { let _ = task.await; }
+        // Cancellation can delegate a final child wait; retain the runtime through that cleanup.
+        self.native_work.drain().await;
+        if let Some(persistence) = &self.persistence {
+            // Poll in place: cancelling a shutdown waiter must not detach the accepted save tail.
+            std::future::poll_fn(|context| {
+                let mut stored = persistence.task.lock();
+                let Some(task) = stored.as_mut() else { return std::task::Poll::Ready(()); };
+                match std::pin::Pin::new(task).poll(context) {
+                    std::task::Poll::Pending => std::task::Poll::Pending,
+                    std::task::Poll::Ready(_) => { stored.take(); std::task::Poll::Ready(()) },
+                }
+            }).await;
+        }
+        *completed = true;
     }
 
     /// Loads native-managed choices and starts bounded verification without caching Git facts.
@@ -295,7 +322,8 @@ impl RepositoryService {
         let selection = Arc::clone(&service.selection);
         let recovery = Arc::clone(&service.recovery);
         let probe = service.probe.clone();
-        let task = tokio::spawn(async move {
+        let native_work = service.native_work.clone();
+        let task = tokio::spawn(async move { let _ = native_work.run(async {
             for ticket in tickets {
                 let context = restoration.as_ref().map(|parent| parent.child().with_kind(OperationKind::RestoreWorkspace));
                 diagnostic_operation::scoped(context.as_ref(), async {
@@ -310,7 +338,7 @@ impl RepositoryService {
                 }).await;
             }
             workspace.finish_restoration().await;
-        });
+        }).await; });
         *service.restoration.0.lock() = Some(task);
         service
     }
@@ -806,7 +834,7 @@ impl RepositoryService {
     /// leaves it checking until a later reopen or refresh supplies an outcome.
     pub async fn refresh(&self, entry_id: &str) -> WorkspaceSnapshot {
         let context = diagnostic_operation::context(&self.diagnostics, OperationKind::RefreshAvailability);
-        diagnostic_operation::scoped(context.as_ref(), self.refresh_entry(entry_id)).await
+        self.native_work.scope(diagnostic_operation::scoped(context.as_ref(), self.refresh_entry(entry_id))).await
     }
 
     async fn refresh_entry(&self, entry_id: &str) -> WorkspaceSnapshot {

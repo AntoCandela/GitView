@@ -136,6 +136,7 @@ Follow [CODE-STYLE.md](../CODE-STYLE.md) for Rust/frontend headers, API document
 | `src-tauri/src/lib.rs` and `host/` | Library declarations and supported `run` entry; host-only Tauri setup, picker, restricted commands and renderer diagnostics. |
 | `src-tauri/src/host/languages.rs` and `src-tauri/build.rs` | Native OS language preferences and supported-locale-only picker titles generated from the same catalogs. |
 | `src-tauri/src/application.rs` | Opening, restoration/recovery, ordered persistence and selected-context observation orchestration. |
+| `src-tauri/src/native_work.rs` | Per-service native admission, cancellation and cleanup ownership across requests, Git children and blocking review work. |
 | `src-tauri/src/workspace/mod.rs` | In-memory authoritative choices, app names, atomic admission/selection/removal and snapshots. |
 | `src-tauri/src/workspace/persistence.rs` | Bounded versioned JSON validation and complete private-file replacement. |
 | `src-tauri/src/git/mod.rs` | `GitProbe` interprets read-only Git results into `RepositoryFacts`, including native identity and HEAD context. |
@@ -248,6 +249,21 @@ Startup restores order and nullable selection before background read-only Git ch
 
 A missing first-launch file is normal. Read/unsupported-format failures preserve the saved bytes and disable replacement for that session: repair the file and restart to recover. Save failures preserve usable navigation and show a separate warning; the next successful choice retries saving. Dismissing an unrelated operation error does not clear storage warnings.
 
+## Owned native shutdown
+
+Explicit application Quit seals native request admission before cancelling live requests and background producers. Completion is checked against closure after the operation's final poll; a rejected completion does not record IPC success. Shutdown waits for owned Git children to be killed and reaped, blocking jobs and abandoned result destructors to finish, and already-accepted workspace saves to publish their outcome before diagnostics drain. Cancelling a shutdown waiter does not detach the accepted save tail; subsequent waiters retain the drain.
+
+This is a native-host boundary, not a change to the domain service's direct-call API. Main-window command authorization and the default window lifecycle are unchanged. No tray, companion window or close-to-tray behavior is implemented by this prerequisite.
+
+Seven shutdown regressions cover admission rejection, live Git cancellation/reaping with an accepted save, blocking cleanup across cancelled shutdown waits, independent service lifetimes, final-poll cancellation and IPC terminal facts, abandoned-result destruction, and persistence ownership across cancelled waiters:
+
+```sh
+cargo test --manifest-path src-tauri/Cargo.toml --locked --target-dir .verification/native-target --lib host::integration_tests::shutdown_
+```
+
+A disposable macOS native smoke reached an owned live Git child, accepted an ordinary application Quit request, exited successfully and left that child absent. That diagnostic-only launch used Node 24.15.0; it does **not** certify the supported toolchain. On the verification host, the pinned Node 24.21.0 launcher failed before native startup in Undici with `setTypeOfService EINVAL`. Native diagnostic capture health and packaged/menu-bar behavior were not verified.
+
+
 
 ## Live changed-file monitoring
 
@@ -296,7 +312,7 @@ The native host owns `diagnostics/diagnostics.sqlite` under the same per-user ap
 
 Records contain timestamps, random session/operation IDs, parent operation IDs, a closed operation/component/event/code vocabulary, monotonic durations, exit status and byte counts. They never contain repository names or paths, file/branch contents, command arguments, process output, credentials, environment values, exception text or stack traces. An expected nonzero Git exit is a process fact; the Git/application layer determines the domain outcome.
 
-The producer does no database I/O and uses a 1,024-entry queue. Write-time retention is bounded to 20,000 events and seven days. Queue exhaustion, incompatible schema, unsafe paths or storage failures report degraded capture without changing repository outcomes. `diagnostic_health`, restricted to the main webview, exposes state, accepted/written/dropped counts and a fixed error code. Shutdown stops application-owned background work before a bounded two-second writer drain.
+The producer does no database I/O and uses a 1,024-entry queue. Write-time retention is bounded to 20,000 events and seven days. Queue exhaustion, incompatible schema, unsafe paths or storage failures report degraded capture without changing repository outcomes. `diagnostic_health`, restricted to the main webview, exposes state, accepted/written/dropped counts and a fixed error code. Shutdown seals native admission and drains owned requests, producers, Git reaping, blocking cleanup and accepted workspace writes before the bounded two-second diagnostic writer drain.
 
 The renderer can submit only fixed, bounded diagnostics; it has no SQL or arbitrary-message endpoint. Request UUIDs propagate through native IPC, application, Git and subprocess scopes. Restoration, recovery, observation and persistence retain parent links; cancellation and supersession are distinct from failure.
 

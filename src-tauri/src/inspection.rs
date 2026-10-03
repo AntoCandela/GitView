@@ -134,7 +134,7 @@ async fn common_git_identity(process: &GitProcess, context: &SelectedContext, de
     let common = PathBuf::from(std::str::from_utf8(bytes).map_err(|_| HistoryErrorCode::InvalidOutput)?);
     if !common.is_absolute() || bytes.contains(&0) { return Err(HistoryErrorCode::InvalidOutput); }
     let root = context.root.clone();
-    let task = tokio::task::spawn_blocking(move || {
+    let task = crate::native_work::spawn_blocking(move || {
         let common = std::fs::canonicalize(common).map_err(|_| HistoryErrorCode::Inaccessible)?;
         let identity = NativeIdentity::capture(&root, &common).map_err(|_| HistoryErrorCode::Inaccessible)?;
         Ok::<_, HistoryErrorCode>((common, identity))

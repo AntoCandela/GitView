@@ -164,7 +164,7 @@ async fn verify_context(context: &SelectedContext, deadline: ProbeDeadline) -> R
 async fn verify_identity(context: &SelectedContext, deadline: ProbeDeadline) -> Result<(), ReviewFailure> {
     let root = context.root.clone();
     let git_dir = context.git_dir.clone();
-    let task = tokio::task::spawn_blocking(move || NativeIdentity::capture(&root, &git_dir));
+    let task = crate::native_work::spawn_blocking(move || NativeIdentity::capture(&root, &git_dir));
     let captured = tokio::time::timeout_at(deadline.instant(), task).await
         .map_err(|_| unavailable(ReviewErrorCode::Timeout))?
         .map_err(|_| unavailable(ReviewErrorCode::Inaccessible))?.map_err(git_error)?;
@@ -244,7 +244,7 @@ async fn blob(process: &GitProcess, root: &Path, revision: &str, path: &Path, de
 
 pub(crate) async fn compare(process: &GitProcess, endpoints: EndpointBytes, deadline: ProbeDeadline) -> Result<(Vec<TextHunk>, EndpointBytes), ReviewFailure> {
     // Private snapshots make Git incapable of racing a live path into a symlink escape.
-    let task = tokio::task::spawn_blocking(move || {
+    let task = crate::native_work::spawn_blocking(move || {
         let scratch = tempfile::tempdir().map_err(|_| unavailable(ReviewErrorCode::Inaccessible))?;
         write_snapshot(&scratch.path().join("from"), &endpoints.0)?;
         write_snapshot(&scratch.path().join("to"), &endpoints.1)?;

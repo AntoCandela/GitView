@@ -8,6 +8,7 @@ use crate::workspace::OpenOutcome;
 use tokio::sync::oneshot;
 use tauri::test::{get_ipc_response, mock_builder, INVOKE_KEY};
 use crate::diagnostics::{Query, ReadOnlyDiagnostics};
+use std::future::Future;
 use std::time::Duration;
 use tauri::test::MockRuntime;
 use uuid::Uuid;
@@ -643,12 +644,12 @@ async fn admit_native_fixture<R: tauri::Runtime>(
 ) -> Result<OpenOutcome, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::OpenRepository, Some(&operation_id))?;
-    Ok(traced_ipc(context, async {
+    traced_ipc(&service, context, async {
         let (send, receive) = oneshot::channel();
         send.send(folder.0.clone()).unwrap();
         let selected = receive.await.map_err(|_| "Native fixture callback failed.").unwrap();
         service.open_chosen(&selected).await
-    }).await)
+    }).await
 }
 
 #[test]
@@ -781,4 +782,230 @@ fn browsing_ipc_reads_issued_working_files_only_from_main_and_records_safe_comma
     let bytes = std::fs::read(database).unwrap();
     assert!(!bytes.windows(b"private-browsing-file".len()).any(|window| window == b"private-browsing-file"));
     assert!(!bytes.windows(b"private browsing bytes".len()).any(|window| window == b"private browsing bytes"));
+}
+
+#[test]
+fn shutdown_rejects_new_repository_commands_without_mutating_workspace() {
+    let app = mock_builder().manage(RepositoryService::new())
+        .invoke_handler(tauri::generate_handler![commands::workspace_snapshot, commands::rename_repository])
+        .build(app_context()).unwrap();
+    let main = tauri::WebviewWindowBuilder::new(&app, "main", Default::default()).build().unwrap();
+    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
+    assert!(get_ipc_response(&main, request(&main, "workspace_snapshot", serde_json::json!({}))).is_err());
+    assert!(get_ipc_response(&main, request(&main, "rename_repository", serde_json::json!({
+        "entryId": "unknown", "displayName": "Must not be saved",
+    }))).is_err());
+    assert!(tauri::async_runtime::block_on(app.state::<RepositoryService>().snapshot()).entries.is_empty());
+}
+
+#[cfg(unix)]
+#[test]
+fn shutdown_cancels_live_ipc_reaps_git_and_drains_an_accepted_save() {
+    let (temp, root) = test_support::working_tree();
+    let choices = temp.path().join("workspace.json");
+    let executable = test_support::executable(temp.path(), &format!(r#"
+case "$*" in *" rev-list "*)
+    git "$@" || exit $?
+    printf '%s\n' "$$" > {}
+    : > {}
+    exec sleep 30 ;;
+esac
+exec git "$@"
+"#, test_support::quote(&temp.path().join(".gitview-child-pid")),
+        test_support::quote(&temp.path().join(".gitview-entered"))));
+    let service = tauri::async_runtime::block_on(RepositoryService::with_workspace_file(choices.clone()))
+        .with_inspection_executable(&executable);
+    let entry = tauri::async_runtime::block_on(async {
+        let OpenOutcome::Opened { entry_id, .. } = service.open_chosen(&root).await else { panic!("fixture opens") };
+        service.select(&entry_id).await;
+        entry_id
+    });
+    let app = mock_builder().manage(service).build(app_context()).unwrap();
+    let main = tauri::WebviewWindowBuilder::new(&app, "main", Default::default()).build().unwrap();
+    let handle = app.handle().clone();
+    let window = main.clone();
+    let history_entry = entry.clone();
+    let history = tauri::async_runtime::spawn(async move {
+        commands::history_page(window, handle.state(), history_entry, None, None, None).await
+    });
+    tauri::async_runtime::block_on(test_support::wait_for_probe(temp.path()));
+    let mut writer = test_support::WorkspaceWriteGate::new(&choices);
+    let handle = app.handle().clone();
+    let rename = tauri::async_runtime::spawn(async move {
+        commands::rename_repository(main, handle.state(), entry, "Accepted choice".into(), None).await
+    });
+    let (child_alive, history_result, rename_result) = tauri::async_runtime::block_on(async {
+        writer.entered().await;
+        let service = app.state::<RepositoryService>();
+        let shutdown = service.shutdown();
+        tokio::pin!(shutdown);
+        assert!(std::future::poll_fn(|context| {
+            std::task::Poll::Ready(shutdown.as_mut().poll(context).is_pending())
+        }).await, "an accepted blocked save must keep shutdown pending");
+        writer.release();
+        writer.completed().await;
+        tokio::time::timeout(WAIT, shutdown).await.unwrap();
+        let pid = std::fs::read_to_string(temp.path().join(".gitview-child-pid")).unwrap();
+        let alive = std::process::Command::new("kill").args(["-0", pid.trim()]).output().unwrap().status.success();
+        // Keep the failing-before fixture from leaving its live child behind.
+        if alive { history.abort(); }
+        let history_result = history.await;
+        test_support::wait_for_reaped_child(temp.path()).await;
+        let rename_result = rename.await;
+        service.shutdown().await;
+        (alive, history_result, rename_result)
+    });
+    assert!(!child_alive, "shutdown returned before the foreground Git child was reaped");
+    assert!(history_result.unwrap().is_err(), "cancelled review must not publish a late success");
+    assert!(rename_result.unwrap().is_err(), "cancelled requester must not wait for the accepted save");
+    let saved: serde_json::Value = serde_json::from_slice(&std::fs::read(choices).unwrap()).unwrap();
+    assert_eq!(saved["repositories"][0]["displayName"], "Accepted choice");
+}
+
+#[tokio::test]
+async fn shutdown_waits_for_blocking_review_cleanup_after_a_cancelled_shutdown_waiter() {
+    let temp = tempfile::tempdir().unwrap();
+    let completed = temp.path().join("completed");
+    let service = std::sync::Arc::new(RepositoryService::new());
+    let (entered, entering) = oneshot::channel();
+    let (release, gate) = std::sync::mpsc::channel();
+    let child = std::sync::Arc::clone(&service);
+    let written = completed.clone();
+    let request = tokio::spawn(async move {
+        child.admit_native_request().unwrap().run(async move {
+            crate::native_work::spawn_blocking(move || {
+                entered.send(()).unwrap();
+                let _ = gate.recv();
+                std::fs::write(written, b"finished").unwrap();
+            }).await.unwrap();
+        }).await
+    });
+    entering.await.unwrap();
+    {
+        let shutdown = service.shutdown();
+        tokio::pin!(shutdown);
+        assert!(std::future::poll_fn(|context| {
+            std::task::Poll::Ready(shutdown.as_mut().poll(context).is_pending())
+        }).await);
+    }
+    assert!(service.admit_native_request().is_err());
+    let shutdown = service.shutdown();
+    tokio::pin!(shutdown);
+    assert!(std::future::poll_fn(|context| {
+        std::task::Poll::Ready(shutdown.as_mut().poll(context).is_pending())
+    }).await, "cancelling a shutdown waiter must not abandon blocking cleanup");
+    release.send(()).unwrap();
+    tokio::time::timeout(WAIT, shutdown).await.unwrap();
+    assert!(request.await.unwrap().is_err());
+    assert_eq!(std::fs::read(completed).unwrap(), b"finished");
+}
+
+#[tokio::test]
+async fn shutdown_is_local_to_one_service_and_does_not_stop_other_native_work() {
+    let (_temp, root) = test_support::working_tree();
+    let first = RepositoryService::new();
+    let other = RepositoryService::new();
+    first.shutdown().await;
+    assert!(matches!(other.admit_native_request().unwrap().run(other.open_chosen(&root)).await,
+        Ok(OpenOutcome::Opened { .. })));
+    assert!(first.snapshot().await.entries.is_empty());
+    other.shutdown().await;
+}
+
+#[tokio::test]
+async fn shutdown_during_a_final_ipc_poll_rejects_the_response_without_completed_trace() {
+    let temp = tempfile::tempdir().unwrap();
+    let database = temp.path().canonicalize().unwrap().join("diagnostics.sqlite");
+    let store = DiagnosticStore::open(&database);
+    let service = RepositoryService::with_diagnostics(store.sink());
+    let context = ipc_context(&service, OperationKind::WorkspaceSnapshot, None).unwrap();
+    let operation = context.id();
+    let result = traced_ipc(&service, context, async {
+        service.begin_shutdown();
+        service.snapshot().await
+    }).await;
+    service.shutdown().await;
+    shutdown_diagnostics(&store);
+    assert!(result.is_err(), "closing during the final poll must win over its successful result");
+    let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query {
+        operation_id: Some(operation), ..Default::default()
+    }).unwrap();
+    assert!(rows.events.iter().any(|row| row.component == Component::Ipc && row.event == Event::Cancelled));
+    assert!(!rows.events.iter().any(|row| row.component == Component::Ipc && row.event == Event::Completed));
+}
+
+struct GatedReviewCleanup {
+    entered: Option<oneshot::Sender<()>>,
+    release: std::sync::mpsc::Receiver<()>,
+}
+
+impl Drop for GatedReviewCleanup {
+    fn drop(&mut self) {
+        if let Some(entered) = self.entered.take() { let _ = entered.send(()); }
+        let _ = self.release.recv();
+    }
+}
+
+#[tokio::test]
+async fn shutdown_waits_until_an_abandoned_blocking_result_finishes_cleanup() {
+    let service = std::sync::Arc::new(RepositoryService::new());
+    let (entered, entering) = oneshot::channel();
+    let (release_work, work_gate) = std::sync::mpsc::channel();
+    let (cleanup_entered, cleanup_entering) = oneshot::channel();
+    let (release_cleanup, cleanup_gate) = std::sync::mpsc::channel();
+    let child = std::sync::Arc::clone(&service);
+    let request = tokio::spawn(async move {
+        child.admit_native_request().unwrap().run(async move {
+            crate::native_work::spawn_blocking(move || {
+                entered.send(()).unwrap();
+                let _ = work_gate.recv();
+                GatedReviewCleanup { entered: Some(cleanup_entered), release: cleanup_gate }
+            }).await.unwrap()
+        }).await
+    });
+    entering.await.unwrap();
+    service.begin_shutdown();
+    assert!(request.await.unwrap().is_err());
+    release_work.send(()).unwrap();
+    cleanup_entering.await.unwrap();
+    let shutdown = service.shutdown();
+    tokio::pin!(shutdown);
+    assert!(std::future::poll_fn(|context| {
+        std::task::Poll::Ready(shutdown.as_mut().poll(context).is_pending())
+    }).await, "an abandoned review result must finish destruction before shutdown returns");
+    release_cleanup.send(()).unwrap();
+    tokio::time::timeout(WAIT, shutdown).await.unwrap();
+}
+
+#[tokio::test]
+async fn shutdown_keeps_an_accepted_save_owned_when_its_first_waiter_is_cancelled() {
+    let (temp, root) = test_support::working_tree();
+    let choices = temp.path().join("workspace.json");
+    let service = std::sync::Arc::new(RepositoryService::with_workspace_file(choices.clone()).await);
+    let OpenOutcome::Opened { entry_id, .. } = service.open_chosen(&root).await else { panic!("fixture opens") };
+    let mut writer = test_support::WorkspaceWriteGate::new(&choices);
+    let child = std::sync::Arc::clone(&service);
+    let rename = tokio::spawn(async move {
+        child.admit_native_request().unwrap().run(child.rename(&entry_id, "Durable after cancellation")).await
+    });
+    writer.entered().await;
+    service.begin_shutdown();
+    assert!(rename.await.unwrap().is_err());
+    {
+        let shutdown = service.shutdown();
+        tokio::pin!(shutdown);
+        assert!(std::future::poll_fn(|context| {
+            std::task::Poll::Ready(shutdown.as_mut().poll(context).is_pending())
+        }).await);
+    }
+    let shutdown = service.shutdown();
+    tokio::pin!(shutdown);
+    assert!(std::future::poll_fn(|context| {
+        std::task::Poll::Ready(shutdown.as_mut().poll(context).is_pending())
+    }).await, "a second shutdown must still own the accepted persistence tail");
+    writer.release();
+    writer.completed().await;
+    tokio::time::timeout(WAIT, shutdown).await.unwrap();
+    let saved: serde_json::Value = serde_json::from_slice(&std::fs::read(choices).unwrap()).unwrap();
+    assert_eq!(saved["repositories"][0]["displayName"], "Durable after cancellation");
 }

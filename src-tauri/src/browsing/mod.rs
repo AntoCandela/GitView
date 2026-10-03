@@ -147,7 +147,7 @@ impl BrowsingController {
         if !retired.is_empty() {
             // Closing SQLite and removing its private files must not run under the
             // application's selection lock. Retain the page permit until cleanup ends.
-            tokio::task::spawn_blocking(move || { drop(retired); drop(operation); });
+            drop(crate::native_work::spawn_blocking(move || { drop(retired); drop(operation); }));
         }
         result
     }
@@ -265,7 +265,7 @@ fn same_context(left: &SelectedContext, right: &SelectedContext) -> bool {
 }
 
 async fn blocking<T: Send + 'static>(deadline: ProbeDeadline, operation: impl FnOnce() -> Result<T, HistoryErrorCode> + Send + 'static) -> Result<T, HistoryErrorCode> {
-    tokio::time::timeout_at(deadline.instant(), tokio::task::spawn_blocking(operation)).await
+    tokio::time::timeout_at(deadline.instant(), crate::native_work::spawn_blocking(operation)).await
         .map_err(|_| HistoryErrorCode::Timeout)?.map_err(|_| HistoryErrorCode::Inaccessible)?
 }
 
