@@ -69,8 +69,8 @@ function selection(expression) {
 function selectedLicense(pkg) {
   if (pkg.ecosystem === 'npm' && pkg.name === 'lucide-react' && pkg.version === '1.49.0' && pkg.declaredLicense === 'ISC') return 'ISC AND MIT';
   if (pkg.ecosystem === 'cargo' && pkg.name === 'brotli-decompressor' && pkg.version === '6.0.1' && pkg.declaredLicense === 'BSD-3-Clause/MIT') return 'BSD-3-Clause AND MIT';
-  if (pkg.ecosystem === 'npm' && pkg.name === '@shikijs/engine-oniguruma' && pkg.version === '4.0.2' && pkg.declaredLicense === 'MIT') return 'MIT AND BSD-2-Clause';
-  if (pkg.ecosystem === 'npm' && pkg.name === '@shikijs/langs' && pkg.version === '4.0.2' && pkg.declaredLicense === 'MIT') return 'MIT AND LicenseRef-TextMate-Bundle';
+  if (pkg.ecosystem === 'npm' && pkg.name === '@shikijs/engine-oniguruma' && pkg.version === '4.4.3' && pkg.declaredLicense === 'MIT') return 'MIT AND BSD-2-Clause';
+  if (pkg.ecosystem === 'npm' && pkg.name === '@shikijs/langs' && pkg.version === '4.4.3' && pkg.declaredLicense === 'MIT') return 'MIT AND LicenseRef-TextMate-Bundle';
   return selection(pkg.declaredLicense);
 }
 async function upstreamTexts(pkg, directory, component, providedVcs) {
