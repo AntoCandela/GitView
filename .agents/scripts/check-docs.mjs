@@ -272,12 +272,24 @@ export async function exerciseDiagnostics({ root = repositoryRoot, output = '.ve
       `${JSON.stringify(pkg.name)} = { path = ${JSON.stringify(await ownedPath(root, pkg.path))} }`));
     const manifest = `[package]\nname = ${JSON.stringify(packageName)}\nversion = "0.0.0"\nedition = "2021"\n\n[dependencies]\ngitview_lib = { package = "gitview", path = ${JSON.stringify(native)} }\ntokio = { version = "1", features = ["macros", "rt", "time"] }\nrusqlite = { version = ${JSON.stringify(sqlite.req)}, features = ["bundled"] }\nuuid = { version = "1", features = ["v4", "serde"] }\nserde_json = "1"\n\n[patch.crates-io]\n${patches.join('\n')}\n`;
     await writeFile(join(scaffold, 'Cargo.toml'), manifest);
-    // Dependency build-script linker arguments do not reach this standalone executable.
-    // Match the native host's Windows activation dependency at the driver boundary.
+    // Dependency linker arguments do not reach this executable; own both CRT and activation policy.
     await writeFile(join(scaffold, 'build.rs'), `fn main() {
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows")
         && std::env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc")
     {
+        // tauri-build 2.7.1's private static_vcruntime module shadows msvcrt.lib via a
+        // transitive search path. Its replacement-library arguments are not transitive.
+        // Keep its CRT policy here without invoking unrelated Tauri app/resource setup.
+        // https://docs.rs/crate/tauri-build/2.7.1/source/src/static_vcruntime.rs
+        for library in [
+            "libvcruntimed.lib", "vcruntime.lib", "vcruntimed.lib", "libcmtd.lib",
+            "msvcrt.lib", "msvcrtd.lib", "libucrt.lib", "libucrtd.lib",
+        ] {
+            println!("cargo:rustc-link-arg=/NODEFAULTLIB:{library}");
+        }
+        for library in ["libcmt.lib", "libvcruntime.lib", "ucrt.lib"] {
+            println!("cargo:rustc-link-arg=/DEFAULTLIB:{library}");
+        }
         println!("cargo:rustc-link-arg=/MANIFEST:EMBED");
         println!("cargo:rustc-link-arg=/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'");
     }

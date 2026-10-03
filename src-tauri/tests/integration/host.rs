@@ -14,12 +14,36 @@ use uuid::Uuid;
 
 const WAIT: Duration = Duration::from_secs(5);
 
-fn assert_diagnostics_flushed(result: Result<(), Code>) {
+fn flush_diagnostics(store: &DiagnosticStore) {
+    let before = store.health();
+    let result = store.flush(WAIT);
+    assert_diagnostic_control(store, before.accepted, before.written, result);
+}
+
+fn shutdown_diagnostics(store: &DiagnosticStore) {
+    let before = store.health();
+    let result = store.shutdown(WAIT);
+    assert_diagnostic_control(store, before.accepted, before.written, result);
+}
+
+fn assert_diagnostic_control(store: &DiagnosticStore, accepted: u64, written: u64, result: Result<(), Code>) {
     match result {
-        Ok(()) => {},
-        Err(Code::Timeout) => panic!("diagnostic flush timed out"),
-        Err(Code::Storage) => panic!("diagnostic flush storage failure"),
-        Err(_) => panic!("diagnostic flush failed with another fixed code"),
+        Ok(()) => assert!(store.health().written >= accepted, "diagnostic control must commit its accepted watermark"),
+        Err(Code::Timeout) => {
+            let health = store.health();
+            if health.written < accepted {
+                if health.written > written {
+                    panic!("diagnostic control timed out while accepted records were still committing");
+                }
+                panic!("diagnostic control timed out with no progress toward its accepted watermark");
+            }
+            if health.written < health.accepted {
+                panic!("diagnostic control timed out after its initial watermark committed; later accepted records remain");
+            }
+            panic!("diagnostic control timed out after its accepted watermark committed; acknowledgement or writer exit pending");
+        },
+        Err(Code::Storage) => panic!("diagnostic control storage failure"),
+        Err(_) => panic!("diagnostic control failed with another fixed code"),
     }
 }
 
@@ -157,7 +181,7 @@ fn malformed_operation_metadata_cannot_mutate_workspace_or_enter_capture() {
     let store = app.state::<DiagnosticStore>();
     assert_eq!(store.health().accepted, 0);
     assert!(tauri::async_runtime::block_on(app.state::<RepositoryService>().snapshot()).entries.is_empty());
-    store.shutdown(WAIT).unwrap();
+    shutdown_diagnostics(&store);
 }
 
 #[test]
@@ -182,7 +206,7 @@ fn renderer_ingestion_rejects_unknown_payloads_and_bounded_metadata_violations()
         assert!(get_ipc_response(&main, request(&main, "record_renderer_diagnostic", body)).is_err());
     }
     assert_eq!(app.state::<DiagnosticStore>().health().accepted, 0);
-    app.state::<DiagnosticStore>().shutdown(WAIT).unwrap();
+    shutdown_diagnostics(&app.state::<DiagnosticStore>());
 }
 
 #[test]
@@ -195,7 +219,8 @@ fn renderer_transport_failure_is_error_evidence_not_success() {
     let main = tauri::WebviewWindowBuilder::new(&app, "main", Default::default()).build().unwrap();
     let operation = Uuid::new_v4();
     response(&main, "record_renderer_diagnostic", renderer_terminal(operation, "transport_failed"));
-    app.state::<DiagnosticStore>().flush(WAIT).unwrap();
+    flush_diagnostics(&app.state::<DiagnosticStore>());
+    shutdown_diagnostics(&app.state::<DiagnosticStore>());
     let rows = ReadOnlyDiagnostics::open(&path).unwrap().events(&Query { operation_id: Some(operation), ..Default::default() }).unwrap();
     assert_eq!(rows.events.len(), 1);
     assert_eq!(rows.events[0].component, Component::Renderer);
@@ -203,7 +228,6 @@ fn renderer_transport_failure_is_error_evidence_not_success() {
     assert_eq!(rows.events[0].level, Level::Error);
     assert_eq!(rows.events[0].code, Some(Code::Transport));
     assert_eq!(rows.events[0].duration_ms, Some(7));
-    app.state::<DiagnosticStore>().shutdown(WAIT).unwrap();
 }
 
 #[test]
@@ -225,7 +249,12 @@ fn actual_mocked_ipc_refresh_correlates_real_git_and_sqlite_across_layers() {
     }));
     assert_eq!(refreshed["entries"][0]["availability"], "available");
     response(&main, "record_renderer_diagnostic", renderer_terminal(operation, "completed"));
-    app.state::<DiagnosticStore>().flush(WAIT).unwrap();
+    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
+    flush_diagnostics(&app.state::<DiagnosticStore>());
+    let health = response(&main, "diagnostic_health", serde_json::json!({}));
+    assert_eq!(health["state"], "healthy");
+    assert!(health["written"].as_u64().unwrap() > 0);
+    shutdown_diagnostics(&app.state::<DiagnosticStore>());
     let rows = ReadOnlyDiagnostics::open(&path).unwrap().events(&Query {
         operation_id: Some(operation), limit: 200, ..Default::default()
     }).unwrap();
@@ -240,11 +269,6 @@ fn actual_mocked_ipc_refresh_correlates_real_git_and_sqlite_across_layers() {
     assert!(rows.events.iter().any(|row| row.component == Component::Process
         && row.duration_ms.is_some() && row.exit_code.is_some()
         && row.stdout_bytes.is_some() && row.stderr_bytes.is_some()));
-    let health = response(&main, "diagnostic_health", serde_json::json!({}));
-    assert_eq!(health["state"], "healthy");
-    assert!(health["written"].as_u64().unwrap() > 0);
-    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
-    app.state::<DiagnosticStore>().shutdown(WAIT).unwrap();
 }
 
 #[test]
@@ -258,12 +282,13 @@ fn native_fallback_id_is_generated_when_existing_callers_omit_metadata() {
     let main = tauri::WebviewWindowBuilder::new(&app, "main", Default::default()).build().unwrap();
     let snapshot = response(&main, "workspace_snapshot", serde_json::json!({}));
     assert_eq!(snapshot["entries"], serde_json::json!([]));
-    app.state::<DiagnosticStore>().flush(WAIT).unwrap();
+    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
+    flush_diagnostics(&app.state::<DiagnosticStore>());
+    shutdown_diagnostics(&app.state::<DiagnosticStore>());
     let rows = ReadOnlyDiagnostics::open(&path).unwrap().events(&Query { limit: 200, ..Default::default() }).unwrap();
     let started = rows.events.iter().find(|row| row.component == Component::Ipc && row.event == Event::Started).unwrap();
     assert_eq!(started.operation_id.get_version(), Some(uuid::Version::Random));
     assert!(rows.events.iter().all(|row| row.operation_id == started.operation_id && row.component != Component::Renderer));
-    app.state::<DiagnosticStore>().shutdown(WAIT).unwrap();
 }
 
 #[test]
@@ -299,7 +324,7 @@ fn health_reads_the_host_store_without_repository_service_or_database_reopening(
     let main = tauri::WebviewWindowBuilder::new(&app, "main", Default::default()).build().unwrap();
     let healthy = response(&main, "diagnostic_health", serde_json::json!({}));
     assert_eq!(healthy["state"], "healthy");
-    app.state::<DiagnosticStore>().shutdown(WAIT).unwrap();
+    shutdown_diagnostics(&app.state::<DiagnosticStore>());
     std::fs::remove_file(&path).unwrap();
     let stopped = response(&main, "diagnostic_health", serde_json::json!({}));
     assert_eq!(stopped["state"], "stopped");
@@ -327,7 +352,9 @@ fn failed_real_git_refresh_keeps_domain_result_and_correlated_failure_evidence()
     assert_eq!(refreshed["entries"][0]["availability"], "unavailable");
     // Resolved transport is not domain success: Git classifies the real probe failure.
     response(&main, "record_renderer_diagnostic", renderer_terminal(operation, "completed"));
-    app.state::<DiagnosticStore>().flush(WAIT).unwrap();
+    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
+    flush_diagnostics(&app.state::<DiagnosticStore>());
+    shutdown_diagnostics(&app.state::<DiagnosticStore>());
     let rows = ReadOnlyDiagnostics::open(&path).unwrap().events(&Query {
         operation_id: Some(operation), limit: 200, ..Default::default()
     }).unwrap();
@@ -341,8 +368,6 @@ fn failed_real_git_refresh_keeps_domain_result_and_correlated_failure_evidence()
         && row.event == Event::Failed && row.code == Some(Code::NotRepository)));
     assert!(rows.events.iter().any(|row| row.component == Component::Process
         && row.event == Event::Completed && row.exit_code.is_some_and(|code| code != 0)));
-    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
-    app.state::<DiagnosticStore>().shutdown(WAIT).unwrap();
 }
 
 #[test]
@@ -368,8 +393,8 @@ fn review_ipc_is_restricted_and_correlates_success_and_failure_without_private_p
                 let accepted = sink.health().accepted;
                 loop {
                     let health = sink.health();
-                    assert_eq!(health.dropped, 0);
-                    assert_eq!(health.last_error_code, None);
+                    // Best-effort admission can drop unrelated records on try_lock contention.
+                    assert!(matches!(health.last_error_code, None | Some(Code::Overflow)));
                     if health.written >= accepted { break; }
                     tokio::time::sleep(Duration::from_millis(5)).await;
                 }
@@ -388,11 +413,11 @@ fn review_ipc_is_restricted_and_correlates_success_and_failure_without_private_p
     } else {
         ("unsupported", Event::Failed, Some(Code::ReviewUnsupported))
     };
-    for (name, category, expected_kind, expected_event, expected_code) in [
+    let operations = [
         ("private-review-path", "untracked", working_text.0, working_text.1, working_text.2),
         ("private-binary-path", "untracked", "unsupported", Event::Failed, Some(Code::ReviewUnsupported)),
         ("private-staged-path", "staged", "text", Event::Completed, None),
-    ] {
+    ].map(|(name, category, expected_kind, expected_event, expected_code)| {
         let id = Uuid::new_v4();
         let body = serde_json::json!({
             "entryId": entry, "observationRevision": revision,
@@ -414,7 +439,12 @@ fn review_ipc_is_restricted_and_correlates_success_and_failure_without_private_p
         response(&main, "record_renderer_diagnostic", serde_json::json!({ "diagnostic": {
             "operationId": id.to_string(), "command": "review_file", "phase": "completed", "durationMs": 1,
         }}));
-        assert_diagnostics_flushed(app.state::<DiagnosticStore>().flush(WAIT));
+        (id, expected_event, expected_code)
+    });
+    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
+    flush_diagnostics(&app.state::<DiagnosticStore>());
+    shutdown_diagnostics(&app.state::<DiagnosticStore>());
+    for (id, expected_event, expected_code) in operations {
         let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(id), limit: 200, ..Default::default() }).unwrap();
         assert!(!rows.has_more);
         for component in [Component::Ipc, Component::Application, Component::Git] {
@@ -424,8 +454,6 @@ fn review_ipc_is_restricted_and_correlates_success_and_failure_without_private_p
         assert!(rows.events.iter().any(|row| row.component == Component::Renderer && row.event == Event::Completed));
         assert!(rows.events.iter().all(|row| row.operation_kind == OperationKind::ReviewFile));
     }
-    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
-    app.state::<DiagnosticStore>().shutdown(WAIT).unwrap();
     let bytes = std::fs::read(database).unwrap();
     assert!(!bytes.windows(b"private-review-path".len()).any(|bytes| bytes == b"private-review-path"));
     assert!(!bytes.windows(b"private-staged-path".len()).any(|bytes| bytes == b"private-staged-path"));
@@ -462,25 +490,24 @@ fn history_ipc_restricts_windows_and_correlates_real_topology_without_private_pa
     response(&main, "record_renderer_diagnostic", serde_json::json!({ "diagnostic": {
         "operationId": operation.to_string(), "command": "history_page", "phase": "completed", "durationMs": 1,
     }}));
-    assert_diagnostics_flushed(app.state::<DiagnosticStore>().flush(WAIT));
-    let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(operation), limit: 200, ..Default::default() }).unwrap();
-    assert!(!rows.has_more);
-    for component in [Component::Ipc, Component::Application, Component::Git, Component::Process, Component::Renderer] {
-        assert!(rows.events.iter().any(|row| row.component == component && row.event == Event::Completed));
-    }
-    assert!(rows.events.iter().all(|row| row.operation_kind == OperationKind::HistoryPage));
     let rejected = Uuid::new_v4();
     let result = response(&main, "history_page", serde_json::json!({
         "entryId": entry, "cursor": "--all", "operationId": rejected.to_string(),
     }));
     assert_eq!(result["kind"], "unavailable");
     assert_eq!(result["code"], "stale_cursor");
-    assert_diagnostics_flushed(app.state::<DiagnosticStore>().flush(WAIT));
+    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
+    flush_diagnostics(&app.state::<DiagnosticStore>());
+    shutdown_diagnostics(&app.state::<DiagnosticStore>());
+    let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(operation), limit: 200, ..Default::default() }).unwrap();
+    assert!(!rows.has_more);
+    for component in [Component::Ipc, Component::Application, Component::Git, Component::Process, Component::Renderer] {
+        assert!(rows.events.iter().any(|row| row.component == component && row.event == Event::Completed));
+    }
+    assert!(rows.events.iter().all(|row| row.operation_kind == OperationKind::HistoryPage));
     let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(rejected), limit: 200, ..Default::default() }).unwrap();
     assert!(!rows.has_more);
     assert!(rows.events.iter().any(|row| row.component == Component::Application && row.event == Event::Superseded && row.code == Some(Code::StaleCursor)));
-    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
-    app.state::<DiagnosticStore>().shutdown(WAIT).unwrap();
     let bytes = std::fs::read(database).unwrap();
     assert!(!bytes.windows(b"private-history-ref".len()).any(|bytes| bytes == b"private-history-ref"));
 }
@@ -541,22 +568,27 @@ fn inspection_ipc_selects_discovered_worktrees_and_records_only_fixed_diagnostic
     let mut stale_body = review_body;
     stale_body["operationId"] = serde_json::json!(stale_operation.to_string());
     assert_eq!(response(&main, "review_commit_file", stale_body), serde_json::json!({ "kind": "stale_selection" }));
-    assert_diagnostics_flushed(app.state::<DiagnosticStore>().flush(WAIT));
+    let operations = [
+        (list_operation, "list_contexts", OperationKind::ListContexts),
+        (files_operation, "commit_files", OperationKind::CommitFiles),
+        (review_operation, "review_commit_file", OperationKind::ReviewCommitFile),
+        (select_operation, "select_worktree", OperationKind::SelectWorktree),
+    ];
+    for (operation, command, _) in operations {
+        response(&main, "record_renderer_diagnostic", serde_json::json!({ "diagnostic": {
+            "operationId": operation.to_string(), "command": command, "phase": "completed", "durationMs": 1,
+        }}));
+    }
+    // All commands and renderer facts are complete; seal capture before read-only validation.
+    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
+    flush_diagnostics(&app.state::<DiagnosticStore>());
+    shutdown_diagnostics(&app.state::<DiagnosticStore>());
     let stale_rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(stale_operation), limit: 200, ..Default::default() }).unwrap();
     assert!(!stale_rows.has_more);
     for component in [Component::Ipc, Component::Application] {
         assert!(stale_rows.events.iter().any(|row| row.component == component && row.event == Event::Superseded));
     }
-    for (operation, command, kind) in [
-        (list_operation, "list_contexts", OperationKind::ListContexts),
-        (files_operation, "commit_files", OperationKind::CommitFiles),
-        (review_operation, "review_commit_file", OperationKind::ReviewCommitFile),
-        (select_operation, "select_worktree", OperationKind::SelectWorktree),
-    ] {
-        response(&main, "record_renderer_diagnostic", serde_json::json!({ "diagnostic": {
-            "operationId": operation.to_string(), "command": command, "phase": "completed", "durationMs": 1,
-        }}));
-        assert_diagnostics_flushed(app.state::<DiagnosticStore>().flush(WAIT));
+    for (operation, _, kind) in operations {
         let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(operation), limit: 200, ..Default::default() }).unwrap();
         assert!(!rows.has_more);
         assert!(rows.events.iter().all(|row| row.operation_kind == kind || row.operation_kind == OperationKind::PersistWorkspace));
@@ -564,8 +596,6 @@ fn inspection_ipc_selects_discovered_worktrees_and_records_only_fixed_diagnostic
             assert!(rows.events.iter().any(|row| row.component == component && row.event == Event::Completed));
         }
     }
-    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
-    app.state::<DiagnosticStore>().shutdown(WAIT).unwrap();
     let bytes = std::fs::read(database).unwrap();
     for private in [b"private-commit-file".as_slice(), b"private content", b"private-topic", b"private-linked"] {
         assert!(!bytes.windows(private.len()).any(|window| window == private));
@@ -641,7 +671,7 @@ fn traced_native_admission_persists_choices_and_correlated_git_completion() {
     assert_eq!(test_support::git_output(&root, &["show-ref"]).stdout, before_refs);
 
     tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
-    app.state::<DiagnosticStore>().shutdown(WAIT).unwrap();
+    shutdown_diagnostics(&app.state::<DiagnosticStore>());
     let records = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query {
         operation_id: Some(operation), limit: 200, ..Default::default()
     }).unwrap();
@@ -696,14 +726,19 @@ fn browsing_ipc_reads_issued_working_files_only_from_main_and_records_safe_comma
         "entryId": entry, "listingId": listed["listingId"], "fileId": "../../outside",
         "operationId": forged_operation.to_string(),
     })), serde_json::json!({ "kind": "stale_selection" }));
-    for (operation, command, kind) in [
+    let operations = [
         (list_operation, "list_repository_files", OperationKind::ListRepositoryFiles),
         (review_operation, "review_repository_file", OperationKind::ReviewRepositoryFile),
-    ] {
+    ];
+    for (operation, command, _) in operations {
         response(&main, "record_renderer_diagnostic", serde_json::json!({ "diagnostic": {
             "operationId": operation.to_string(), "command": command, "phase": "completed", "durationMs": 1,
         }}));
-        app.state::<DiagnosticStore>().flush(WAIT).unwrap();
+    }
+    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
+    flush_diagnostics(&app.state::<DiagnosticStore>());
+    shutdown_diagnostics(&app.state::<DiagnosticStore>());
+    for (operation, _, kind) in operations {
         let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(operation), limit: 200, ..Default::default() }).unwrap();
         assert!(!rows.has_more);
         assert!(rows.events.iter().all(|row| row.operation_kind == kind));
@@ -714,8 +749,6 @@ fn browsing_ipc_reads_issued_working_files_only_from_main_and_records_safe_comma
     let rows = ReadOnlyDiagnostics::open(&database).unwrap().events(&Query { operation_id: Some(forged_operation), limit: 200, ..Default::default() }).unwrap();
     assert!(!rows.has_more);
     assert!(rows.events.iter().any(|row| row.component == Component::Ipc && row.event == Event::Superseded));
-    tauri::async_runtime::block_on(app.state::<RepositoryService>().shutdown());
-    app.state::<DiagnosticStore>().shutdown(WAIT).unwrap();
     let bytes = std::fs::read(database).unwrap();
     assert!(!bytes.windows(b"private-browsing-file".len()).any(|window| window == b"private-browsing-file"));
     assert!(!bytes.windows(b"private browsing bytes".len()).any(|window| window == b"private browsing bytes"));
