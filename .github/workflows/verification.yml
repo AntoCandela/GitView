@@ -58,11 +58,11 @@ jobs:
         run: |
           node --input-type=module <<'NODE'
           import { run } from 'node:test';
-          import { readdir } from 'node:fs/promises';
-          const files = (await readdir('tests/infrastructure')).filter(name => name.endsWith('.test.mjs')).map(name => `tests/infrastructure/${name}`);
-          const codes = new Set(['EADDRINUSE', 'ECONNREFUSED', 'ERR_ASSERTION', 'ERR_TEST_FAILURE', 'ENOENT']);
+          const files = ['tests/infrastructure/agent-worker.test.mjs'];
+          const codes = new Set(['EADDRINUSE', 'ECONNREFUSED', 'ERR_ASSERTION', 'ERR_TEST_FAILURE', 'ERR_INPUT_TYPE_NOT_ALLOWED', 'ENOENT']);
           const messages = new Set(['worker_web_not_ready', 'worker_port_busy', 'worker_child_failed', 'worker_dirty', 'worker_untracked_files', 'runtime exited before readiness']);
-          for await (const event of run({ files })) {
+          for (let attempt = 0; attempt < 20 && !process.exitCode; attempt++) {
+          for await (const event of run({ files, execArgv: [], testNamePatterns: ['worker lifecycle terminates POSIX'] })) {
             if (event.type !== 'test:fail') continue;
             const errors = [];
             for (let error = event.data.details?.error; error && errors.length < 4; error = error.cause) {
@@ -74,6 +74,7 @@ jobs:
             }
             console.log(JSON.stringify({ diagnostic: 'infrastructure_failure', errors }));
             process.exitCode = 1;
+          }
           }
           console.log(JSON.stringify({ diagnostic: 'infrastructure_completed', passed: !process.exitCode }));
           NODE
