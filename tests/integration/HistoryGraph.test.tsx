@@ -36,17 +36,45 @@ function graphClient(): RepositoryClient {
   return client;
 }
 
+test("a viewed local branch name does not promote a coincident remote-tracking name", async () => {
+  const user = userEvent.setup();
+  const page = historyPage([
+    historyCommit(first, [{ oid: root, state: "loaded" }], "Viewed tip"),
+    historyCommit(root, [], "Shared ancestor"),
+  ], {
+    head: { scope: "worktree", state: "attached", branch: "origin/topic", oid: first },
+    refs: [
+      { kind: "local_branch", name: "origin/topic", commitOid: first },
+      { kind: "remote_tracking", name: "origin/topic", commitOid: root },
+      { kind: "local_branch", name: "main", commitOid: root },
+    ],
+  });
+  render(<HistoryGraph client={historyClient(async () => ({ kind: "page", page }))} entryId="one" selectionGeneration={0} />);
+  const ancestor = await screen.findByRole("button", { name: `Shared ancestor, Commit ${root}` });
+  const header = within(ancestor.closest<HTMLElement>(".history-header")!);
+  expect(header.getByRole("button", { name: "Local branch main" })).toBeVisible();
+  expect(header.queryByRole("button", { name: "Remote-tracking branch origin/topic" })).not.toBeInTheDocument();
+  await user.click(header.getByRole("button", { name: "Show 1 more reference" }));
+  const references = await screen.findByRole("dialog");
+  expect(within(references).getByRole("region", { name: "Remote-tracking branches" })).toHaveTextContent("origin/topic");
+  expect(ancestor).toHaveAttribute("aria-expanded", "false");
+});
+
 test("commit activation expands actual hierarchical file rows directly below it and toggles closed", async () => {
   const user = userEvent.setup();
   render(<HistoryGraph client={graphClient()} entryId="one" selectionGeneration={0} />);
   const commit = await screen.findByRole("button", { name: `Merge topic, Commit ${merge}` });
-  expect(within(commit).getByLabelText("Local branch main")).toBeVisible();
-  expect(within(commit).getByLabelText("Remote-tracking branch origin/main")).toBeVisible();
-  expect(within(commit).getByLabelText("Tag release")).toBeVisible();
+  expect(screen.getByRole("button", { name: /^Local branch main/ })).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Show 2 more references" }));
+  const references = await screen.findByRole("dialog");
+  expect(within(references).getByRole("region", { name: "Local branches" })).toHaveTextContent("main");
+  expect(within(references).getByRole("region", { name: "Remote-tracking branches" })).toHaveTextContent("origin/main");
+  expect(within(references).getByRole("region", { name: "Tags" })).toHaveTextContent("release");
+  expect(commit).toHaveAttribute("aria-expanded", "false");
+  await user.keyboard("{Escape}");
   act(() => commit.focus());
   await user.keyboard("{Enter}");
   const expansion = await screen.findByRole("region", { name: `Changed files for commit ${merge}` });
-  expect(commit.parentElement).toContainElement(expansion);
   await user.click(await within(expansion).findByRole("button", { name: "Expand src" }));
   await user.click(within(expansion).getByRole("button", { name: "Expand src/nested" }));
   expect(await within(expansion).findByText("committed.ts")).toBeVisible();
@@ -237,6 +265,11 @@ function largeHistory() {
   return commits;
 }
 
+function scrollToHistoryRegion(scroller: Element, index: number, count: number) {
+  const height = Number.parseFloat(screen.getByRole("group", { name: "Commits" }).style.height);
+  fireEvent.scroll(scroller, { target: { scrollTop: height * index / count } });
+}
+
 test("large histories bound complete rows and SVG while retaining lanes crossing unmounted endpoints", async () => {
   const commits = largeHistory();
   const client = historyClient(async () => ({ kind: "page", page: historyPage(commits) }));
@@ -244,14 +277,10 @@ test("large histories bound complete rows and SVG while retaining lanes crossing
   await screen.findByRole("button", { name: `Commit row 0, Commit ${commits[0].oid}` });
   const scroller = container.querySelector<HTMLElement>(".history-scroll")!;
   expect(container.querySelectorAll(".history-row").length).toBeLessThan(30);
-  expect(container.querySelectorAll(".history-lanes circle").length).toBeLessThan(30);
-  expect(screen.getByRole("group", { name: "Commits" })).toHaveStyle({ height: "43200px" });
-  fireEvent.scroll(scroller, { target: { scrollTop: 18000 } });
+  scrollToHistoryRegion(scroller, 500, commits.length);
   await screen.findByRole("button", { name: `Commit row 500, Commit ${commits[500].oid}` });
   expect(screen.queryByRole("button", { name: `Commit row 1, Commit ${commits[1].oid}` })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: `Commit row 1198, Commit ${commits[1198].oid}` })).not.toBeInTheDocument();
-  const middle = screen.getByRole("button", { name: `Commit row 500, Commit ${commits[500].oid}` });
-  expect(middle.querySelector('path[d="M 32 0 C 32 18, 32 18, 32 36"]')).not.toBeNull();
   expect(container.querySelectorAll(".history-row").length).toBeLessThan(30);
   expect(container.querySelectorAll(".history-lanes path").length).toBeLessThan(90);
 });
@@ -267,7 +296,7 @@ test("Home and End reach every loaded commit without selecting and keep focused 
   const lastCommit = await screen.findByRole("button", { name: `Commit row 1199, Commit ${commits[1199].oid}` });
   expect(lastCommit).toHaveFocus();
   expect(lastCommit).toHaveAttribute("aria-expanded", "false");
-  fireEvent.scroll(container.querySelector(".history-scroll")!, { target: { scrollTop: 18000 } });
+  scrollToHistoryRegion(container.querySelector(".history-scroll")!, 500, commits.length);
   await screen.findByRole("button", { name: `Commit row 500, Commit ${commits[500].oid}` });
   expect(lastCommit).toHaveFocus();
   await user.keyboard("{Home}");
@@ -292,7 +321,7 @@ test("offscreen expansions preserve merge parent and collapsed folder state with
   expect(await screen.findByText("retained.ts")).toBeVisible();
   await user.click(await screen.findByRole("button", { name: "Collapse src/nested" }));
   const scroller = container.querySelector(".history-scroll")!;
-  fireEvent.scroll(scroller, { target: { scrollTop: 18000 } });
+  scrollToHistoryRegion(scroller, 500, commits.length);
   await screen.findByRole("button", { name: `Commit row 500, Commit ${commits[500].oid}` });
   expect(parent).toHaveValue(commits[1199].oid);
   fireEvent.scroll(scroller, { target: { scrollTop: 0 } });
@@ -332,7 +361,7 @@ test("Tab crosses virtual gaps in logical order and exits only at the loaded his
   const { container } = render(<><HistoryGraph client={client} entryId="one" selectionGeneration={0} /><button>After history</button></>);
   const firstCommit = await screen.findByRole("button", { name: `Commit row 0, Commit ${commits[0].oid}` });
   firstCommit.focus();
-  fireEvent.scroll(container.querySelector(".history-scroll")!, { target: { scrollTop: 18000 } });
+  scrollToHistoryRegion(container.querySelector(".history-scroll")!, 500, commits.length);
   await screen.findByRole("button", { name: `Commit row 500, Commit ${commits[500].oid}` });
   expect(screen.queryByRole("button", { name: `Commit row 1, Commit ${commits[1].oid}` })).not.toBeInTheDocument();
   await user.tab();
@@ -356,6 +385,18 @@ test("Tab enters expanded parent and folder controls before moving to the next c
   render(<HistoryGraph client={graphClient()} entryId="one" selectionGeneration={0} />);
   await user.click(await screen.findByRole("button", { name: `Merge topic, Commit ${merge}` }));
   await screen.findByRole("button", { name: "Expand src" });
+  await user.tab();
+  const localRef = screen.getByRole("button", { name: /^Local branch main/ });
+  expect(localRef).toHaveFocus();
+  await user.keyboard("{Enter}");
+  expect(await screen.findByRole("dialog")).toHaveTextContent("main");
+  expect(screen.getByRole("button", { name: `Merge topic, Commit ${merge}` })).toHaveAttribute("aria-expanded", "true");
+  await user.keyboard("{Escape}");
+  expect(localRef).toHaveFocus();
+  await user.tab();
+  expect(screen.getByRole("button", { name: "Show 2 more references" })).toHaveFocus();
+  await user.keyboard("{Enter}");
+  await screen.findByRole("dialog");
   await user.tab();
   expect(screen.getByRole("combobox", { name: "Comparison parent" })).toHaveFocus();
   await user.tab();

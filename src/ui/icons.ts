@@ -2,6 +2,7 @@
 
 export {
   CircleAlert as AlertIcon,
+  Cloud as RemoteBranchIcon,
   ChevronDown as ChevronDownIcon,
   ChevronRight as ChevronRightIcon,
   ChevronsDownUp as CollapseAllIcon,
@@ -9,6 +10,8 @@ export {
   EllipsisVertical as EllipsisIcon,
   File as FileIcon,
   Folder as FolderIcon,
+  GitBranch as BranchIcon,
+  Tag as TagIcon,
   Palette as AppearanceIcon,
   PanelsTopLeft as LayoutIcon,
   PanelLeft as SidebarIcon,

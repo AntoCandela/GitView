@@ -6,9 +6,12 @@ import { Tooltip as BaseTooltip } from "@base-ui/react/tooltip";
 export function Tooltip({
   trigger,
   content,
+  enabled = true,
 }: {
   trigger: ReactElement<Record<string, unknown>>;
   content: ReactNode;
+  /** Suppress hover/focus hints while the trigger's persistent disclosure is open. */
+  enabled?: boolean;
 }) {
   const generatedId = useId();
   const id = typeof trigger.props.id === "string" ? trigger.props.id : generatedId;
@@ -18,17 +21,17 @@ export function Tooltip({
   useEffect(() => {
     setOpen(false);
     return () => window.clearTimeout(hoverTimer.current);
-  }, [disabled]);
+  }, [disabled, enabled]);
   return (
     <BaseTooltip.Provider delay={200} closeDelay={0}>
-      <BaseTooltip.Root disableHoverablePopup open={open} triggerId={id} onOpenChange={(next, details) => {
+      <BaseTooltip.Root disableHoverablePopup open={enabled && open} triggerId={id} onOpenChange={(next, details) => {
         if (details.reason === "escape-key") details.allowPropagation();
         if (!next) window.clearTimeout(hoverTimer.current);
-        setOpen(next);
+        setOpen(enabled && next);
       }}>
         <BaseTooltip.Trigger id={id} render={cloneElement(trigger, { title: undefined })}
           onPointerEnter={disabled ? (event) => {
-            if (event.pointerType === "touch") return;
+            if (!enabled || event.pointerType === "touch") return;
             window.clearTimeout(hoverTimer.current);
             hoverTimer.current = window.setTimeout(() => setOpen(true), 200);
           } : undefined}
