@@ -68,6 +68,7 @@ async fn restored_context_gets_session_authority_without_persisting_review_epoch
 async fn companion_open_waits_for_gated_restoration_then_completes_without_reopening() {
     use crate::companion::{BeginCompanionReviewResult, ReviewCaller};
     let (temp, root) = working_tree();
+    let root = fs::canonicalize(root).unwrap();
     let file = temp.path().join("workspace.json");
     seed(&file, std::slice::from_ref(&root), Some(&root));
     block(&root);
@@ -92,11 +93,11 @@ async fn accepted_verified_selection_refreshes_workspace_facts_without_a_rendere
     let (temp, root) = working_tree();
     let service = RepositoryService::with_probe_and_diagnostics(GitProbe::with_executable(&gated_git(temp.path())), Default::default());
     let id = opened(service.open_chosen(&root).await);
+    git(&root, &["branch", "-m", "updated-native-head"]);
     block(&root);
     let selected = tokio::time::timeout(Duration::from_secs(1), service.select(&id)).await.unwrap();
     assert!(matches!(selected, SelectOutcome::Selected { .. }));
     wait_for_probe(&root).await;
-    git(&root, &["branch", "-m", "updated-native-head"]);
     allow_new_probes(&root);
     release(&root);
     let ready = wait_for(&service, |snapshot| snapshot.entries[0].availability == Availability::Available).await;

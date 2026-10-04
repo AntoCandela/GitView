@@ -715,18 +715,21 @@ impl RepositoryService {
     async fn remove_entry(&self, entry_id: &str) -> MutationOutcome {
         let outcome = {
             let _selection = self.selection.lock().await;
+            let removed_active = self.workspace.active_context_id().await.as_deref() == Some(entry_id);
             let outcome = self.workspace.remove(entry_id).await;
             if matches!(outcome, MutationOutcome::Updated { .. }) {
                 self.observation.remove(entry_id);
-                self.recovery.cancel();
-                if let Some(replacement_id) = self.workspace.active_context_id().await {
-                    if let Some(context) = self.workspace.selected_context(&replacement_id).await {
-                        self.observation.select(context, self.workspace.review.context_epoch());
-                    } else {
-                        self.observation.select_unverified(&replacement_id, self.workspace.review.context_epoch());
+                if removed_active {
+                    self.recovery.cancel();
+                    if let Some(replacement_id) = self.workspace.active_context_id().await {
+                        if let Some(context) = self.workspace.selected_context(&replacement_id).await {
+                            self.observation.select(context, self.workspace.review.context_epoch());
+                        } else {
+                            self.observation.select_unverified(&replacement_id, self.workspace.review.context_epoch());
+                        }
+                        self.recovery.start(replacement_id, self.probe.clone(), Arc::clone(&self.workspace),
+                            Arc::clone(&self.observation), Arc::clone(&self.selection), RecoveryStart::UserSelection);
                     }
-                    self.recovery.start(replacement_id, self.probe.clone(), Arc::clone(&self.workspace),
-                        Arc::clone(&self.observation), Arc::clone(&self.selection), RecoveryStart::UserSelection);
                 }
             }
             outcome

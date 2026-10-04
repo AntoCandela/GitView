@@ -558,10 +558,11 @@ impl WorkspaceStore {
         let Some(position) = state.entries.iter().position(|stored| stored.entry.id == entry_id) else {
             return MutationOutcome::NotFound { snapshot: state.snapshot() };
         };
+        let removed_active = state.active_context_id.as_deref() == Some(entry_id);
         let removed = state.entries.remove(position);
         let generation = state.next_generation();
         state.removed_roots.insert(removed.root, generation);
-        if state.active_context_id.as_deref() == Some(entry_id) {
+        if removed_active {
             let replacement = state.entries.iter().position(|stored| stored.entry.availability == Availability::Available);
             state.active_context_id = replacement.map(|position| {
                 let stored = &mut state.entries[position];
@@ -571,7 +572,11 @@ impl WorkspaceStore {
             });
         }
         state.revision += 1;
-        state.invalidate_context(&self.review);
+        if removed_active {
+            state.invalidate_context(&self.review);
+        } else {
+            self.review.workspace_changed(state.revision);
+        }
         MutationOutcome::Updated { snapshot: state.snapshot() }
     }
 

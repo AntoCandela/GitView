@@ -13,11 +13,7 @@
     use crate::diagnostics::{Component, DiagnosticStore, Event, Query, ReadOnlyDiagnostics};
 
     fn service(executable: &Path) -> Arc<RepositoryService> {
-        Arc::new(RepositoryService {
-            probe: GitProbe::with_executable(executable),
-            workspace: Arc::new(WorkspaceStore::default()),
-            ..RepositoryService::default()
-        })
+        Arc::new(RepositoryService::with_probe_and_diagnostics(GitProbe::with_executable(executable), Default::default()))
     }
 
     fn opened(outcome: OpenOutcome) -> (String, WorkspaceSnapshot) {
@@ -95,7 +91,6 @@
         let completed = refreshing.await.unwrap();
         assert_eq!(completed.active_context_id, Some(other_id));
         assert_eq!(completed.entries[0].availability, Availability::Available);
-        assert_eq!(completed.entries[1].availability, Availability::Checking);
         assert!(completed.revision > selected.revision);
     }
 
@@ -156,15 +151,24 @@
         block(&root);
         let stale = start_refresh(&service, &id);
         wait_for_probe(&root).await;
+        git(&root, &["branch", "-m", "selected-head"]);
+        allow_new_probes(&root);
 
         let SelectOutcome::Selected { snapshot: selected } = service.select(&id).await else {
             panic!("context could not be selected");
         };
         assert_eq!(selected.active_context_id, Some(id));
-        assert_eq!(selected.entries[0].availability, Availability::Checking);
-        allow_new_probes(&root);
+        tokio::time::timeout(Duration::from_secs(10), async {
+            loop {
+                if service.snapshot().await.entries[0].availability == Availability::Available { break; }
+                tokio::time::sleep(Duration::from_millis(5)).await;
+            }
+        }).await.expect("accepted selection did not finish its owned refresh");
         release(&root);
-        assert_eq!(stale.await.unwrap(), selected);
+        let completed = stale.await.unwrap();
+        assert_eq!(completed.active_context_id, selected.active_context_id);
+        assert_eq!(completed.context_epoch, selected.context_epoch);
+        assert_eq!(completed.entries[0].head, HeadLabel::Branch { name: "selected-head".into() });
     }
 
     #[tokio::test]
