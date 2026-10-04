@@ -56,7 +56,7 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          node --input-type=module <<'NODE'
+          cat > "$RUNNER_TEMP/gitview-worker-diagnostic.mjs" <<'NODE'
           import { run } from 'node:test';
           const files = ['tests/infrastructure/agent-worker.test.mjs'];
           const codes = new Set(['EADDRINUSE', 'ECONNREFUSED', 'ERR_ASSERTION', 'ERR_TEST_FAILURE', 'ERR_INPUT_TYPE_NOT_ALLOWED', 'ENOENT']);
@@ -78,6 +78,7 @@ jobs:
           }
           console.log(JSON.stringify({ diagnostic: 'infrastructure_completed', passed: !process.exitCode }));
           NODE
+          node "$RUNNER_TEMP/gitview-worker-diagnostic.mjs"
       - name: Run shared required verification
         if: ${{ !cancelled() }}
         run: node scripts/verify.mjs --suite all --output .verification/${{ matrix.platform }}
