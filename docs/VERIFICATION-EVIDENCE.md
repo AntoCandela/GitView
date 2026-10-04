@@ -274,9 +274,13 @@ A disposable macOS native smoke reached an owned live Git child, accepted an ord
 
 One `RepositoryService` and observation controller own both surfaces. Host visibility—not renderer focus guesses—controls their combined demand. Context epochs are opaque, session-only authority; each companion opening has a separate open epoch and requires a scan started after its opening request, including when recovery first needs to verify a restored context. Accepted selections own their availability/HEAD refresh natively, independently of renderer reply ordering. Both-hidden demand suspends scanning/recovery and invalidates in-flight surface results.
 
+Removing an inactive admitted entry preserves the active review epoch and observer. Removal tombstones still reject a pending worktree admission targeting that removed entry.
+
 Native row/category provenance bounds what a compact handoff may request. One pending request carries a revision-bearing retirement state and expires after five seconds. Main discovers and claims only after coherent workspace preparation, applies the exact returned target synchronously, then acknowledges. A live claim retains its issued path/revision authority while an older cached observation catches up. No remaining changes and unavailable context are explicit outcomes; focus alone is not an acknowledgement.
 
 Main publishes the current six-locale presentation, icon/interface/review choices and session-only persistence warning. Companion providers never establish another storage owner or show a guessed first language/theme. Native menu publication accepts only the canonical translated Open/Quit pair. Surface notice subscriptions carry fixed invalidations; cached reads recover bootstrap/reveal without hidden periodic polling. These are source contracts, not evidence that the full native display/focus/resource matrix has passed.
+
+A macOS arm64 development launch using Node 24.21.0 ran the native executable and exposed an on-screen main window, with companion opt-in enabled in isolated native settings. Accessibility inspection was denied and window screenshot capture failed. The menu-bar icon, compact panel, handoff, focus/Spaces/multiple-display behavior and resource budgets were not visually or operationally verified in that launch. This is development-launch evidence only, not packaged-native or release certification.
 
 ## Live changed-file monitoring
 
