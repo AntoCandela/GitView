@@ -8,8 +8,15 @@ import { deferred } from "../support/deferred";
 import { changedFile, readyObservation, textReview } from "../support/review";
 import type { ReviewResult } from "../../src/contracts/diff";
 
-beforeEach(() => vi.useFakeTimers());
-afterEach(() => { cleanup(); vi.useRealTimers(); });
+beforeEach(() => {
+  vi.useFakeTimers();
+  // jsdom has no layout; match the main catalog fixture so virtualized rows remain mounted.
+  vi.spyOn(HTMLElement.prototype, "offsetHeight", "get").mockImplementation(function (this: HTMLElement) {
+    return this.classList.contains("repository-list") ? 480 : 44;
+  });
+  vi.spyOn(HTMLElement.prototype, "offsetWidth", "get").mockReturnValue(296);
+});
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.useRealTimers(); });
 function fixture() {
   let surface: ReviewSurfaceSnapshot = {
     visible: true, openEpoch: "open-1", handoff: { revision: 0, pendingRequestId: null },
