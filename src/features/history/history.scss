@@ -189,7 +189,6 @@
     min-width: 0;
     gap: 4px;
     padding: 0 8px 0 4px;
-    overflow: hidden;
 
     &:empty {
       display: none;
@@ -211,27 +210,204 @@
     line-height: 14px;
   }
 
-  .history-badge-head,
-  .history-badge-local_branch,
-  .history-badge-remote_tracking {
-    color: var(--history-color-0);
-    background: color-mix(in srgb, currentColor 6%, var(--history-row-bg));
+  .history-badge-head {
+    background: transparent;
+    font-weight: 500;
   }
 
-  .history-badge-local_branch::before,
-  .history-badge-remote_tracking::before {
-    content: "";
-    display: inline-block;
-    width: 5px;
-    height: 5px;
-    margin-right: 4px;
-    border-radius: 50%;
-    background: currentColor;
-    vertical-align: 1px;
+  .history-refs {
+    display: flex;
+    flex: 1;
+    min-width: 100px;
+    gap: 4px;
   }
 
-  .history-badge-tag {
+  .history-ref {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 1;
+    gap: 4px;
+    max-width: min(360px, 100%);
+    height: 14px;
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    > svg {
+      flex: none;
+    }
+
+    &[data-current="true"] {
+      background: var(--pill-bg);
+      color: var(--ink);
+    }
+
+    &:hover,
+    &[data-popup-open] {
+      color: var(--ink);
+      background: var(--pill-bg);
+    }
+
+    &:focus-visible {
+      outline-offset: 1px;
+    }
+  }
+
+  .history-ref-head {
+    flex: none;
+    font-weight: 500;
+  }
+
+  .history-ref-name {
+    position: relative;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .history-ref-name-measure {
+    display: block;
+    width: max-content;
+    visibility: hidden;
+  }
+
+  .history-ref-name-display {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .history-ref-leading,
+  .history-ref-remote {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .history-ref-remote {
+    flex-shrink: 0;
+    max-width: 35%;
+  }
+
+  .history-ref-trailing {
+    display: inline-flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    max-width: 55%;
+    overflow: hidden;
+  }
+
+  .history-ref-overflow {
+    flex: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .history-ref-positioner {
+    z-index: 60;
+  }
+
+  .history-ref-popup {
+    box-sizing: border-box;
+    width: max-content;
+    max-width: min(380px, var(--available-width));
+    max-height: min(400px, var(--available-height));
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
     color: var(--ink);
+    background: var(--canvas);
+    font-size: 12px;
+  }
+
+  .history-ref-title {
+    margin: 0 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .history-ref-details {
+    display: grid;
+    gap: 12px;
+  }
+
+  .history-ref-group {
+    h3 {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin: 0 0 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    ul {
+      display: grid;
+      gap: 4px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    li {
+      display: flex;
+      align-items: start;
+      gap: 6px;
+
+      > svg {
+        flex: none;
+        margin-top: 3px;
+      }
+    }
+  }
+
+  .history-ref-full-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+
+  .history-ref-context {
+    margin: 0;
+    overflow-wrap: anywhere;
+    font-size: 11px;
+  }
+
+  .history-ref-hint {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 10px;
+  }
+
+  .history-ref-hover,
+  .history-commit-tooltip {
+    font: 12px/1.5 var(--font-ui);
+  }
+
+  .history-ref-hover .history-ref-details {
+    max-height: min(280px, 50vh);
+    overflow: hidden;
+  }
+
+  .history-commit-tooltip {
+    display: grid;
+    gap: 4px;
+
+    code {
+      overflow-wrap: anywhere;
+      font-family: var(--font-mono);
+      font-size: 10px;
+    }
+
+    > span {
+      color: var(--muted);
+      font-size: 11px;
+    }
   }
 
   .history-short-oid {

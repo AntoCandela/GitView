@@ -36,13 +36,42 @@ function graphClient(): RepositoryClient {
   return client;
 }
 
+test("a viewed local branch name does not promote a coincident remote-tracking name", async () => {
+  const user = userEvent.setup();
+  const page = historyPage([
+    historyCommit(first, [{ oid: root, state: "loaded" }], "Viewed tip"),
+    historyCommit(root, [], "Shared ancestor"),
+  ], {
+    head: { scope: "worktree", state: "attached", branch: "origin/topic", oid: first },
+    refs: [
+      { kind: "local_branch", name: "origin/topic", commitOid: first },
+      { kind: "remote_tracking", name: "origin/topic", commitOid: root },
+      { kind: "local_branch", name: "main", commitOid: root },
+    ],
+  });
+  render(<HistoryGraph client={historyClient(async () => ({ kind: "page", page }))} entryId="one" selectionGeneration={0} />);
+  const ancestor = await screen.findByRole("button", { name: `Shared ancestor, Commit ${root}` });
+  const header = within(ancestor.closest<HTMLElement>(".history-header")!);
+  expect(header.getByRole("button", { name: "Local branch main" })).toBeVisible();
+  expect(header.queryByRole("button", { name: "Remote-tracking branch origin/topic" })).not.toBeInTheDocument();
+  await user.click(header.getByRole("button", { name: "Show 1 more reference" }));
+  const references = await screen.findByRole("dialog");
+  expect(within(references).getByRole("region", { name: "Remote-tracking branches" })).toHaveTextContent("origin/topic");
+  expect(ancestor).toHaveAttribute("aria-expanded", "false");
+});
+
 test("commit activation expands actual hierarchical file rows directly below it and toggles closed", async () => {
   const user = userEvent.setup();
   render(<HistoryGraph client={graphClient()} entryId="one" selectionGeneration={0} />);
   const commit = await screen.findByRole("button", { name: `Merge topic, Commit ${merge}` });
-  expect(screen.getByLabelText("Local branch main")).toBeVisible();
-  expect(screen.getByLabelText("Remote-tracking branch origin/main")).toBeVisible();
-  expect(screen.getByLabelText("Tag release")).toBeVisible();
+  expect(screen.getByRole("button", { name: /^Local branch main/ })).toBeVisible();
+  await user.click(screen.getByRole("button", { name: "Show 2 more references" }));
+  const references = await screen.findByRole("dialog");
+  expect(within(references).getByRole("region", { name: "Local branches" })).toHaveTextContent("main");
+  expect(within(references).getByRole("region", { name: "Remote-tracking branches" })).toHaveTextContent("origin/main");
+  expect(within(references).getByRole("region", { name: "Tags" })).toHaveTextContent("release");
+  expect(commit).toHaveAttribute("aria-expanded", "false");
+  await user.keyboard("{Escape}");
   act(() => commit.focus());
   await user.keyboard("{Enter}");
   const expansion = await screen.findByRole("region", { name: `Changed files for commit ${merge}` });
@@ -356,6 +385,18 @@ test("Tab enters expanded parent and folder controls before moving to the next c
   render(<HistoryGraph client={graphClient()} entryId="one" selectionGeneration={0} />);
   await user.click(await screen.findByRole("button", { name: `Merge topic, Commit ${merge}` }));
   await screen.findByRole("button", { name: "Expand src" });
+  await user.tab();
+  const localRef = screen.getByRole("button", { name: /^Local branch main/ });
+  expect(localRef).toHaveFocus();
+  await user.keyboard("{Enter}");
+  expect(await screen.findByRole("dialog")).toHaveTextContent("main");
+  expect(screen.getByRole("button", { name: `Merge topic, Commit ${merge}` })).toHaveAttribute("aria-expanded", "true");
+  await user.keyboard("{Escape}");
+  expect(localRef).toHaveFocus();
+  await user.tab();
+  expect(screen.getByRole("button", { name: "Show 2 more references" })).toHaveFocus();
+  await user.keyboard("{Enter}");
+  await screen.findByRole("dialog");
   await user.tab();
   expect(screen.getByRole("combobox", { name: "Comparison parent" })).toHaveFocus();
   await user.tab();

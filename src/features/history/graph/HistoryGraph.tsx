@@ -12,6 +12,7 @@ import { colorHistory } from "./colors";
 import { useHistory } from "../useHistory";
 import { ContextSelector } from "../ContextSelector";
 import { CommitFiles } from "../CommitFiles";
+import { HistoryRefs } from "./HistoryRefs";
 
 export interface HistoryGraphProps {
   client: RepositoryClient;
@@ -22,9 +23,7 @@ export interface HistoryGraphProps {
   comparison?: CommitComparisonControls;
 }
 
-const refKindLabels: Record<HistoryPage["refs"][number]["kind"], string> = {
-  local_branch: "Local branch", remote_tracking: "Remote-tracking branch", tag: "Tag",
-};
+const noRefs: HistoryPage["refs"] = [];
 const laneSpacing = 16;
 
 /** The parent supplies bounded flex space; expanded paths keep all outgoing lanes continuous. */
@@ -143,12 +142,13 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
     virtualizer.scrollToIndex(target, { align: "start" });
   }
 
-  function tabBetweenRows(event: KeyboardEvent<HTMLDivElement>, index: number) {
+  function tabBetweenRows(event: KeyboardEvent<HTMLElement>, index: number, origin?: HTMLButtonElement) {
     if (event.key !== "Tab" || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || !page) return;
-    const controls = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement | HTMLSelectElement>("button:not([disabled]), select:not([disabled])"))
+    const row = list.current?.querySelector<HTMLDivElement>(`.history-row[data-index="${index}"]`);
+    const controls = Array.from(row?.querySelectorAll<HTMLButtonElement | HTMLSelectElement>("button:not([disabled]), select:not([disabled])") ?? [])
       .filter((control) => control.tabIndex >= 0);
     const boundary = event.shiftKey ? controls[0] : controls[controls.length - 1];
-    if (event.target !== boundary) return;
+    if ((origin ?? event.target) !== boundary) return;
     const target = index + (event.shiftKey ? -1 : 1);
     if (target < 0 || target >= layout.rows.length) return;
     event.preventDefault();
@@ -190,22 +190,23 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
               const headerHeight = headerHeights[index];
               const subjectHeight = headerHeight === 28 ? 28 : 24;
               const isHead = row.commit.oid === headOid;
+              const rowRefs = refsByOid.get(row.commit.oid) ?? noRefs;
               return <div className="history-row" key={virtualRow.key} data-index={index}
                 ref={virtualizer.measureElement} style={{ transform: `translateY(${virtualRow.start - scrollMargin}px)` }}
                 onKeyDown={(event) => tabBetweenRows(event, index)}
                 onFocusCapture={() => setFocus({ scope, refs: page.refs, oid: row.commit.oid })}
                 onBlurCapture={(event) => {
-                  if (!event.currentTarget.contains(event.relatedTarget)) setFocus(null);
+                  const next = event.relatedTarget;
+                  const ownedPopup = next instanceof Element && next.closest("[data-history-owner]")?.getAttribute("data-history-owner") === row.commit.oid;
+                  if (!event.currentTarget.contains(next) && !ownedPopup) setFocus(null);
                 }}>
             <div className="history-header" data-head={isHead} data-selected={selectedOid === row.commit.oid}
               style={{ "--history-header-height": `${headerHeight}px`, "--history-subject-height": `${subjectHeight}px` } as CSSProperties}>
-            <Tooltip content={<>
-              <div>{selectedOid === row.commit.oid ? "Collapse" : "Expand"} changed files for commit {row.commit.oid}</div>
-              {row.commit.subject && <div>{row.commit.subject}</div>}
-              {(refsByOid.get(row.commit.oid) ?? []).map((ref) => <div key={`${ref.kind}:${ref.name}`}>
-                {refKindLabels[ref.kind]} {ref.name}
-              </div>)}
-            </>} trigger={<button type="button" className="history-commit" data-history-index={index}
+            <Tooltip content={<div className="history-commit-tooltip">
+              <strong>{row.commit.subject ?? "Commit"}</strong>
+              <code>{row.commit.oid}</code>
+              <span>{selectedOid === row.commit.oid ? "Collapse" : "Expand"} changed files</span>
+            </div>} trigger={<button type="button" className="history-commit" data-history-index={index}
               aria-label={`${row.commit.subject ? `${row.commit.subject}, ` : ""}Commit ${row.commit.oid}`}
               aria-describedby={isHead ? `${headLabelId}-${row.commit.oid}` : undefined}
               aria-pressed={selectedOid === row.commit.oid}
@@ -220,18 +221,13 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
               <code className="history-short-oid" aria-hidden="true">{row.commit.oid.slice(0, 7)}</code>
             </button>} />
               <span className="history-badges">
-                {isHead && <span id={`${headLabelId}-${row.commit.oid}`} className="history-badge history-badge-head"
-                  style={{ color: colors.commits.get(row.commit.oid) }}>
-                  {page.head.scope === "repository" ? "Repository HEAD" : "HEAD"}{page.head.state === "detached" ? " · detached" : ""}
-                </span>}
-                {(refsByOid.get(row.commit.oid) ?? []).map((ref) => <Tooltip key={`${ref.kind}:${ref.name}`}
-                  content={`${refKindLabels[ref.kind]} ${ref.name}`}
-                  trigger={<span className={`history-badge history-badge-${ref.kind}`}
-                    style={{ color: colors.refs.get(`${ref.kind}:${ref.name}`) }}
-                    aria-label={`${refKindLabels[ref.kind]} ${ref.name}`}
-                  >{ref.name}</span>} />)}
                 {row.commit.root && row.commit.parents.length === 0 && <span className="history-badge">Root</span>}
                 {!row.commit.root && row.commit.parents.length === 0 && <span className="history-badge">Ancestry unavailable</span>}
+                {(rowRefs.length > 0 || isHead) && <HistoryRefs
+                  refs={rowRefs} colors={colors.refs} context={scope} snapshot={page.refs}
+                  commitOid={row.commit.oid} viewedBranch={branch ?? page.head.branch}
+                  head={isHead ? page.head : null} headLabelId={`${headLabelId}-${row.commit.oid}`}
+                  onTabOut={(event, trigger) => tabBetweenRows(event, index, trigger)} />}
               </span>
             </div>
             {selectedOid === row.commit.oid && <div className="history-expansion">
