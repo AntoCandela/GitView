@@ -28,12 +28,17 @@ import {
 } from "../ui/icons";
 import { RepositoryBrowser, RepositoryFiles, headLabel, useWorkspace, type RepositoryRenameState } from "../features/repositories";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
+import { useTranslation, useLocale } from "../i18n";
+import { workspaceErrorMessage } from "../features/repositories";
+import { LanguageMenu } from "./LanguageMenu";
 
 export function Workspace({
   client = repositoryClient,
 }: {
   client?: RepositoryClient;
 }) {
+  const { locale, t } = useTranslation();
+  const localeState = useLocale();
   const appearance = useAppearanceTheme();
   useLayoutEffect(() => {
     document.documentElement.dataset.appearance = appearance.theme;
@@ -124,7 +129,7 @@ export function Workspace({
     ? snapshot.entries.filter(
         (entry) =>
           entry.repositoryLabel.toLocaleLowerCase().includes(query) ||
-          headLabel(entry).toLocaleLowerCase().includes(query) ||
+          headLabel(entry, locale).toLocaleLowerCase().includes(query) ||
           entry.locationLabel.toLocaleLowerCase().includes(query),
       )
     : snapshot.entries;
@@ -137,7 +142,7 @@ export function Workspace({
     return <RepositoryBrowser query={searchQuery} onQueryChange={setSearchQuery} opening={opening}
       onOpen={() => void openRepository()} list={{
         entries: visibleEntries,
-        emptyMessage: snapshot.entries.length === 0 ? "No repositories open." : "No matching repositories.",
+        emptyMessage: t(snapshot.entries.length === 0 ? "app.noRepositories" : "app.noMatchingRepositories"),
         selectedId: pendingId ?? snapshot.activeContextId,
         onSelect: (entryId) => {
           setRepositoriesOpen(false);
@@ -162,8 +167,8 @@ export function Workspace({
       <header className={`workbench-toolbar${active ? " workbench-toolbar--branded" : ""}`}>
         <div className="workbench-identity">
         {active ? <Brand compact /> : null}
-        <Tooltip content={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"} trigger={
-          <button type="button" className="workspace-sidebar-toggle" aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+        <Tooltip content={t(sidebarOpen ? "app.collapseSidebar" : "app.expandSidebar")} trigger={
+          <button type="button" className="workspace-sidebar-toggle" aria-label={t(sidebarOpen ? "app.collapseSidebar" : "app.expandSidebar")}
             aria-expanded={sidebarOpen} aria-controls="workspace-sidebar"
             onClick={() => { setSidebarOpen((current) => !current); setRepositoriesOpen(false); }}>
             <SidebarIcon size={16} aria-hidden="true" />
@@ -176,10 +181,10 @@ export function Workspace({
           setRepositoriesOpen(false);
           controlsRef.current?.querySelector<HTMLButtonElement>(".repository-selector")?.focus();
         }}>
-          <Tooltip content={active?.locationLabel ?? "Choose a repository"} trigger={
-            <button type="button" className="repository-selector" aria-label={`Current repository: ${active?.repositoryLabel ?? "none"}`}
+          <Tooltip content={active?.locationLabel ?? t("app.chooseRepository")} trigger={
+            <button type="button" className="repository-selector" aria-label={active ? t("app.currentRepository", { name: active.repositoryLabel }) : t("app.noCurrentRepository")}
               aria-expanded={repositoriesOpen} aria-controls="repository-disclosure" onClick={() => setRepositoriesOpen(!repositoriesOpen)}>
-              <span>{active?.repositoryLabel ?? "Repositories"}</span>
+              <span>{active?.repositoryLabel ?? t("app.repositories")}</span>
               <ChevronDownIcon aria-hidden="true" />
             </button>
           } />
@@ -189,8 +194,8 @@ export function Workspace({
         </div>
         </div>
         <div className="workbench-layout-control">
-          <Tooltip content="Reset layout" trigger={
-            <button type="button" className="ui-kebab-trigger" aria-label="Reset layout"
+          <Tooltip content={t("app.resetLayout")} trigger={
+            <button type="button" className="ui-kebab-trigger" aria-label={t("app.resetLayout")}
               onClick={() => {
                 resetPanelLayout();
                 setLayout(defaultWorkbenchLayout);
@@ -201,6 +206,7 @@ export function Workspace({
           } />
           <AppearanceMenu />
           <WorkbenchLayoutMenu value={layout} onChange={setLayout} />
+          <LanguageMenu />
         </div>
       </header>
       <div className="workspace-body">
@@ -208,26 +214,29 @@ export function Workspace({
           {active && active.kind !== "unknown" ? <RepositoryFiles key={`${active.id}:${selectionGeneration}`}
             client={client} entryId={active.id} enabled={sidebarOpen} observation={observation} selected={repositoryFile}
             onSelect={(file) => setBrowsedFile({ entryId: active.id, generation: selectionGeneration, file })} />
-            : <p className="empty-list">{pendingId ? "Switching repository…" : "Choose a repository to browse files."}</p>}
+            : <p className="empty-list">{t(pendingId ? "app.switchingRepository" : "app.chooseFilesRepository")}</p>}
         </WorkspaceSidebar>
 
       <main className="workspace-main">
+        {localeState.persistenceError ? <div className="error-banner persistence-warning" role="alert">
+          <AlertIcon aria-hidden="true" /><span>{t("common.sessionOnly")}</span>
+        </div> : null}
         {snapshot.persistenceError ? (
           <div className="error-banner persistence-warning" role="alert">
             <AlertIcon aria-hidden="true" />
             <span>
-              {snapshot.persistenceError.message}
+              {t(`app.persistence.${snapshot.persistenceError.code}`)}
             </span>
           </div>
         ) : null}
         {error ? (
           <div className="error-banner" role="alert">
             <AlertIcon aria-hidden="true" />
-            <span>{error}</span>
-            <Tooltip content="Dismiss error" trigger={<button
+            <span>{workspaceErrorMessage(error, locale)}</span>
+            <Tooltip content={t("app.dismissError")} trigger={<button
               type="button"
               onClick={dismissError}
-              aria-label="Dismiss error"
+              aria-label={t("app.dismissError")}
             >
               <CloseIcon aria-hidden="true" />
             </button>} />
@@ -235,17 +244,17 @@ export function Workspace({
         ) : null}
         {snapshot.restoring ? (
           <p className="workspace-restoring" role="status">
-            Checking saved repository locations…
+            {t("app.checkingSaved")}
           </p>
         ) : null}
         {pendingId !== null ? (
-          <section className="workspace-state" role="status"><h2>Switching repository…</h2></section>
+          <section className="workspace-state" role="status"><h2>{t("app.switchingRepository")}</h2></section>
         ) : active ? (
           active.kind === "unknown" ? <section className="workspace-state" role="status">
-            <p>{active.availability === "unavailable" ? "Repository unavailable. Checking again automatically." : "Checking repository…"}</p>
-            {active.availability === "unavailable" ? <Tooltip content="Check repository availability again" trigger={
+            <p>{t(active.availability === "unavailable" ? "app.repositoryUnavailable" : "app.checkingRepository")}</p>
+            {active.availability === "unavailable" ? <Tooltip content={t("app.checkAgainHint")} trigger={
               <button className="retry-button" type="button" onClick={() => refreshAvailability(active.id)}>
-                <RefreshIcon aria-hidden="true" />Check again
+                <RefreshIcon aria-hidden="true" />{t("app.checkAgain")}
               </button>} /> : null}
           </section> : observation ? <Workbench
             key={`${active.id}:${selectionGeneration}`}
@@ -262,9 +271,9 @@ export function Workspace({
         ) : (
           <section className="workspace-state workspace-state--branded" role="status">
             <Brand />
-            <h2>{snapshot.entries.length ? "Choose a repository" : "No repository open"}</h2>
-            <p className="brand-description">Your repository, in view.<br />Inspect changes, compare files and follow commit history. Local by design.</p>
-            {loading ? <p>Connecting…</p> : null}
+            <h2>{t(snapshot.entries.length ? "app.chooseRepository" : "app.noRepository")}</h2>
+            <p className="brand-description">{t("app.tagline")}<br />{t("app.description")}</p>
+            {loading ? <p>{t("app.connecting")}</p> : null}
           </section>
         )}
       </main>

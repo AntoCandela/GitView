@@ -5,6 +5,7 @@
   "windows": ["main"],
   "permissions": [
     "allow-workspace-snapshot",
+    "allow-preferred-languages",
     "allow-open-chosen-repository",
     "allow-select-context",
     "allow-rename-repository",

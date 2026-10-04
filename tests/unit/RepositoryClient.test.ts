@@ -16,7 +16,7 @@ const snapshot: WorkspaceSnapshot = {
 };
 const operations: { command: RepositoryCommand; start: (client: RepositoryClient) => Promise<unknown> }[] = [
   { command: "workspace_snapshot", start: (client) => client.snapshot() },
-  { command: "open_chosen_repository", start: (client) => client.openChosenRepository() },
+  { command: "open_chosen_repository", start: (client) => client.openChosenRepository("en-US") },
   { command: "select_context", start: (client) => client.selectContext("entry") },
   { command: "refresh_entry_availability", start: (client) => client.refreshEntryAvailability("entry") },
   { command: "observe_selected_context", start: (client) => client.observeSelectedContext("entry") },
@@ -75,7 +75,7 @@ test("a resolved domain rejection is a completed transport and never waits for d
   const reply = deferred<unknown>();
   const delivery = deferred<unknown>();
   const terminal: unknown[] = [];
-  const outcome = { kind: "rejected", code: "not_repository", message: "Private domain result", snapshot };
+  const outcome = { kind: "rejected", code: "not_repository", snapshot };
   installTransport((command, args) => {
     if (command === "record_renderer_diagnostic") {
       terminal.push(terminalPayload(args));
@@ -84,7 +84,7 @@ test("a resolved domain rejection is a completed transport and never waits for d
     return reply.promise;
   });
 
-  const pending = repositoryClient.openChosenRepository();
+  const pending = repositoryClient.openChosenRepository("en-US");
   let settledResult: unknown;
   void pending.then((value) => { settledResult = value; });
   expect(terminal).toEqual([]);
@@ -259,4 +259,23 @@ test.each(["list_contexts", "select_worktree", "commit_files"] as const)("%s dia
   const operation = operations.find((item) => item.command === command)!;
   await operation.start(repositoryClient);
   expect(payloads).toEqual([{ operationId: firstId, command, phase: "completed", durationMs: 0 }]);
+});
+
+test.each(["resolved", "rejected"] as const)("native language discovery remains outside diagnostics when %s", async (state) => {
+  const payloads: unknown[] = [];
+  const privateFailure = { environment: "private-desktop-preferences" };
+  installTransport((command, args) => {
+    if (command === "record_renderer_diagnostic") {
+      payloads.push(terminalPayload(args));
+      return Promise.resolve();
+    }
+    return state === "resolved"
+      ? Promise.resolve({ languages: ["pt-PT", "en-GB"] })
+      : Promise.reject(privateFailure);
+  });
+  const result = repositoryClient.preferredLanguages();
+  if (state === "resolved") await result;
+  else await expect(result).rejects.toBe(privateFailure);
+  expect(payloads).toEqual([]);
+  expect(crypto.randomUUID).not.toHaveBeenCalled();
 });

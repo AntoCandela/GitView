@@ -15,15 +15,25 @@ import { deferred } from "../support/deferred";
 import { historyClient, historyOids, historyPage, mergeHistory } from "../support/history";
 import { readyObservation, textReview } from "../support/review";
 import { installVirtualLayout } from "../support/virtualLayout";
+import { CommitFileReview } from "../../src/features/diff";
+import { createLocaleStore, installLocaleStoreForTests, setLocaleChoice } from "../../src/i18n";
 
 let restoreVirtualLayout: () => void;
+let restoreLocale: () => void;
 beforeEach(() => {
+  const values = new Map<string, string>();
+  restoreLocale = installLocaleStoreForTests(createLocaleStore({ storage: () => ({
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => { values.set(key, value); },
+    removeItem: (key) => { values.delete(key); },
+  }) }));
   restoreVirtualLayout = installVirtualLayout();
 });
 afterEach(() => {
   cleanup();
   restoreVirtualLayout();
   vi.restoreAllMocks();
+  restoreLocale();
 });
 const { merge, first, second, root } = historyOids;
 const path = "archive/version.ts";
@@ -60,6 +70,24 @@ function Workbench({ client, entryId = "one", generation = 0, observation = read
     {(comparison) => <HistoryGraph client={client} entryId={entryId} selectionGeneration={generation} comparison={comparison} />}
   </AppWorkbench>;
 }
+
+test("es keeps pinned source, commit identifiers and reader choices while changing interface language", async () => {
+  const client = previewClient();
+  render(<CommitFileReview client={client} entryId="one" selectionGeneration={0} contextLabel="Pinned repository"
+    selection={{ ...identity(), segments: path.split("/") }} />);
+  const source = await screen.findByText("committed-only source");
+  await userEvent.setup().click(screen.getByRole("radio", { name: "Wrap" }));
+  const wrap = screen.getByRole("radio", { name: "Wrap" });
+  wrap.focus();
+  await act(async () => setLocaleChoice("es"));
+  expect(screen.getByText("committed-only source")).toBe(source);
+  expect(screen.getByRole("heading", { name: path })).toBeVisible();
+  expect(screen.getByText(`Nuevo · Commit ${merge.slice(0, 10)}`)).toBeVisible();
+  expect(screen.getByText(`Anterior · Padre ${first.slice(0, 10)}`)).toBeVisible();
+  expect(screen.getByRole("radio", { name: "Ajustar líneas" })).toBe(wrap);
+  expect(wrap).toBeChecked();
+  expect(wrap).toHaveFocus();
+});
 
 test("clicked committed files use pinned content in the shared preview and sidebar clicks restore live selection", async () => {
   const user = userEvent.setup();

@@ -68,7 +68,7 @@ async fn concurrent_real_opens_keep_failure_classification_and_process_facts_sep
         failure.scope(service.open_chosen(missing_repository.path())),
     );
     assert!(matches!(opened, OpenOutcome::Opened { .. }));
-    assert!(matches!(rejected, OpenOutcome::Rejected { code: "not_repository", .. }));
+    assert!(matches!(rejected, OpenOutcome::Rejected { code: gitview_lib::git::GitError::NotRepository, .. }));
     service.shutdown().await;
     flush_diagnostics(&store).await;
     shutdown_diagnostics(&store).await;

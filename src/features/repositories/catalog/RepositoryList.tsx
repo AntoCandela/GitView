@@ -13,6 +13,7 @@ import { SidebarRow } from "../../../ui/SidebarRow";
 import { Tooltip } from "../../../ui/Tooltip";
 import { headLabel } from "./headLabel";
 import { RepositoryNameEditor, type RepositoryRenameState } from "./RepositoryNameEditor";
+import { useTranslation } from "../../../i18n";
 
 export function RepositoryList({
   entries,
@@ -39,6 +40,7 @@ export function RepositoryList({
   onRenameSave: () => void;
   onRenameCancel: (restoreFocus?: boolean) => void;
 }) {
+  const { locale, t } = useTranslation();
   const scrollRef = useRef<HTMLElement>(null);
   const pendingFocusIndex = useRef<number | null>(null);
   const pathDescriptionId = useId();
@@ -100,7 +102,7 @@ export function RepositoryList({
   return (
     <nav
       className="repository-list"
-      aria-label="Repositories"
+      aria-label={t("repo.repositories")}
       ref={scrollRef}
       onKeyDown={handleKeyDown}
     >
@@ -117,14 +119,14 @@ export function RepositoryList({
           const statusLabel =
             entry.kind === "unknown"
               ? entry.availability === "unavailable"
-                ? "repository context · unavailable"
-                : "repository context · checking"
+                ? t("repo.contextUnavailable")
+                : t("repo.contextChecking")
               : entry.kind === "bare"
                 ? entry.availability === "unavailable"
-                  ? "bare · unavailable"
-                  : "bare"
+                  ? t("repo.bareUnavailable")
+                  : t("repo.bare")
                 : entry.availability === "unavailable"
-                  ? "unavailable"
+                  ? t("repo.unavailable")
                   : "";
           return (
             <div
@@ -167,7 +169,7 @@ export function RepositoryList({
                           {entry.repositoryLabel}
                         </span>
                       </span>
-                      <Pill>{headLabel(entry)}</Pill>
+                      <Pill>{headLabel(entry, locale)}</Pill>
                     </span>
                     {statusLabel ? (
                       <span className="repository-meta">{statusLabel}</span>
@@ -177,16 +179,16 @@ export function RepositoryList({
               />
               )}
               <KebabMenu
-                label={`Actions for ${entry.repositoryLabel}`}
+                label={t("repo.actions", { name: entry.repositoryLabel })}
                 disabled={actionsDisabled || renameState?.entryId === entry.id}
                 items={[
                   {
-                    label: "Rename",
+                    label: t("repo.rename"),
                     icon: <PencilIcon aria-hidden="true" />,
                     onSelect: () => onRename(entry),
                   },
                   {
-                    label: "Remove from sidebar",
+                    label: t("repo.remove"),
                     icon: <TrashIcon aria-hidden="true" />,
                     destructive: true,
                     onSelect: () => onRemove(entry.id),

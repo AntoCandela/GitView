@@ -11,6 +11,8 @@ export const platforms = {
   'ubuntu-24.04-x64': { architecture: 'x64', os: /^Ubuntu 24\.04(?:\.[0-9]+)?$/, webview: 'WebKitGTK' },
 };
 export const requiredScenarios = ['install_launch', 'native_picker', 'native_ipc', 'secondary_window_denied', 'repository_open', 'linked_and_bare', 'live_observation', 'read_only_repository', 'diagnostics_correlation', 'diagnostics_privacy', 'diagnostics_health'];
+export const requiredLocales = ['pt-BR', 'pt-PT', 'it', 'es', 'en-US', 'en-GB'];
+export const requiredLocaleScenarios = ['selection_persistence', 'interface_errors_counts_accessibility', 'native_picker_title', 'repository_data_unchanged', 'linguistic_review'];
 const statuses = new Set(['passed', 'failed', 'not_run', 'blocked']);
 const validHash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 const version = value => typeof value === 'string' && /^[0-9]+\.[0-9]+(?:\.[0-9]+)?$/.test(value);
@@ -68,7 +70,17 @@ export async function assessPreview({ artifact, platform, report } = {}) {
     scenarios[name] = { status: valid ? scenario.status : 'not_run', observed: valid ? scenario.observed : false };
     if (!valid || scenario.status !== 'passed' || scenario.observed !== true) reject('native_scenarios_unverified');
   }
-  return { schemaVersion: 1, boundary: 'packaged-native', assessedAt: new Date().toISOString(), platform: expected ? platform : null, artifact: identity, revision, observation: { kind: observation.kind === 'human' ? 'human' : 'unverified', observedAt, observerHash: observerValid ? createHash('sha256').update(observation.observer).digest('hex') : null }, runtime, prerequisites, scenarios, ready: reasons.length === 0, status: reasons.length === 0 ? 'report_validated' : 'unverified', reasons, details: 'omitted_private_payloads', assurance: 'human_report_not_independently_certified', signing: 'not_assessed', notarization: 'not_assessed', publicRelease: 'not_assessed' };
+  const localization = {};
+  for (const locale of requiredLocales) {
+    localization[locale] = {};
+    for (const name of requiredLocaleScenarios) {
+      const scenario = input.localization?.[locale]?.[name];
+      const valid = object(scenario) && statuses.has(scenario.status) && typeof scenario.observed === 'boolean';
+      localization[locale][name] = { status: valid ? scenario.status : 'not_run', observed: valid ? scenario.observed : false };
+      if (!valid || scenario.status !== 'passed' || scenario.observed !== true) reject('localization_unverified');
+    }
+  }
+  return { schemaVersion: 1, boundary: 'packaged-native', assessedAt: new Date().toISOString(), platform: expected ? platform : null, artifact: identity, revision, observation: { kind: observation.kind === 'human' ? 'human' : 'unverified', observedAt, observerHash: observerValid ? createHash('sha256').update(observation.observer).digest('hex') : null }, runtime, prerequisites, scenarios, localization, ready: reasons.length === 0, status: reasons.length === 0 ? 'report_validated' : 'unverified', reasons, details: 'omitted_private_payloads', assurance: 'human_report_not_independently_certified', signing: 'not_assessed', notarization: 'not_assessed', publicRelease: 'not_assessed' };
 }
 
 if (isEntryPoint(import.meta.url)) {

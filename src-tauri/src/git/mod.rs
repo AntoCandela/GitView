@@ -40,8 +40,9 @@ impl GitOperation {
     }
 }
 
-/// Sanitized probe failures; renderer messages never include native paths or Git stderr.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Closed probe failures; serialized outcomes contain codes, never native paths or Git stderr.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum GitError {
     GitUnavailable,
     NotRepository,
@@ -50,6 +51,7 @@ pub enum GitError {
     ProbeTimeout,
     RepositoryChanged,
     UnsupportedPathEncoding,
+    #[serde(rename = "repository_unavailable")]
     Unavailable,
 }
 
@@ -64,23 +66,6 @@ impl GitError {
             Self::RepositoryChanged => "repository_changed",
             Self::UnsupportedPathEncoding => "unsupported_path_encoding",
             Self::Unavailable => "repository_unavailable",
-        }
-    }
-
-    pub fn message(self) -> &'static str {
-        match self {
-            Self::GitUnavailable => "Installed Git could not be started.",
-            Self::NotRepository => "Choose a Git working tree or bare repository.",
-            Self::Inaccessible => "Git cannot access this location. Check its permissions.",
-            Self::UnsafeRepository => {
-                "Git refused to read this repository because of its ownership."
-            }
-            Self::ProbeTimeout => "Git took too long to inspect this repository.",
-            Self::RepositoryChanged => "The repository changed while it was being inspected.",
-            Self::UnsupportedPathEncoding => {
-                "This repository path or reference cannot be represented safely."
-            }
-            Self::Unavailable => "The repository could not be read right now.",
         }
     }
 }

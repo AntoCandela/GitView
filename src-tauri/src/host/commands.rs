@@ -5,6 +5,7 @@ use tauri_plugin_dialog::DialogExt;
 use tokio::sync::oneshot;
 
 use super::{ipc_context, require_main_window, traced_ipc};
+use super::languages::{self, Locale, PreferredLanguages};
 use super::renderer_diagnostics::RendererDiagnostic;
 use crate::application::RepositoryService;
 use crate::browsing::{RepositoryFileResult, RepositoryFilesRequest, RepositoryFilesResult};
@@ -16,6 +17,14 @@ use crate::history::HistoryPageResult;
 use crate::inspection::{CommitFilesResult, ContextOptionsResult};
 use crate::observation::ObservationSnapshot;
 use crate::workspace::{MutationOutcome, OpenOutcome, SelectOutcome, WorkspaceSnapshot};
+
+#[tauri::command]
+pub(super) fn preferred_languages<R: tauri::Runtime>(
+    window: WebviewWindow<R>,
+) -> Result<PreferredLanguages, &'static str> {
+    require_main_window(&window)?;
+    Ok(languages::preferred_languages())
+}
 
 #[tauri::command]
 pub(super) async fn workspace_snapshot<R: tauri::Runtime>(
@@ -32,6 +41,7 @@ pub(super) async fn workspace_snapshot<R: tauri::Runtime>(
 pub(super) async fn open_chosen_repository<R: tauri::Runtime>(
     window: WebviewWindow<R>,
     service: tauri::State<'_, RepositoryService>,
+    locale: Locale,
     operation_id: Option<String>,
 ) -> Result<OpenOutcome, &'static str> {
     require_main_window(&window)?;
@@ -42,7 +52,7 @@ pub(super) async fn open_chosen_repository<R: tauri::Runtime>(
             .dialog()
             .file()
             .set_parent(&window)
-            .set_title("Choose a Git repository")
+            .set_title(locale.picker_title())
             .pick_folder(move |path| {
                 // A closed receiver means the invoking future is gone; no path or state needs updating.
                 let _ = send.send(path);

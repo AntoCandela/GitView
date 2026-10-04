@@ -8,6 +8,7 @@ import { FileReview, CommitFileReview, RepositoryFileReview, type CommitReviewSe
 import { ResizableWorkbench } from "./ResizableWorkbench";
 import { ChangedFileList, type ObservationView } from "../../features/changes";
 import { defaultWorkbenchLayout, type WorkbenchLayoutId } from "./workbenchLayout";
+import { useTranslation } from "../../i18n";
 
 type ChangeSelection = ReviewSelection;
 
@@ -25,6 +26,7 @@ export function Workbench({ observation, client, entryId, selectionGeneration, c
   repositoryFile?: RepositoryFileSelection | null;
   onRepositoryFileDismiss?: () => void;
 }) {
+  const { t } = useTranslation();
   const scope = useMemo(() => ({ client, entryId, selectionGeneration }), [client, entryId, selectionGeneration]);
   const [chosen, setChosen] = useState<{
     scope: typeof scope;
@@ -64,7 +66,7 @@ export function Workbench({ observation, client, entryId, selectionGeneration, c
       <FileReview client={client} entryId={entryId} selectionGeneration={selectionGeneration} contextLabel={contextLabel}
         observation={observation} selection={selection} categories={categories}
         onCategoryChange={(category) => { if (selection) selectChange({ ...selection, category }); }} />
-    ) : <div className="comparison-empty">Select a changed file to compare.</div>} files={
+    ) : <div className="comparison-empty">{t("app.selectFile")}</div>} files={
       <ChangedFileList observation={observation} entryId={entryId} selectionGeneration={selectionGeneration}
         selection={selection} onSelect={selectChange} onRecheck={onRecheck} />
     } />

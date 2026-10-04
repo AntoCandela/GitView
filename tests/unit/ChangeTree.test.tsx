@@ -18,7 +18,7 @@ afterEach(() => { cleanup(); restoreLayout(); vi.restoreAllMocks(); });
 function filesIn(directory: string[], count: number): ChangeTreeFile[] {
   return Array.from({ length: count }, (_, index) => {
     const segments = [...directory, `file-${index}.ts`];
-    return { id: segments.join(":"), displayPath: segments.join("/"), segments, status: "Modified", marker: "M" };
+    return { id: segments.join(":"), displayPath: segments.join("/"), segments, statuses: [{ kind: "committed", change: "modified" }], marker: "M" };
   });
 }
 
@@ -107,7 +107,7 @@ test("refresh preserves the leading native-segment anchor when earlier rows and 
   const { rerender } = render(<ChangeTree files={files} label="Files" view="list" onSelect={() => {}} />);
   const scroller = scrollerFor();
   scroll(scroller, 2807);
-  const inserted = { id: "inserted", displayPath: "inserted.ts", segments: ["inserted.ts"], status: "", marker: "" };
+  const inserted: ChangeTreeFile = { id: "inserted", displayPath: "inserted.ts", segments: ["inserted.ts"], statuses: [], marker: "" };
   rerender(<ChangeTree files={[inserted, ...files.map((file) => ({ ...file, id: `refresh:${file.id}` }))]} label="Files" view="list" onSelect={() => {}} />);
   expect(scroller.scrollTop).toBe(2835);
   expect(screen.getByRole("button", { name: "Review file-100.ts" })).toBeInTheDocument();

@@ -3,16 +3,26 @@
 import "@testing-library/jest-dom/vitest";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { ReviewResult } from "../../src/contracts/diff";
 import type { RepositoryClient } from "../../src/contracts/repositories";
 import { Workbench } from "../../src/app/workbench/Workbench";
 import { useObservation } from "../../src/features/changes";
 import { FileReview } from "../../src/features/diff";
+import { createLocaleStore, installLocaleStoreForTests, setLocaleChoice } from "../../src/i18n";
 import { deferred } from "../support/deferred";
 import { changedFile, readingSelection, readyObservation, reviewClient, reviewIdentity, textReview } from "../support/review";
 
-afterEach(() => { cleanup(); vi.useRealTimers(); });
+let restoreLocale: () => void;
+beforeEach(() => {
+  const values = new Map<string, string>();
+  restoreLocale = installLocaleStoreForTests(createLocaleStore({ storage: () => ({
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => { values.set(key, value); },
+    removeItem: (key) => { values.delete(key); },
+  }) }));
+});
+afterEach(() => { cleanup(); vi.useRealTimers(); restoreLocale(); });
 
 test("staged and unstaged choices show their live endpoints, escaped source, line kinds and newline markers", async () => {
   const read: RepositoryClient["reviewFile"] = async (entryId, _revision, pathId, category) => ({
@@ -143,4 +153,27 @@ test("client replacement clears the local reading choice immediately", async () 
   rerender(<Workbench {...props} client={reviewClient()} />);
   expect(screen.queryByRole("region", { name: "Selected file review" })).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Review src/example.ts" })).toHaveAttribute("aria-pressed", "false");
+});
+
+test.each([
+  ["pt-BR", "O Git está indisponível."],
+  ["pt-PT", "O Git está indisponível."],
+  ["it", "Git non è disponibile."],
+  ["es", "Git no está disponible."],
+  ["en-US", "Git is unavailable."],
+  ["en-GB", "Git is unavailable."],
+] as const)("%s retranslates a visible live failure without refetching or changing its diagnostic identity", async (locale, explanation) => {
+  vi.useFakeTimers();
+  const result: ReviewResult = { kind: "unavailable", code: "git_unavailable", identity: reviewIdentity };
+  const read = vi.fn<RepositoryClient["reviewFile"]>().mockResolvedValue(result);
+  render(<FileReview client={reviewClient(read)} entryId="one" selectionGeneration={0} contextLabel="Sample repository"
+    observation={readyObservation()} selection={readingSelection} categories={["unstaged"]} onCategoryChange={() => {}} />);
+  await act(async () => { await Promise.resolve(); });
+  const selectedFile = screen.getByRole("heading", { name: readingSelection.displayPath });
+  const calls = read.mock.calls.length;
+  await act(async () => setLocaleChoice(locale));
+  expect(screen.getByText(explanation)).toBeVisible();
+  expect(screen.getByRole("heading", { name: readingSelection.displayPath })).toBe(selectedFile);
+  expect(result.code).toBe("git_unavailable");
+  expect(read).toHaveBeenCalledTimes(calls);
 });

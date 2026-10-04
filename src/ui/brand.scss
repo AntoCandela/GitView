@@ -22,8 +22,8 @@
 }
 .workbench-identity { display: flex; align-items: center; min-width: 0; }
 .workbench-toolbar.workbench-toolbar--branded {
-  grid-template-columns: minmax(64px, 1fr) minmax(0, auto) minmax(64px, 1fr);
-  .workspace-selectors { max-width: min(440px, calc(100vw - 144px)); }
+  grid-template-columns: minmax(64px, 1fr) minmax(0, auto) minmax(max-content, 1fr);
+  .workspace-selectors { max-width: min(440px, calc(100vw - 208px)); }
   .workbench-layout-control { display: flex; align-items: center; padding-left: 0; }
 }
 .workspace-state.workspace-state--branded {

@@ -4,14 +4,24 @@ import "@testing-library/jest-dom/vitest";
 import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { afterEach, expect, test } from "vitest";
+import { afterEach, beforeEach, expect, test } from "vitest";
 import type { RepositoryFileResult, RepositoryFileSelection } from "../../src/contracts/browsing";
 import { RepositoryFileReview } from "../../src/features/diff";
+import { createLocaleStore, installLocaleStoreForTests, setLocaleChoice } from "../../src/i18n";
 import { Workbench } from "../../src/app/workbench/Workbench";
 import { deferred } from "../support/deferred";
 import { readyObservation, reviewClient, textReview } from "../support/review";
 
-afterEach(cleanup);
+let restoreLocale: () => void;
+beforeEach(() => {
+  const values = new Map<string, string>();
+  restoreLocale = installLocaleStoreForTests(createLocaleStore({ storage: () => ({
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => { values.set(key, value); },
+    removeItem: (key) => { values.delete(key); },
+  }) }));
+});
+afterEach(() => { cleanup(); restoreLocale(); });
 const selection: RepositoryFileSelection = { id: "readme", listingId: "listing-one", displayPath: "README.txt", segments: ["README.txt"] };
 const props = { entryId: "one", selectionGeneration: 0, contextLabel: "Sample repository", selection };
 function text(content: string, file = selection): RepositoryFileResult {
@@ -95,4 +105,21 @@ test("retry reads current working bytes after a recoverable unavailable result",
   available = true;
   await userEvent.setup().click(retry);
   expect(await screen.findByText("recovered working bytes")).toBeVisible();
+});
+
+test("it retranslates an existing coded failure and keeps retry focus and file identity", async () => {
+  const client = reviewClient();
+  let available = false;
+  client.reviewRepositoryFile = async () => available ? text("original source bytes\n") : { kind: "unavailable", code: "inaccessible" };
+  render(<RepositoryFileReview {...props} client={client} />);
+  const retry = await screen.findByRole("button", { name: "Retry preview" });
+  retry.focus();
+  await act(async () => setLocaleChoice("it"));
+  expect(screen.getByText("Impossibile accedere al file o al repository.")).toBeVisible();
+  expect(screen.getByRole("button", { name: "Riprova anteprima" })).toBe(retry);
+  expect(retry).toHaveFocus();
+  expect(screen.getByRole("heading", { name: "README.txt" })).toBeVisible();
+  available = true;
+  await userEvent.setup().keyboard("{Enter}");
+  expect(await screen.findByText("original source bytes")).toBeVisible();
 });

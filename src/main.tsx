@@ -5,10 +5,14 @@ import "@fontsource-variable/geist-mono";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { Workspace } from "./app/Workspace";
+import { repositoryClient } from "./platform/RepositoryClient";
+import { initializeLocale } from "./i18n";
 import "./style.scss";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <Workspace />
-  </StrictMode>,
-);
+void initializeLocale(() => repositoryClient.preferredLanguages().then((result) => result.languages)).then(() => {
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <Workspace />
+    </StrictMode>,
+  );
+});

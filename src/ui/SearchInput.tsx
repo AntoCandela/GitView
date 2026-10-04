@@ -2,6 +2,7 @@
 
 import { CloseIcon, SearchIcon } from "./icons";
 import { Tooltip } from "./Tooltip";
+import { useTranslation } from "../i18n";
 
 export function SearchInput({
   value,
@@ -14,6 +15,7 @@ export function SearchInput({
   label: string;
   placeholder: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="ui-search">
       <SearchIcon aria-hidden="true" />
@@ -26,10 +28,10 @@ export function SearchInput({
         spellCheck={false}
       />
       {value ? (
-        <Tooltip content="Clear search" trigger={<button
+        <Tooltip content={t("ui.clearSearch")} trigger={<button
           type="button"
           onClick={() => onChange("")}
-          aria-label="Clear search"
+          aria-label={t("ui.clearSearch")}
         >
           <CloseIcon aria-hidden="true" />
         </button>} />

@@ -4,13 +4,16 @@ import { Popover } from "@base-ui/react/popover";
 import type { HistoryPage } from "../../../contracts/history";
 import { BranchIcon, RemoteBranchIcon, TagIcon } from "../../../ui/icons";
 import { Tooltip } from "../../../ui/Tooltip";
+import { formatNumber, useTranslation, type MessageKey } from "../../../i18n";
 
 type Reference = HistoryPage["refs"][number];
-const kindLabels = { local_branch: "Local branch", remote_tracking: "Remote-tracking branch", tag: "Tag" };
+const kindKeys = {
+  local_branch: "history.ref.localBranch", remote_tracking: "history.ref.remoteTracking", tag: "history.ref.tag",
+} as const satisfies Record<Reference["kind"], MessageKey>;
 const groups = [
-  { kind: "local_branch", label: "Local branches", Icon: BranchIcon },
-  { kind: "remote_tracking", label: "Remote-tracking branches", Icon: RemoteBranchIcon },
-  { kind: "tag", label: "Tags", Icon: TagIcon },
+  { kind: "local_branch", label: "history.refs.localBranches", more: "history.refs.moreLocalBranches", Icon: BranchIcon },
+  { kind: "remote_tracking", label: "history.refs.remoteBranches", more: "history.refs.moreRemoteBranches", Icon: RemoteBranchIcon },
+  { kind: "tag", label: "history.refs.tags", more: "history.refs.moreTags", Icon: TagIcon },
 ] as const;
 
 /** Snapshot identity closes stale disclosures; the summary never hides references from the full inventory. */
@@ -25,6 +28,7 @@ export function HistoryRefs({ refs, colors, context, snapshot, commitOid, viewed
   headLabelId: string;
   onTabOut: (event: KeyboardEvent<HTMLElement>, trigger: HTMLButtonElement) => void;
 }) {
+  const { locale, t } = useTranslation();
   const activeTrigger = useRef<HTMLButtonElement | null>(null);
   const restoreFocus = useRef(false);
   const id = useId();
@@ -33,7 +37,9 @@ export function HistoryRefs({ refs, colors, context, snapshot, commitOid, viewed
   const openKey = choice?.context === context && choice.snapshot === snapshot ? choice.key : null;
   const primary = primaryReference(refs, viewedBranch, head);
   const combinedHead = head?.state === "attached" && primary?.kind === "local_branch" && primary.name === head.branch;
-  const headLabel = head ? `${head.scope === "repository" ? "Repository HEAD" : "HEAD"}${head.state === "detached" ? " · detached" : ""}` : null;
+  const headLabel = head ? head.scope === "repository"
+    ? t(head.state === "detached" ? "history.refs.repositoryDetachedHead" : "history.refs.repositoryHead")
+    : head.state === "detached" ? t("history.detachedHead") : "HEAD" : null;
   const hidden = refs.length - (primary ? 1 : 0);
   const details = <ReferenceDetails refs={refs} colors={colors} head={head} />;
 
@@ -46,9 +52,9 @@ export function HistoryRefs({ refs, colors, context, snapshot, commitOid, viewed
       setChoice(open ? { context, snapshot, key } : null);
     }}>
       <Tooltip enabled={openKey === null && dismissedHint !== key} content={<div className="history-ref-hover">
-        <div className="history-ref-title">References on this commit</div>
+        <div className="history-ref-title">{t("history.refs.title")}</div>
         <ReferenceDetails refs={refs} colors={colors} head={head} preview />
-        <div className="history-ref-hint">Click or press Enter to keep open and see all references.</div>
+        <div className="history-ref-hint">{t("history.refs.keepOpen")}</div>
       </div>} trigger={<Popover.Trigger id={triggerId}
         className={`history-badge history-ref${key === "overflow" ? " history-ref-overflow" : " history-ref-primary"}`}
         data-current={current} aria-label={label}
@@ -68,7 +74,7 @@ export function HistoryRefs({ refs, colors, context, snapshot, commitOid, viewed
               onTabOut(event, trigger);
               event.stopPropagation();
             }}>
-            <Popover.Title className="history-ref-title">References on this commit</Popover.Title>
+            <Popover.Title className="history-ref-title">{t("history.refs.title")}</Popover.Title>
             {details}
           </Popover.Popup>
         </Popover.Positioner>
@@ -79,12 +85,14 @@ export function HistoryRefs({ refs, colors, context, snapshot, commitOid, viewed
   const Icon = primary ? groups.find((group) => group.kind === primary.kind)!.Icon : BranchIcon;
   return <span className="history-refs">
     {headLabel && !combinedHead && <span id={headLabelId} className="history-badge history-badge-head">{headLabel}</span>}
-    {primary && disclosure(`${primary.kind}:${primary.name}`, `${kindLabels[primary.kind]} ${primary.name}${combinedHead ? `, ${headLabel}` : ""}`, <>
+    {primary && disclosure(`${primary.kind}:${primary.name}`, combinedHead
+      ? t("history.refs.currentReference", { reference: t(kindKeys[primary.kind], { name: primary.name }), head: headLabel! })
+      : t(kindKeys[primary.kind], { name: primary.name }), <>
       {combinedHead && <span id={headLabelId} className="history-ref-head">{headLabel}<span aria-hidden="true"> · </span></span>}
       <Icon size={11} aria-hidden="true" style={{ color: colors.get(`${primary.kind}:${primary.name}`) }} />
       <ReferenceName reference={primary} />
     </>, combinedHead || primary.kind === "local_branch" && primary.name === viewedBranch)}
-    {hidden > 0 && disclosure("overflow", `Show ${hidden} more ${hidden === 1 ? "reference" : "references"}`, `+${hidden}`)}
+    {hidden > 0 && disclosure("overflow", t("history.refs.showMore", { count: hidden }), `+${formatNumber(locale, hidden)}`)}
   </span>;
 }
 
@@ -101,20 +109,23 @@ function primaryReference(refs: HistoryPage["refs"], viewedBranch: string | null
 function ReferenceDetails({ refs, colors, head, preview = false }: {
   refs: HistoryPage["refs"]; colors: ReadonlyMap<string, string>; head: HistoryPage["head"] | null; preview?: boolean;
 }) {
+  const { locale, t } = useTranslation();
   return <div className="history-ref-details">
-    {head && <p className="history-ref-context">{head.scope === "repository" ? "Repository HEAD" : "Checked out here"}
-      {head.state === "detached" ? " · detached HEAD" : head.branch ? ` · ${head.branch}` : ""}</p>}
-    {groups.map(({ kind, label, Icon }) => {
+    {head && <p className="history-ref-context">{t(head.scope === "repository"
+      ? "history.refs.repositoryContext" : "history.refs.worktreeContext", {
+      state: head.state, branch: head.branch ?? "",
+    })}</p>}
+    {groups.map(({ kind, label, more, Icon }) => {
       const entries = refs.filter((ref) => ref.kind === kind);
       if (entries.length === 0) return null;
       const shown = preview ? entries.slice(0, 4) : entries;
-      return <section className="history-ref-group" key={kind} aria-label={label}>
-        <h3>{label} <span>{entries.length}</span></h3>
+      return <section className="history-ref-group" key={kind} aria-label={t(label)}>
+        <h3>{t(label)} <span>{formatNumber(locale, entries.length)}</span></h3>
         <ul>{shown.map((ref) => <li key={ref.name}>
           <Icon size={12} aria-hidden="true" style={{ color: colors.get(`${ref.kind}:${ref.name}`) }} />
           <span className={`history-ref-full-name${ref.kind === "tag" ? "" : " history-branch-name"}`}>{ref.name}</span>
         </li>)}</ul>
-        {shown.length < entries.length && <div className="history-ref-hint">{entries.length - shown.length} more {label.toLowerCase()}</div>}
+        {shown.length < entries.length && <div className="history-ref-hint">{t(more, { count: entries.length - shown.length })}</div>}
       </section>;
     })}
   </div>;

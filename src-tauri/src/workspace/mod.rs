@@ -114,8 +114,7 @@ pub enum OpenOutcome {
         snapshot: WorkspaceSnapshot,
     },
     Rejected {
-        code: &'static str,
-        message: &'static str,
+        code: GitError,
         snapshot: WorkspaceSnapshot,
     },
 }
@@ -128,13 +127,44 @@ pub enum SelectOutcome {
     NotFound { snapshot: WorkspaceSnapshot },
 }
 
+/// Stable app-state rejection facts, including admission failures propagated from Git probing.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum WorkspaceRejectionCode {
+    InvalidDisplayName,
+    RepositoryChanged,
+    RepositoryUnavailable,
+    SupersededSelection,
+    GitUnavailable,
+    NotRepository,
+    Inaccessible,
+    UnsafeRepository,
+    ProbeTimeout,
+    UnsupportedPathEncoding,
+}
+
+impl From<GitError> for WorkspaceRejectionCode {
+    fn from(error: GitError) -> Self {
+        match error {
+            GitError::GitUnavailable => Self::GitUnavailable,
+            GitError::NotRepository => Self::NotRepository,
+            GitError::Inaccessible => Self::Inaccessible,
+            GitError::UnsafeRepository => Self::UnsafeRepository,
+            GitError::ProbeTimeout => Self::ProbeTimeout,
+            GitError::RepositoryChanged => Self::RepositoryChanged,
+            GitError::UnsupportedPathEncoding => Self::UnsupportedPathEncoding,
+            GitError::Unavailable => Self::RepositoryUnavailable,
+        }
+    }
+}
+
 /// App-only label/removal or native worktree selection result; rejected edits leave choices unchanged.
 #[derive(Debug, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum MutationOutcome {
     Updated { snapshot: WorkspaceSnapshot },
     NotFound { snapshot: WorkspaceSnapshot },
-    Rejected { message: &'static str, snapshot: WorkspaceSnapshot },
+    Rejected { code: WorkspaceRejectionCode, snapshot: WorkspaceSnapshot },
 }
 
 /// Stored filesystem identity prevents a different repository at the same canonical path from recovering.
@@ -426,8 +456,7 @@ impl WorkspaceStore {
                 })
             {
                 return OpenOutcome::Rejected {
-                    code: GitError::RepositoryChanged.code(),
-                    message: GitError::RepositoryChanged.message(),
+                    code: GitError::RepositoryChanged,
                     snapshot: state.snapshot(),
                 };
             }
@@ -468,7 +497,7 @@ impl WorkspaceStore {
         let display_name = display_name.trim();
         if display_name.is_empty() {
             return MutationOutcome::Rejected {
-                message: "Enter a repository display name.", snapshot: state.snapshot(),
+                code: WorkspaceRejectionCode::InvalidDisplayName, snapshot: state.snapshot(),
             };
         }
         let stored = &mut state.entries[position];

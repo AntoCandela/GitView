@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 1420 --strictPort",
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/check-locales.mjs && tsc --noEmit && vite build",
     "smoke:browser": "node --experimental-strip-types scripts/browser-smoke.mjs",
     "test": "vitest run",
     "test:unit": "node scripts/verify.mjs --suite unit",
@@ -33,12 +33,14 @@
     "@tanstack/react-virtual": "^3.14.10",
     "@tauri-apps/api": "^2.12.0",
     "diff": "9.0.0",
+    "intl-messageformat": "12.1.2",
     "lucide-react": "^1.49.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "shiki": "4.4.3"
   },
   "devDependencies": {
+    "@formatjs/icu-messageformat-parser": "3.5.20",
     "@playwright/test": "1.63.0",
     "@tauri-apps/cli": "^2.12.0",
     "@testing-library/jest-dom": "^6.6.3",

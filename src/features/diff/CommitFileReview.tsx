@@ -4,10 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { CommitReviewResult } from "../../contracts/inspection";
 import { appearanceTheme, useAppearanceTheme, useReviewChoices } from "../appearance";
 import type { RepositoryClient } from "../../contracts/repositories";
+import { useTranslation } from "../../i18n";
 import { Tooltip } from "../../ui/Tooltip";
 import { ReviewControls } from "./ReviewControls";
 import { TextDiff } from "./text/TextDiff";
-import { unavailableLabels, unsupportedLabels } from "./reviewOutcomeLabels";
+import { unavailableMessageKeys, unsupportedMessageKeys } from "./reviewOutcomeLabels";
 
 import type { CommitReviewSelection } from "./selection";
 
@@ -18,6 +19,7 @@ export function CommitFileReview({ client, entryId, selectionGeneration, context
   contextLabel: string;
   selection: CommitReviewSelection;
 }) {
+  const { t } = useTranslation();
   const [attempt, setAttempt] = useState(0);
   const choices = useReviewChoices();
   const appearance = useAppearanceTheme();
@@ -78,30 +80,30 @@ export function CommitFileReview({ client, entryId, selectionGeneration, context
     : result?.kind === "unsupported" || result?.kind === "unavailable" ? result.identity : null;
   const fromAbsent = identity?.fromAbsent ?? selection.fromAbsent;
   const toAbsent = identity?.toAbsent ?? selection.toAbsent;
-  const oldEndpointLabel = selection.parentOid === null ? "Empty tree (root commit)"
-    : `Parent ${selection.parentOid.slice(0, 10)}${fromAbsent ? " · absent (new file)" : ""}`;
-  const newEndpointLabel = `Commit ${selection.commitOid.slice(0, 10)}${toAbsent ? " · absent (deleted file)" : ""}`;
-  const title = !current ? "Checking comparison…"
-    : current.transportError ? "Desktop connection interrupted"
-    : result?.kind === "unsupported" ? "Preview unsupported"
-    : result?.kind === "stale_selection" ? "Comparison selection expired"
-    : result?.kind === "unavailable" ? "Comparison unavailable"
-    : result?.kind === "text" && result.hunks.length === 0 ? "No text differences" : null;
-  const description = current?.transportError ? "No historical comparison is available. Retry the selected file."
-    : result?.kind === "unsupported" ? unsupportedLabels[result.reason]
-    : result?.kind === "unavailable" ? unavailableLabels[result.code]
-    : result?.kind === "stale_selection" ? "Select a committed file again to authorize a current comparison." : null;
+  const oldEndpointLabel = selection.parentOid === null ? t("diff.endpoint.root")
+    : t("diff.endpoint.parent", { oid: selection.parentOid.slice(0, 10), absent: String(fromAbsent) });
+  const newEndpointLabel = t("diff.endpoint.commit", { oid: selection.commitOid.slice(0, 10), absent: String(toAbsent) });
+  const title = !current ? t("diff.state.checking")
+    : current.transportError ? t("diff.state.transport")
+    : result?.kind === "unsupported" ? t("diff.state.unsupported")
+    : result?.kind === "stale_selection" ? t("diff.state.comparisonExpired")
+    : result?.kind === "unavailable" ? t("diff.state.comparisonUnavailable")
+    : result?.kind === "text" && result.hunks.length === 0 ? t("diff.state.noTextDifferences") : null;
+  const description = current?.transportError ? t("diff.state.retryHistorical")
+    : result?.kind === "unsupported" ? t(unsupportedMessageKeys[result.reason])
+    : result?.kind === "unavailable" ? t(unavailableMessageKeys[result.code])
+    : result?.kind === "stale_selection" ? t("diff.state.reselectCommitted") : null;
 
-  return <section className="file-review" aria-label="Selected file review" aria-description={identity?.contextLabel ?? contextLabel}
+  return <section className="file-review" aria-label={t("diff.selectedReview")} aria-description={identity?.contextLabel ?? contextLabel}
     aria-busy={!current}>
     <header className="diff-heading">
       <h2>{identity?.displayPath ?? selection.displayPath}</h2>
       <ReviewControls choices={choices} />
     </header>
     {title ? <div className="diff-state" role="status"><h3>{title}</h3>{description ? <p>{description}</p> : null}
-      {current?.transportError || result?.kind === "unavailable" ? <Tooltip content="Retry comparison"
+      {current?.transportError || result?.kind === "unavailable" ? <Tooltip content={t("diff.controls.retryComparison")}
         trigger={<button type="button" className="retry-button"
-          onClick={() => setAttempt((value) => value + 1)}>Retry comparison</button>} /> : null}
+          onClick={() => setAttempt((value) => value + 1)}>{t("diff.controls.retryComparison")}</button>} /> : null}
     </div> : null}
     <TextDiff key={JSON.stringify([entryId, selectionGeneration, selection.commitOid, selection.parentOid, selection.fileId])}
       review={result?.kind === "text" ? result : null} oldEndpointLabel={oldEndpointLabel} newEndpointLabel={newEndpointLabel}

@@ -5,6 +5,7 @@ import { ChangeTree, changeDirectoryId, type ChangeTreeDirectory, type ChangeTre
 import { CollapseAllIcon, ExpandAllIcon, FileIcon, FolderIcon } from "../icons";
 import type { ChangeTreeSummaryProps } from "./changeTreeRows";
 import { Tooltip } from "../Tooltip";
+import { useTranslation } from "../../i18n";
 
 const NO_DIRECTORIES: ChangeTreeDirectory[] = [];
 
@@ -22,6 +23,7 @@ export function FileExplorer({ files, directories = NO_DIRECTORIES, summaryFiles
   actions?: ReactNode;
   children?: ReactNode;
 }) {
+  const { t } = useTranslation();
   const [view, setView] = useState<"tree" | "list">("tree");
   const [expansion, setExpansion] = useState(() => ({ defaultExpanded: false, exceptions: new Set<string>() }));
   const directoryIds = useMemo(() => {
@@ -62,10 +64,10 @@ export function FileExplorer({ files, directories = NO_DIRECTORIES, summaryFiles
   for (const id of directoryIds) {
     if (collapsed.has(id)) { allExpanded = false; break; }
   }
-  const action = allExpanded ? "Collapse all" : "Expand all";
+  const action = t(allExpanded ? "tree.collapseAll" : "tree.expandAll");
   return <>
     <div className="files-toolbar">
-      <span className="files-count">{countLabel ?? (count === null ? "Files" : `${count} ${count === 1 ? "file" : "files"}`)}</span>
+      <span className="files-count">{countLabel ?? (count === null ? t("tree.files") : t("tree.fileCount", { count }))}</span>
       {actions}
       <div className="files-view-controls">
         <Tooltip content={action} trigger={<button type="button" className="files-expand" aria-label={action}
@@ -73,12 +75,12 @@ export function FileExplorer({ files, directories = NO_DIRECTORIES, summaryFiles
           onClick={() => setExpansion({ defaultExpanded: !allExpanded, exceptions: new Set() })}>
           {allExpanded ? <CollapseAllIcon size={16} aria-hidden="true" /> : <ExpandAllIcon size={16} aria-hidden="true" />}
         </button>} />
-        <Tooltip content={view === "tree" ? "Switch to list view" : "Switch to tree view"}
+        <Tooltip content={t(view === "tree" ? "tree.switchList" : "tree.switchTree")}
           trigger={<button type="button" className="files-view-toggle"
-            aria-label={view === "tree" ? "Switch to list view" : "Switch to tree view"}
+            aria-label={t(view === "tree" ? "tree.switchList" : "tree.switchTree")}
             onClick={() => setView((current) => current === "tree" ? "list" : "tree")}>
             {view === "tree" ? <FolderIcon size={16} aria-hidden="true" /> : <FileIcon size={16} aria-hidden="true" />}
-            <span>{view === "tree" ? "Tree" : "List"}</span>
+            <span>{t(view === "tree" ? "tree.tree" : "tree.list")}</span>
           </button>} />
       </div>
     </div>

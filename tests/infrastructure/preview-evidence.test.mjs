@@ -5,7 +5,7 @@ import { mkdtemp, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { assessPreview, requiredScenarios, parseArguments } from '../../scripts/preview-evidence.mjs';
+import { assessPreview, requiredScenarios, requiredLocales, requiredLocaleScenarios, parseArguments } from '../../scripts/preview-evidence.mjs';
 
 async function fixture(t) {
   const root = await mkdtemp(join(tmpdir(), 'gitview-native-'));
@@ -19,7 +19,9 @@ function observedReport(artifactHash) {
     observation: { kind: 'human', observedAt: '2026-10-01T12:00:00Z', observer: 'maintainer-1' },
     prerequisites: { installedGit: 'passed', supportedOs: 'passed' },
     runtime: { os: 'macOS 15', architecture: 'arm64', webview: 'WKWebView', gitVersion: '2.50.0' },
-    scenarios: Object.fromEntries(requiredScenarios.map(name => [name, { status: 'passed', observed: true }])) };
+    scenarios: Object.fromEntries(requiredScenarios.map(name => [name, { status: 'passed', observed: true }])),
+    localization: Object.fromEntries(requiredLocales.map(locale => [locale,
+      Object.fromEntries(requiredLocaleScenarios.map(name => [name, { status: 'passed', observed: true }]))])) };
 }
 
 test('missing report keeps all scenarios not run and hashes actual file', async t => {
@@ -59,6 +61,22 @@ test('missing, failed, malformed or unobserved scenarios never return ready', as
   report.scenarios.native_picker = { status: 'failed', observed: true };
   assert.equal((await assessPreview({ artifact, platform: 'macos-arm64', report })).ready, false);
   assert.equal((await assessPreview({ artifact, platform: 'unsupported', report: {} })).ready, false);
+});
+
+test('missing locale, failed language journey and absent linguistic review block packaged readiness', async t => {
+  const artifact = await fixture(t);
+  const hash = createHash('sha256').update('real artifact bytes').digest('hex');
+  const missingLocale = observedReport(hash);
+  delete missingLocale.localization['pt-PT'];
+  const missing = await assessPreview({ artifact, platform: 'macos-arm64', report: missingLocale });
+  assert.equal(missing.ready, false);
+  assert.equal(missing.localization['pt-PT'].native_picker_title.observed, false);
+  const failedJourney = observedReport(hash);
+  failedJourney.localization.it.selection_persistence.status = 'failed';
+  assert.equal((await assessPreview({ artifact, platform: 'macos-arm64', report: failedJourney })).ready, false);
+  const unreviewed = observedReport(hash);
+  unreviewed.localization['en-GB'].linguistic_review.observed = false;
+  assert.equal((await assessPreview({ artifact, platform: 'macos-arm64', report: unreviewed })).ready, false);
 });
 
 test('native CLI requires artifact and supported platform and rejects unknown or duplicate flags', () => {

@@ -5,6 +5,7 @@ import { usePanelLayout } from "../../ui/resize/panelLayout";
 import { dividerSize, snapResizeToCenter } from "../../ui/resize/resizeGeometry";
 import { Tooltip } from "../../ui/Tooltip";
 import { defaultWorkbenchLayout, workbenchLayouts, type WorkbenchLayoutId } from "./workbenchLayout";
+import { useTranslation } from "../../i18n";
 
 type Axis = "width" | "height";
 type ResizeMode = Axis | "both";
@@ -22,6 +23,7 @@ function constrain(value: number, available: number, axis: Axis) {
 export function ResizableWorkbench({ files, history, comparison, layout = defaultWorkbenchLayout }: {
   files: ReactNode; history: ReactNode; comparison: ReactNode; layout?: WorkbenchLayoutId;
 }) {
+  const { t } = useTranslation();
   const root = useRef<HTMLElement>(null);
   const { resetVersion } = usePanelLayout();
   const mountedResetVersion = useRef(resetVersion);
@@ -111,14 +113,14 @@ export function ResizableWorkbench({ files, history, comparison, layout = defaul
     const limits = bounds(available[axis], axis);
     const value = axis === "width" ? width : height;
     const snapped = axis === "width" ? snappedWidth : snappedHeight;
-    const label = axis === "height" ? "Resize panel rows" : arrangement.left === "files" ? "Resize file list"
-      : arrangement.left === "history" ? "Resize commit graph" : "Resize file comparison";
-    return <Tooltip content={`${label}. Drag near the center for an even split.`} trigger={<div className={`workbench-divider ${axis === "width" ? "column-divider" : "row-divider"}${snapped ? " is-snapped" : ""}`}
+    const label = t(axis === "height" ? "app.resizeRows" : arrangement.left === "files" ? "app.resizeFiles"
+      : arrangement.left === "history" ? "app.resizeGraph" : "app.resizeComparison");
+    return <Tooltip content={t("ui.resizeHint", { label })} trigger={<div className={`workbench-divider ${axis === "width" ? "column-divider" : "row-divider"}${snapped ? " is-snapped" : ""}`}
       role="separator" tabIndex={0} aria-label={label}
       aria-orientation={axis === "width" ? "vertical" : "horizontal"}
       aria-controls={paneId(axis === "width" ? arrangement.left : arrangement.top)}
       aria-valuemin={Math.round(Math.min(limits.min, limits.max))} aria-valuemax={Math.round(limits.max)}
-      aria-valuenow={Math.round(value)} aria-valuetext={`${Math.round(value)} pixels`}
+      aria-valuenow={Math.round(value)} aria-valuetext={t("ui.pixels", { count: Math.round(value) })}
       {...pointerHandlers(axis)}
       onKeyDown={(event) => {
         const step = event.shiftKey ? 32 : 16;
@@ -133,13 +135,13 @@ export function ResizableWorkbench({ files, history, comparison, layout = defaul
   }
 
   return <section ref={root} className={`workbench${resizing ? ` is-resizing resizing-${resizing}` : ""}`}
-    aria-label="Repository workbench" data-workbench-layout={layout}
+    aria-label={t("app.workbench")} data-workbench-layout={layout}
     style={{
       "--workbench-left-width": `${width}px`, "--workbench-top-height": `${height}px`,
       gridTemplateAreas: `"${arrangement.top} ${arrangement.top} ${arrangement.top}" "rows rows rows" "${arrangement.left} columns ${arrangement.right}"`,
     } as CSSProperties}>
     <div id={paneId("comparison")} className="comparison-panel workbench-pane" data-panel="comparison">{comparison}</div>
-    <aside id={paneId("files")} className="file-sidebar workbench-pane" data-panel="files" aria-label="Files">{files}</aside>
+    <aside id={paneId("files")} className="file-sidebar workbench-pane" data-panel="files" aria-label={t("app.panel.files")}>{files}</aside>
     <div id={paneId("history")} className="history-panel workbench-pane" data-panel="history"
       style={{
         "--history-panel-width": `${arrangement.top === "history" ? available.width : arrangement.left === "history" ? width : available.width - width - dividerSize}px`,
@@ -147,9 +149,9 @@ export function ResizableWorkbench({ files, history, comparison, layout = defaul
       } as CSSProperties}>{history}</div>
     {splitter("width")}
     {splitter("height")}
-    <Tooltip content="Resize both panel dividers. Drag near the center for an even split." trigger={<button type="button" className={`workbench-junction${snappedWidth || snappedHeight ? " is-snapped" : ""}`} aria-label="Resize all panels"
+    <Tooltip content={t("app.resizeAllHint")} trigger={<button type="button" className={`workbench-junction${snappedWidth || snappedHeight ? " is-snapped" : ""}`} aria-label={t("app.resizeAll")}
       aria-controls={`${paneId("comparison")} ${paneId("files")} ${paneId("history")}`}
-      aria-description="Drag to resize both dividers. Arrow keys resize one axis; Shift uses larger steps. Home and End resize both to their limits."
+      aria-description={t("app.resizeAllDescription")}
       {...pointerHandlers("both")}
       onKeyDown={(event) => {
         const step = event.shiftKey ? 32 : 16;

@@ -4,7 +4,6 @@ use std::fs;
 
 use gitview_lib::application::RepositoryService;
 use gitview_lib::git::{GitProbe, Head};
-#[cfg(unix)]
 use gitview_lib::git::GitError;
 use gitview_lib::workspace::{
     Availability, EntryKind, HeadLabel, OpenOutcome, SelectOutcome,
@@ -139,7 +138,7 @@ async fn cancellation_and_rejection_preserve_entries_and_active_selection() {
     else {
         panic!("invalid directory admitted");
     };
-    assert_eq!(code, "not_repository");
+    assert_eq!(code, GitError::NotRepository);
     assert_eq!(cancelled, before);
     assert_eq!(rejected, before);
 }
@@ -205,14 +204,12 @@ async fn missing_or_non_directory_picker_result_is_rejected_without_losing_works
     let missing = temp.path().join("no-longer-here");
     let OpenOutcome::Rejected {
         code,
-        message,
         snapshot,
     } = store.open_chosen(&missing).await
     else {
         panic!("missing picker path was admitted");
     };
-    assert_eq!(code, "not_repository");
-    assert!(!message.contains("no-longer-here"));
+    assert_eq!(code, GitError::NotRepository);
     assert_eq!(snapshot, before);
 
     let file = temp.path().join("a-file");
@@ -220,7 +217,7 @@ async fn missing_or_non_directory_picker_result_is_rejected_without_losing_works
     let OpenOutcome::Rejected { code, snapshot, .. } = store.open_chosen(&file).await else {
         panic!("non-directory picker path was admitted");
     };
-    assert_eq!(code, "not_repository");
+    assert_eq!(code, GitError::NotRepository);
     assert_eq!(snapshot, before);
 }
 
@@ -314,4 +311,29 @@ fn temporary_git_fixture_is_removed_when_a_scenario_panics() {
     });
     assert!(failure.is_err());
     assert!(!directory.exists());
+}
+
+#[tokio::test]
+async fn admission_failures_serialize_only_closed_codes_and_preserve_state() {
+    let service = RepositoryService::new();
+    let before = service.snapshot().await;
+    for (error, code) in [
+        (GitError::GitUnavailable, "git_unavailable"),
+        (GitError::NotRepository, "not_repository"),
+        (GitError::Inaccessible, "inaccessible"),
+        (GitError::UnsafeRepository, "unsafe_repository"),
+        (GitError::ProbeTimeout, "probe_timeout"),
+        (GitError::RepositoryChanged, "repository_changed"),
+        (GitError::UnsupportedPathEncoding, "unsupported_path_encoding"),
+        (GitError::Unavailable, "repository_unavailable"),
+    ] {
+        let outcome = service.rejected(error).await;
+        let json = serde_json::to_value(&outcome).unwrap();
+        assert_eq!(json["code"], code);
+        assert!(json.get("message").is_none());
+        let OpenOutcome::Rejected { snapshot, .. } = outcome else { panic!("expected rejection") };
+        assert_eq!(snapshot, before);
+        let mutation_code = gitview_lib::workspace::WorkspaceRejectionCode::from(error);
+        assert_eq!(serde_json::to_value(mutation_code).unwrap(), code);
+    }
 }

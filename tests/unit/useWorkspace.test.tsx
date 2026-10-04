@@ -4,6 +4,7 @@ import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 import type { RepositoryMutationOutcome, SelectOutcome, WorkspaceSnapshot } from "../../src/contracts/repositories";
 import { useWorkspace } from "../../src/features/repositories/useWorkspace";
+import type { WorkspaceError } from "../../src/features/repositories/workspaceError";
 import { deferred } from "../support/deferred";
 import { reviewClient } from "../support/review";
 
@@ -32,4 +33,14 @@ test("a later repository intent waits for worktree admission but its older reply
   await act(async () => repository.resolve({ kind: "selected", snapshot: { ...initial, revision: 3, activeContextId: "two" } }));
   expect(result.current.snapshot.activeContextId).toBe("two");
   expect(result.current.pendingId).toBeNull();
+});
+
+test("rename rejection remains a coded fact rather than native or translated prose", async () => {
+  const client = reviewClient();
+  client.renameRepository = async () => ({ kind: "rejected", code: "invalid_display_name", snapshot: await client.snapshot() });
+  const { result } = renderHook(() => useWorkspace(client));
+  await act(async () => { await Promise.resolve(); });
+  let rejection: WorkspaceError | null = null;
+  await act(async () => { rejection = await result.current.renameRepository("one", ""); });
+  expect(rejection).toEqual({ domain: "rejection", code: "invalid_display_name" });
 });

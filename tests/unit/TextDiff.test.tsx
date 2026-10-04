@@ -7,10 +7,18 @@ import type { TextHunk } from "../../src/contracts/diff";
 import { TextDiff } from "../../src/features/diff/text/TextDiff";
 import { textReview } from "../support/review";
 import { resetPanelLayout } from "../../src/ui/resize/panelLayout";
+import { createLocaleStore, installLocaleStoreForTests, setLocaleChoice } from "../../src/i18n";
 
 let glyphScale = 1;
+let restoreLocale: () => void;
 
 beforeEach(() => {
+  const values = new Map<string, string>();
+  restoreLocale = installLocaleStoreForTests(createLocaleStore({ storage: () => ({
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => { values.set(key, value); },
+    removeItem: (key) => { values.delete(key); },
+  }) }));
   resetPanelLayout();
   // jsdom has no layout; the source viewport contains ten of the component's fixed-height rows.
   vi.spyOn(HTMLElement.prototype, "clientHeight", "get").mockReturnValue(220);
@@ -26,7 +34,7 @@ beforeEach(() => {
   } as CanvasRenderingContext2D;
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(context);
 });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); restoreLocale(); });
 
 test("the snapped diff proportion survives file remounts and resets without replacing source panes", () => {
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
@@ -73,6 +81,21 @@ function scrollTo(pane: HTMLElement, top: number) {
   pane.scrollTop = top;
   fireEvent.scroll(pane);
 }
+
+test("it changes source framing without replacing panes, source identifiers or reading position", async () => {
+  render(<TextDiff review={comparison(Array.from({ length: 100 }, (_, index) => `original ${index}`))} />);
+  const { old, new: next } = panes();
+  scrollTo(old, 220);
+  next.focus();
+  const source = within(next).getByText("original 10");
+  await act(async () => setLocaleChoice("it"));
+  expect(screen.getByRole("region", { name: "Blocchi di codice nuovi" })).toBe(next);
+  expect(next).toHaveFocus();
+  expect(old.scrollTop).toBe(220);
+  expect(next.scrollTop).toBe(220);
+  expect(within(next).getByText("original 10")).toBe(source);
+  expect(source.closest(".diff-line")).toHaveAccessibleName("Nuova riga di contesto 11");
+});
 
 function sourceRow(pane: HTMLElement, text: string) {
   return within(pane).getByText(text).closest<HTMLElement>(".diff-line")!;

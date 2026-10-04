@@ -9,6 +9,8 @@ import type {
   RepositoryClient,
   WorkspaceSnapshot,
 } from "../../contracts/repositories";
+import { useLocale } from "../../i18n";
+import type { WorkspaceError } from "./workspaceError";
 
 const emptyWorkspace: WorkspaceSnapshot = {
   revision: 0,
@@ -17,20 +19,19 @@ const emptyWorkspace: WorkspaceSnapshot = {
   restoring: false,
   persistenceError: null,
 };
-const restorationConnectionError =
-  "Could not update the restored workspace. Checking again automatically.";
 
 /**
  * Keeps native selections in user-intent order without delaying pending UI feedback.
  * A pending ID is presentation state, not a confirmed host selection.
  */
 export function useWorkspace(client: RepositoryClient) {
+  const { locale } = useLocale();
   const [snapshot, setSnapshot] = useState<WorkspaceSnapshot>(emptyWorkspace);
   const [loading, setLoading] = useState(true);
   const [opening, setOpening] = useState(false);
   const [mutating, setMutating] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<WorkspaceError | null>(null);
   const [observationGeneration, setObservationGeneration] = useState(0);
   const selectionGeneration = useRef(0);
   const selectionQueue = useRef<Promise<void>>(Promise.resolve());
@@ -86,9 +87,7 @@ export function useWorkspace(client: RepositoryClient) {
           lifecycle.current === requestedLifecycle &&
           selectionGeneration.current === requestedGeneration
         )
-          setError(
-            "Desktop connection unavailable. Open GitView as a desktop app.",
-          );
+          setError({ domain: "workspace", code: "desktop_unavailable" });
       })
       .finally(() => {
         if (lifecycle.current === requestedLifecycle) setLoading(false);
@@ -122,7 +121,7 @@ export function useWorkspace(client: RepositoryClient) {
           !selectionPending.current
         ) {
           applySnapshot(incoming);
-          setError((current) => current === restorationConnectionError ? null : current);
+          setError((current) => current?.domain === "workspace" && current.code === "restoration_connection" ? null : current);
         }
       } catch {
         if (
@@ -132,7 +131,7 @@ export function useWorkspace(client: RepositoryClient) {
           !startedDuringSelection &&
           !selectionPending.current
         )
-          setError(restorationConnectionError);
+          setError({ domain: "workspace", code: "restoration_connection" });
       } finally {
         // Completion pacing bounds native reads even when the desktop service is slow.
         if (active) timer = window.setTimeout(() => void poll(), 1000);
@@ -171,18 +170,16 @@ export function useWorkspace(client: RepositoryClient) {
     setOpening(true);
     setError(null);
     try {
-      const outcome = await client.openChosenRepository();
+      const outcome = await client.openChosenRepository(locale);
       if (lifecycle.current !== requestedLifecycle) return;
       if (selectionGeneration.current === requestedGeneration && !selectionPending.current)
         applySnapshot(outcome.snapshot);
       else if (outcome.kind === "opened" || outcome.kind === "reused")
         await reconcileOpenAfterSelection(requestedLifecycle);
-      if (outcome.kind === "rejected") setError(outcome.message);
+      if (outcome.kind === "rejected") setError({ domain: "rejection", code: outcome.code });
     } catch {
       if (lifecycle.current !== requestedLifecycle) return;
-      setError(
-        "Could not reach the desktop service. Your open repositories are still here; try again.",
-      );
+      setError({ domain: "workspace", code: "open_connection" });
       // A lost reply may follow a committed host change; reconcile before retrying.
       try {
         await reconcileOpenAfterSelection(requestedLifecycle);
@@ -211,7 +208,7 @@ export function useWorkspace(client: RepositoryClient) {
           lifecycle.current === requestedLifecycle &&
           selectionGeneration.current === requestedGeneration
         )
-          setError("Could not check this location. Try again.");
+          setError({ domain: "workspace", code: "check_connection" });
       });
   }
 
@@ -241,13 +238,11 @@ export function useWorkspace(client: RepositoryClient) {
           selectionPending.current = false;
           setPendingId(null);
           if (outcome.kind === "rejected") {
-            setError(outcome.message);
+            setError({ domain: "rejection", code: outcome.code });
             return;
           }
           if (outcome.kind === "not_found") {
-            setError(
-              "This workspace entry no longer exists. Choose another repository.",
-            );
+            setError({ domain: "workspace", code: "not_found" });
             return;
           }
           if (outcome.snapshot.activeContextId)
@@ -259,9 +254,7 @@ export function useWorkspace(client: RepositoryClient) {
           ) return;
           selectionPending.current = false;
           setPendingId(null);
-          setError(
-            "Could not switch repositories. Your open repositories are still here; try again.",
-          );
+          setError({ domain: "workspace", code: "switch_connection" });
           try {
             // Failure does not prove the host transition failed; recover its actual state.
             const recovered = await readSnapshot(client);
@@ -283,7 +276,7 @@ export function useWorkspace(client: RepositoryClient) {
   function mutateRepository(
     entryId: string,
     displayName?: string,
-  ): Promise<string | null> {
+  ): Promise<WorkspaceError | null> {
     const requestedLifecycle = lifecycle.current;
     const requestedGeneration = ++selectionGeneration.current;
     selectionPending.current = true;
@@ -295,9 +288,9 @@ export function useWorkspace(client: RepositoryClient) {
       selectionGeneration.current === requestedGeneration;
     const request = selectionQueue.current
       .catch(() => undefined)
-      .then(async () => {
+      .then(async (): Promise<WorkspaceError | null> => {
         if (lifecycle.current !== requestedLifecycle)
-          return "The desktop connection changed. Please try again.";
+          return { domain: "workspace", code: "connection_changed" };
         try {
           const outcome = isRemoval
             ? await client.removeRepository(entryId)
@@ -309,9 +302,9 @@ export function useWorkspace(client: RepositoryClient) {
             if (isRemoval && outcome.snapshot.activeContextId !== snapshot.activeContextId)
               setObservationGeneration(requestedGeneration);
           }
-          if (outcome.kind === "rejected") return outcome.message;
+          if (outcome.kind === "rejected") return { domain: "rejection", code: outcome.code };
           if (outcome.kind === "not_found")
-            return "This workspace entry no longer exists.";
+            return { domain: "workspace", code: "not_found" };
           return null;
         } catch {
           // The host may have committed before the reply was lost; recover its state.
@@ -325,9 +318,7 @@ export function useWorkspace(client: RepositoryClient) {
           } catch {
             // Preserve the last accepted snapshot and its independent persistence warning.
           }
-          return isRemoval
-            ? "Could not remove this repository from the sidebar. Check the desktop connection and try again."
-            : "Could not rename this repository. Check the desktop connection and try again.";
+          return { domain: "workspace", code: isRemoval ? "remove_connection" : "rename_connection" };
         } finally {
           if (lifecycle.current === requestedLifecycle) setMutating(false);
           if (currentIntent()) {

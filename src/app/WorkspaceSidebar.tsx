@@ -4,8 +4,10 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { ResizeDivider } from "../ui/resize/ResizeDivider";
 import { usePanelLayout } from "../ui/resize/panelLayout";
 import { constrainResize } from "../ui/resize/resizeGeometry";
+import { useTranslation } from "../i18n";
 
 export function WorkspaceSidebar({ open, children }: { open: boolean; children: ReactNode }) {
+  const { t } = useTranslation();
   const sidebarRef = useRef<HTMLElement>(null);
   const bodyRef = useRef<HTMLElement>(null);
   const [preferredWidth, setPreferredWidth] = useState(280);
@@ -38,10 +40,10 @@ export function WorkspaceSidebar({ open, children }: { open: boolean; children: 
   const maximum = Math.max(0, Math.min(480, bounds.width - (bounds.overlay ? 40 : 320)));
   const minimum = Math.min(180, maximum);
   const width = constrainResize(preferredWidth, minimum, maximum);
-  return <aside ref={sidebarRef} id="workspace-sidebar" className="workspace-sidebar" aria-label="Workspace sidebar"
+  return <aside ref={sidebarRef} id="workspace-sidebar" className="workspace-sidebar" aria-label={t("app.sidebar")}
     hidden={!open} style={{ width, flexBasis: width }}>
     {children}
-    <ResizeDivider label="Resize repository files sidebar" controls="workspace-sidebar" root={bodyRef}
+    <ResizeDivider label={t("app.resizeSidebar")} controls="workspace-sidebar" root={bodyRef}
       value={width} min={minimum} max={maximum} onChange={setPreferredWidth} className="workspace-sidebar-divider" />
   </aside>;
 }

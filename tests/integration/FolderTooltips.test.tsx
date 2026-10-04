@@ -16,22 +16,22 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
-function file(segments: string[], status: string): ChangeTreeFile {
-  return { id: JSON.stringify(segments), displayPath: segments.join("/"), segments, status, marker: "M" };
+function file(segments: string[], ...statuses: ChangeTreeFile["statuses"]): ChangeTreeFile {
+  return { id: JSON.stringify(segments), displayPath: segments.join("/"), segments, statuses, marker: "M" };
 }
 
 test("collapsed folders count all nested changes by status, including both sides of one file", async () => {
   const user = userEvent.setup();
   render(<ChangeTree label="Changes" files={[
-    file(["src", "nested", "both.ts"], "Staged Modified, Unstaged Modified"),
-    file(["src", "other.ts"], "Unstaged Modified"),
-    file(["src", "nested", "added.ts"], "Staged Added"),
-    file(["src", "nested", "deleted.ts"], "Unstaged Deleted"),
-    file(["src", "new.ts"], "Untracked"),
-    file(["src", "conflict.ts"], "Conflict"),
-    file(["src", "module"], "Submodule · unsupported"),
-    file(["src", "unchanged.ts"], "Unchanged"),
-    file(["src-other", "excluded.ts"], "Unstaged Modified"),
+    file(["src", "nested", "both.ts"], { kind: "staged", change: "modified" }, { kind: "unstaged", change: "modified" }),
+    file(["src", "other.ts"], { kind: "unstaged", change: "modified" }),
+    file(["src", "nested", "added.ts"], { kind: "staged", change: "added" }),
+    file(["src", "nested", "deleted.ts"], { kind: "unstaged", change: "deleted" }),
+    file(["src", "new.ts"], { kind: "untracked" }),
+    file(["src", "conflict.ts"], { kind: "conflict" }),
+    file(["src", "module"], { kind: "unsupported", change: "submodule" }),
+    file(["src", "unchanged.ts"], { kind: "unchanged" }),
+    file(["src-other", "excluded.ts"], { kind: "unstaged", change: "modified" }),
   ]} onSelect={() => {}} />);
   const folder = screen.getByRole("button", { name: "Expand src" });
   expect(folder).not.toHaveAttribute("title");
@@ -52,9 +52,9 @@ test("collapsed folders count all nested changes by status, including both sides
 test("committed-style statuses default to the complete files even when descendants are collapsed", async () => {
   const user = userEvent.setup();
   render(<ChangeTree label="Committed files" files={[
-    file(["docs", "deep", "added.md"], "Added"),
-    file(["docs", "deep", "modified.md"], "Modified"),
-    file(["docs", "removed.md"], "Deleted"),
+    file(["docs", "deep", "added.md"], { kind: "committed", change: "added" }),
+    file(["docs", "deep", "modified.md"], { kind: "committed", change: "modified" }),
+    file(["docs", "removed.md"], { kind: "committed", change: "deleted" }),
   ]} />);
   await user.hover(screen.getByRole("button", { name: "Expand docs" }));
   const tooltip = await screen.findByRole("tooltip");
@@ -103,7 +103,7 @@ test.each([true, false])("sidebar distinguishes no known changes from unavailabl
 
 test("file and view controls use shared tooltips without competing native titles", async () => {
   const user = userEvent.setup();
-  render(<FileExplorer files={[file(["src", "nested", "file.ts"], "Staged Modified, Unstaged Deleted")]}
+  render(<FileExplorer files={[file(["src", "nested", "file.ts"], { kind: "staged", change: "modified" }, { kind: "unstaged", change: "deleted" })]}
     treeLabel="Files" listLabel="File list" onSelect={() => {}} />);
   const expand = screen.getByRole("button", { name: "Expand all" });
   expect(expand).not.toHaveAttribute("title");

@@ -6,6 +6,8 @@ import type { RepositoryClient } from "../../contracts/repositories";
 import { BranchIcon, CheckIcon, ChevronDownIcon, WorktreeIcon } from "../../ui/icons";
 import { SearchInput } from "../../ui/SearchInput";
 import { Tooltip } from "../../ui/Tooltip";
+import { useTranslation } from "../../i18n";
+import { historyErrorKeys, type HistoryReadFailure } from "./historyMessages";
 
 type Worktree = Extract<ContextOptionsResult, { kind: "options" }>["worktrees"][number];
 
@@ -18,10 +20,11 @@ export function ContextSelector({ client, entryId, branch, refColors, descriptio
   description: string;
   onWorktree?: (worktreeId: string) => void;
 }) {
+  const { locale, t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [state, setState] = useState<{
-    client: RepositoryClient; entryId: string; result: ContextOptionsResult | null; transportError: boolean;
+    client: RepositoryClient; entryId: string; result: Extract<ContextOptionsResult, { kind: "options" }> | HistoryReadFailure | null; transportError: boolean;
   } | null>(null);
   const currentState = state?.client === client && state.entryId === entryId ? state : null;
   const result = currentState?.result ?? null;
@@ -38,7 +41,7 @@ export function ContextSelector({ client, entryId, branch, refColors, descriptio
     setState(null);
     setQuery("");
     void client.listContexts(entryId).then((next) => {
-      if (current) setState({ client, entryId, result: next, transportError: false });
+      if (current) setState({ client, entryId, result: next.kind === "options" ? next : { kind: next.kind, code: next.code }, transportError: false });
     }).catch(() => { if (current) setState({ client, entryId, result: null, transportError: true }); });
     root.current?.querySelector<HTMLInputElement>('input[type="search"]')?.focus();
     const outside = (event: PointerEvent) => {
@@ -66,7 +69,7 @@ export function ContextSelector({ client, entryId, branch, refColors, descriptio
     event.preventDefault();
     choices[target]?.focus();
   }
-  const filter = query.trim().toLocaleLowerCase();
+  const filter = query.trim().toLocaleLowerCase(locale);
   const options = result?.kind === "options" ? result : null;
   const checkoutByBranch = new Map<string, Worktree>();
   for (const item of options?.worktrees ?? []) {
@@ -75,21 +78,23 @@ export function ContextSelector({ client, entryId, branch, refColors, descriptio
   const currentBranch = options?.worktrees.find((item) => item.current)?.branch;
   const branchTypeOrder = (name: string) => name === currentBranch ? 0 : checkoutByBranch.has(name) ? 2 : 1;
   const branches = options?.branches.filter((item) =>
-    `${item.name} ${checkoutByBranch.get(item.name)?.label ?? ""}`.toLocaleLowerCase().includes(filter))
+    `${item.name} ${checkoutByBranch.get(item.name)?.label ?? ""}`.toLocaleLowerCase(locale).includes(filter))
     .sort((left, right) => branchTypeOrder(left.name) - branchTypeOrder(right.name) || left.name.localeCompare(right.name)) ?? [];
   const branchNames = new Set(options?.branches.map((item) => item.name));
   const otherWorktrees = options?.worktrees.filter((item) => (item.branch === null || !branchNames.has(item.branch)
     || checkoutByBranch.get(item.branch)?.id !== item.id)
-    && `${item.label} ${item.branch ?? "Detached HEAD"}`.toLocaleLowerCase().includes(filter))
+    && `${item.label} ${item.branch ?? t("history.context.detachedHead")}`.toLocaleLowerCase(locale).includes(filter))
     .sort((left, right) => Number(right.current) - Number(left.current)
       || Number(left.branch === null) - Number(right.branch === null) || left.label.localeCompare(right.label)) ?? [];
   function branchChoice(name: string) {
     const checkout = checkoutByBranch.get(name);
     const target = checkout && !checkout.current ? checkout : null;
     const Icon = checkout?.current ? CheckIcon : target ? WorktreeIcon : BranchIcon;
-    const action = target ? `Open worktree ${target.label} for branch ${name}` : `View branch ${name}`;
-    const detail = target ? `${action}. Changes the active directory and history without checking out files.`
-      : `${action} without checking out files${checkout ? ` · Current worktree: ${checkout.label}` : ""}`;
+    const action = target ? t("history.context.openBranchWorktree", { label: target.label, branch: name })
+      : t("history.context.viewBranch", { branch: name });
+    const detail = target ? t("history.context.openBranchWorktreeDescription", { label: target.label, branch: name })
+      : checkout ? t("history.context.viewCurrentBranchDescription", { branch: name, label: checkout.label })
+      : t("history.context.viewBranchDescription", { branch: name });
     return <Tooltip key={name} content={<ChoiceHint name={name} checkout={checkout}
       color={refColors.get(`local_branch:${name}`)} navigationAvailable={!!onWorktree} />}
       trigger={<button type="button" data-context-choice aria-description={detail}
@@ -102,37 +107,37 @@ export function ContextSelector({ client, entryId, branch, refColors, descriptio
   }
   return <div className="history-context" ref={root} onKeyDown={navigate}>
     <Tooltip enabled={!open} content={description} trigger={<button type="button" className="history-context-trigger" ref={trigger}
-      aria-label={`View branch or worktree: ${branch}`} aria-description={description} aria-expanded={open} aria-haspopup="dialog"
+      aria-label={t("history.context.view", { branch })} aria-description={description} aria-expanded={open} aria-haspopup="dialog"
       onClick={() => setOpen(!open)}><span>{branch}</span><ChevronDownIcon size={14} aria-hidden="true" /></button>} />
-    {open && <div className="history-context-disclosure" role="dialog" aria-label="Choose branch or worktree">
-      <SearchInput value={query} onChange={setQuery} label="Search branches and worktrees"
-        placeholder={options?.worktrees.some((item) => !item.current) ? "Search branches and worktrees…" : "Search branches…"} />
-      {!result && !transportError && <p role="status">Loading choices…</p>}
-      {transportError && <p role="alert">Desktop connection interrupted. Close and reopen to retry.</p>}
-      {result && result.kind !== "options" && <p role="alert">{result.message}</p>}
+    {open && <div className="history-context-disclosure" role="dialog" aria-label={t("history.context.choose")}>
+      <SearchInput value={query} onChange={setQuery} label={t("history.context.search")}
+        placeholder={t(options?.worktrees.some((item) => !item.current) ? "history.context.searchPlaceholder" : "history.context.searchBranchesPlaceholder")} />
+      {!result && !transportError && <p role="status">{t("history.context.loading")}</p>}
+      {transportError && <p role="alert">{t("history.context.transportError")}</p>}
+      {result && result.kind !== "options" && <p role="alert">{t(historyErrorKeys[result.code])}</p>}
       {options && <>
-        {branches.length > 0 && <div role="group" aria-label="Repository branches">
+        {branches.length > 0 && <div role="group" aria-label={t("history.context.repositoryBranches")}>
           {branches.map((item) => branchChoice(item.name))}
         </div>}
-        {otherWorktrees.length > 0 && <div role="group" aria-label="Other worktrees"
+        {otherWorktrees.length > 0 && <div role="group" aria-label={t("history.context.otherWorktrees")}
           className={branches.length > 0 ? "history-context-worktrees" : undefined}>
           {otherWorktrees.map((item) => {
             const Icon = item.current ? CheckIcon : WorktreeIcon;
-            const action = item.current ? `View current worktree ${item.label}` : `Open worktree ${item.label}`;
+            const action = t(item.current ? "history.context.viewCurrentWorktree" : "history.context.openWorktree", { label: item.label });
             return <Tooltip key={item.id} content={<ChoiceHint name={item.label} checkout={item}
               color={item.branch ? refColors.get(`local_branch:${item.branch}`) : undefined} navigationAvailable={!!onWorktree} />}
               trigger={<button type="button" data-context-choice aria-label={action}
-                aria-description={item.branch === null ? "Detached HEAD — no checked-out branch." : `Checked out branch: ${item.branch}`}
+                aria-description={item.branch === null ? t("history.context.detachedDescription") : t("history.context.checkedOutBranch", { branch: item.branch })}
                 aria-current={item.current ? "true" : undefined} disabled={!item.current && !onWorktree}
                 onClick={() => { if (item.current) onBranch(null); else onWorktree?.(item.id); dismiss(true); }}>
                 <Icon size={14} aria-hidden="true" />
                 <span className="history-context-name">{item.label}</span>
-                <span className="history-context-meta">{item.branch ?? "Detached HEAD"}</span>
+                <span className="history-context-meta">{item.branch ?? t("history.context.detachedHead")}</span>
               </button>} />;
           })}
         </div>}
         {branches.length === 0 && otherWorktrees.length === 0 && <p role="status">
-          {filter ? "No matching branches or worktrees." : "No local branches."}
+          {t(filter ? "history.context.noMatches" : "history.context.noLocalBranches")}
         </p>}
       </>}
     </div>}
@@ -142,25 +147,27 @@ export function ContextSelector({ client, entryId, branch, refColors, descriptio
 function ChoiceHint({ name, checkout, color, navigationAvailable }: {
   name: string; checkout?: Worktree; color?: string; navigationAvailable: boolean;
 }) {
+  const { t } = useTranslation();
   const navigates = checkout && !checkout.current;
   const unavailable = navigates && !navigationAvailable;
   const Icon = checkout?.current ? CheckIcon : checkout ? WorktreeIcon : BranchIcon;
   return <div className="history-context-hint">
-    <div className="history-context-hint-kind">{checkout?.current ? "Current worktree"
-      : checkout ? checkout.branch === null ? "Detached worktree" : "Checked out elsewhere" : "Not checked out"}</div>
+    <div className="history-context-hint-kind">{t(checkout?.current ? "history.context.hint.currentWorktree"
+      : checkout ? checkout.branch === null ? "history.context.hint.detachedWorktree" : "history.context.hint.checkedOutElsewhere"
+      : "history.context.hint.notCheckedOut")}</div>
     <div className="history-context-hint-title">
       <Icon size={16} aria-hidden="true" style={{ color }} />
       <strong>{name}</strong>
     </div>
     {checkout && <dl>
-      <dt>Worktree</dt><dd>{checkout.label}</dd>
-      {checkout.branch !== name && <><dt>Branch</dt><dd>{checkout.branch ?? "Detached HEAD — no branch"}</dd></>}
+      <dt>{t("history.context.hint.worktree")}</dt><dd>{checkout.label}</dd>
+      {checkout.branch !== name && <><dt>{t("history.context.hint.branch")}</dt><dd>{checkout.branch ?? t("history.context.hint.detachedBranch")}</dd></>}
     </dl>}
     <div className="history-context-hint-action">
-      <strong>{unavailable ? "Navigation unavailable" : navigates ? "Open worktree" : "View history"}</strong>
-      <span>{unavailable ? "This view cannot open another worktree."
-        : navigates ? "Switches working directory and history. No checkout."
-        : "Working directory and files stay unchanged. No checkout."}</span>
+      <strong>{t(unavailable ? "history.context.hint.navigationUnavailable"
+        : navigates ? "history.context.hint.openWorktree" : "history.context.hint.viewHistory")}</strong>
+      <span>{t(unavailable ? "history.context.hint.unavailableDescription"
+        : navigates ? "history.context.hint.navigateDescription" : "history.context.hint.viewDescription")}</span>
     </div>
   </div>;
 }

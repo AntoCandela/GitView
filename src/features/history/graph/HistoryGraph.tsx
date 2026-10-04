@@ -13,6 +13,8 @@ import { useHistory } from "../useHistory";
 import { ContextSelector } from "../ContextSelector";
 import { CommitFiles } from "../CommitFiles";
 import { HistoryRefs } from "./HistoryRefs";
+import { useTranslation } from "../../../i18n";
+import { historyErrorKeys } from "../historyMessages";
 
 export interface HistoryGraphProps {
   client: RepositoryClient;
@@ -28,6 +30,7 @@ const laneSpacing = 16;
 
 /** The parent supplies bounded flex space; expanded paths keep all outgoing lanes continuous. */
 export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWorktree, workingBranch, comparison }: HistoryGraphProps) {
+  const { t } = useTranslation();
   const context = useMemo(() => ({ client, entryId, selectionGeneration }), [client, entryId, selectionGeneration]);
   const [branchChoice, setBranchChoice] = useState<{ context: typeof context; branch: string | null } | null>(null);
   const branch = branchChoice?.context === context ? branchChoice.branch : null;
@@ -158,33 +161,33 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
   }
 
   return (
-    <section className="history history-feature" aria-label="Commit ancestry" style={{ "--history-lane-width": `${width}px` } as CSSProperties}>
+    <section className="history history-feature" aria-label={t("history.ancestry")} style={{ "--history-lane-width": `${width}px` } as CSSProperties}>
       <div className="history-toolbar">
         <ContextSelector key={`${entryId}:${selectionGeneration}`} client={client} entryId={entryId}
-          branch={branch ?? page?.head.branch ?? (page?.head.state === "detached" ? "Detached" : "HEAD")}
+          branch={branch ?? page?.head.branch ?? (page?.head.state === "detached" ? t("history.detached") : "HEAD")}
           refColors={colors.refs}
-          description={branch === null ? "Choose a branch. Branches checked out elsewhere open their worktrees; other branches show history without checkout."
-            : `Viewing ${branch}; working files remain on ${workingBranch ?? page?.head.branch ?? "the current HEAD"}. No checkout.`}
+          description={branch === null ? t("history.context.description")
+            : t("history.context.viewingDescription", { branch, workingBranch: workingBranch ?? page?.head.branch ?? t("history.currentHead") })}
           onBranch={(next) => {
             invalidateComparison?.(); setSelection(null);
             setBranchChoice({ context, branch: next });
           }}
           onWorktree={onSelectWorktree} />
-        <Tooltip content="Refresh history" trigger={<button className="history-refresh" type="button"
-          onClick={() => { invalidateComparison?.(); setSelection(null); refresh(); }} aria-label="Refresh history">
+        <Tooltip content={t("history.refresh")} trigger={<button className="history-refresh" type="button"
+          onClick={() => { invalidateComparison?.(); setSelection(null); refresh(); }} aria-label={t("history.refresh")}>
           <RefreshIcon size={16} aria-hidden="true" />
         </button>} />
       </div>
       <div className="history-scroll" ref={list} aria-busy={loading !== null}>
         <div ref={notices}>
-          {loading === "initial" && <p className="history-notice" role="status">Loading history…</p>}
-          {error && <p className="history-notice history-error" role="alert">{error.message}</p>}
-          {page?.head.state === "unresolved" && <p className="history-notice" role="status">HEAD could not be resolved. Other available refs are shown.</p>}
-          {page?.completeness === "shallow_or_missing" && <p className="history-notice" role="status">Some ancestry is shallow or unavailable.</p>}
-          {page?.commits.length === 0 && <p className="history-notice" role="status">{page.head.state === "unborn" ? "No commits at HEAD." : "No reachable commits."}</p>}
+          {loading === "initial" && <p className="history-notice" role="status">{t("history.loading")}</p>}
+          {error && <p className="history-notice history-error" role="alert">{t(error.kind === "transport_unavailable" ? "history.transportError" : historyErrorKeys[error.code])}</p>}
+          {page?.head.state === "unresolved" && <p className="history-notice" role="status">{t("history.unresolvedHead")}</p>}
+          {page?.completeness === "shallow_or_missing" && <p className="history-notice" role="status">{t("history.incompleteAncestry")}</p>}
+          {page?.commits.length === 0 && <p className="history-notice" role="status">{t(page.head.state === "unborn" ? "history.noHeadCommits" : "history.noReachableCommits")}</p>}
         </div>
         {page && <>
-          <div className="history-rows" role="group" aria-label="Commits" style={{ height: virtualizer.getTotalSize() }}>
+          <div className="history-rows" role="group" aria-label={t("history.commits")} style={{ height: virtualizer.getTotalSize() }}>
             {visibleRows.map((virtualRow) => {
               const index = virtualRow.index;
               const row = layout.rows[index];
@@ -204,11 +207,11 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
             <div className="history-header" data-head={isHead} data-selected={selectedOid === row.commit.oid}
               style={{ "--history-header-height": `${headerHeight}px`, "--history-subject-height": `${subjectHeight}px` } as CSSProperties}>
             <Tooltip content={<div className="history-commit-tooltip">
-              <strong>{row.commit.subject ?? "Commit"}</strong>
+              <strong>{row.commit.subject ?? t("history.commitTitle")}</strong>
               <code>{row.commit.oid}</code>
-              <span>{selectedOid === row.commit.oid ? "Collapse" : "Expand"} changed files</span>
+              <span>{t(selectedOid === row.commit.oid ? "history.collapseFiles" : "history.expandFiles")}</span>
             </div>} trigger={<button type="button" className="history-commit" data-history-index={index}
-              aria-label={`${row.commit.subject ? `${row.commit.subject}, ` : ""}Commit ${row.commit.oid}`}
+              aria-label={row.commit.subject ? t("history.commitWithSubject", { subject: row.commit.subject, oid: row.commit.oid }) : t("history.commit", { oid: row.commit.oid })}
               aria-describedby={isHead ? `${headLabelId}-${row.commit.oid}` : undefined}
               aria-pressed={selectedOid === row.commit.oid}
               aria-expanded={selectedOid === row.commit.oid}
@@ -222,8 +225,8 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
               <code className="history-short-oid" aria-hidden="true">{row.commit.oid.slice(0, 7)}</code>
             </button>} />
               <span className="history-badges">
-                {row.commit.root && row.commit.parents.length === 0 && <span className="history-badge">Root</span>}
-                {!row.commit.root && row.commit.parents.length === 0 && <span className="history-badge">Ancestry unavailable</span>}
+                {row.commit.root && row.commit.parents.length === 0 && <span className="history-badge">{t("history.root")}</span>}
+                {!row.commit.root && row.commit.parents.length === 0 && <span className="history-badge">{t("history.ancestryUnavailable")}</span>}
                 {(rowRefs.length > 0 || isHead) && <HistoryRefs
                   refs={rowRefs} colors={colors.refs} context={scope} snapshot={page.refs}
                   commitOid={row.commit.oid} viewedBranch={branch ?? page.head.branch}
@@ -244,16 +247,16 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
               {layout.stubs.map((stub) => <path className={`history-stub-${stub.state}`} key={stub.edgeKey} style={{ color: colors.commits.get(stub.colorOid) }} d={`M ${stub.lane * laneSpacing + laneSpacing} 0 v 16`} />)}
             </svg>
             <details className="history-stubs">
-              <Tooltip content="Toggle unresolved ancestry details" trigger={<summary>Unresolved ancestry ({unresolvedParents.length})</summary>} />
+              <Tooltip content={t("history.toggleUnresolved")} trigger={<summary>{t("history.unresolvedCount", { count: unresolvedParents.length })}</summary>} />
               <ul>{unresolvedParents.map((stub) => <li key={stub.oid}>
                 <code>{stub.oid}</code>
-                <span>{stub.state === "unavailable" ? "Unavailable parent" : page.hasMore ? "Parent beyond loaded pages" : "Parent outside loaded history"}</span>
+                <span>{t(stub.state === "unavailable" ? "history.parentUnavailable" : page.hasMore ? "history.parentBeyondPages" : "history.parentOutsideHistory")}</span>
               </li>)}</ul>
             </details>
           </div>}
-          {page.hasMore && <Tooltip content="Load more commits" trigger={<button className="history-load-more" type="button"
+          {page.hasMore && <Tooltip content={t("history.loadMoreCommits")} trigger={<button className="history-load-more" type="button"
             onClick={loadMore} disabled={loading !== null || page.cursor === null}>
-            {loading === "more" ? "Loading more…" : "Load more"}
+            {t(loading === "more" ? "history.loadingMore" : "history.loadMore")}
           </button>} />}
         </>}
       </div>

@@ -1,8 +1,9 @@
 /** Owns explicit ancestry reads and pinned pagination; superseded scopes and requests cannot publish. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { HistoryPage, HistoryPageResult } from "../../contracts/history";
+import type { HistoryPage } from "../../contracts/history";
 import type { RepositoryClient } from "../../contracts/repositories";
+import type { HistoryReadFailure } from "./historyMessages";
 
 interface HistoryScope {
   client: RepositoryClient;
@@ -11,7 +12,7 @@ interface HistoryScope {
   branch: string | null;
 }
 
-export type HistoryFailure = Exclude<HistoryPageResult, { kind: "page" }> | { kind: "transport_unavailable"; message: string };
+export type HistoryFailure = HistoryReadFailure | { kind: "transport_unavailable" };
 interface HistoryState {
   scope: HistoryScope;
   page: HistoryPage | null;
@@ -44,9 +45,9 @@ export function useHistory(client: RepositoryClient, entryId: string, selectionG
           ? await client.historyPage(entryId, previous?.cursor ?? null)
           : await client.historyPage(entryId, previous?.cursor ?? null, branch);
         if (result.kind !== "page") {
-          error = result;
+          error = { kind: result.kind, code: result.code };
         } else if (result.page.entryId !== entryId) {
-          error = { kind: "error", code: "invalid_output", message: "History response does not match the selected repository." };
+          error = { kind: "error", code: "invalid_output" };
         } else if (previous) {
           const known = new Set(previous.commits.map((commit) => commit.oid));
           page = {
@@ -64,7 +65,7 @@ export function useHistory(client: RepositoryClient, entryId: string, selectionG
           page = result.page;
         }
       } catch {
-        error = { kind: "transport_unavailable", message: "Desktop connection interrupted. Refresh to retry." };
+        error = { kind: "transport_unavailable" };
       }
       // The render-time scope guard covers the interval before effect cleanup, including same-entry reselection.
       if (!mounted.current || desired.current !== scope || pending.current !== operation) return;

@@ -14,10 +14,10 @@
     position: relative;
     z-index: 20;
     display: grid;
-    grid-template-columns: minmax(28px, 1fr) minmax(0, auto) minmax(64px, 1fr);
+    grid-template-columns: minmax(28px, 1fr) minmax(0, auto) minmax(max-content, 1fr);
     align-items: center;
     gap: 4px;
-    height: 36px;
+    min-height: 36px;
     padding: 0 4px;
     border-bottom: 1px solid var(--border);
   }
@@ -26,7 +26,7 @@
     align-items: center;
     gap: 4px;
     min-width: 0;
-    max-width: min(440px, calc(100vw - 108px));
+    max-width: min(440px, calc(100vw - 176px));
   }
   .workspace-sidebar-toggle {
     display: grid;
@@ -60,11 +60,11 @@
     .workspace-sidebar { position: absolute; z-index: 10; inset: 0 auto 0 0; width: min(280px, 100%); }
   }
   @media (max-width: 440px) {
-    .workspace-selectors { gap: 0; max-width: calc(100vw - 108px); }
+    .workspace-selectors { gap: 0; max-width: calc(100vw - 176px); }
     .workspace-selectors .repository-selector { padding-inline: 4px; }
   }
   .repository-controls { position: relative; min-width: 0; max-width: 100%; }
-  .workbench-layout-control { flex: none; margin-left: auto; padding-left: 8px; }
+  .workbench-layout-control { display: flex; flex-wrap: nowrap; flex: none; margin-left: auto; padding-left: 8px; }
   .repository-selector {
     display: flex;
     align-items: center;

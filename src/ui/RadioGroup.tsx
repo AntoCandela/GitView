@@ -2,6 +2,7 @@
 
 import { useId, useRef, type KeyboardEvent, type ReactNode } from "react";
 import { Tooltip } from "./Tooltip";
+import { useTranslation } from "../i18n";
 
 export interface RadioGroupOption<Value extends string> {
   value: Value;
@@ -15,6 +16,8 @@ export interface RadioGroupProps<Value extends string> {
   value: Value;
   options: readonly RadioGroupOption<Value>[];
   onChange: (value: Value) => void;
+  /** Optional renewed intent when the already-selected option is activated. */
+  onReselect?: (value: Value) => void;
   disabled?: boolean;
   className?: string;
 }
@@ -25,9 +28,11 @@ export function RadioGroup<Value extends string>({
   value,
   options,
   onChange,
+  onReselect,
   disabled = false,
   className,
 }: RadioGroupProps<Value>) {
+  const { t } = useTranslation();
   const name = useId();
   const inputs = useRef(new Map<Value, HTMLInputElement>());
   const enabledOptions = disabled ? [] : options.filter((option) => !option.disabled);
@@ -64,6 +69,7 @@ export function RadioGroup<Value extends string>({
     const nextValue = enabledOptions[nextIndex].value;
     inputs.current.get(nextValue)?.focus();
     if (nextValue !== value) onChange(nextValue);
+    else onReselect?.(nextValue);
   }
 
   return (
@@ -74,7 +80,7 @@ export function RadioGroup<Value extends string>({
       className={`ui-radio-group${className ? ` ${className}` : ""}`}
     >
       {options.map((option) => (
-        <Tooltip key={option.value} content={`Set ${label}: ${option.label}`} trigger={
+        <Tooltip key={option.value} content={t("ui.setOption", { group: label, option: option.label })} trigger={
         <label className="ui-radio-option">
           <input
             ref={(input) => {
@@ -89,6 +95,7 @@ export function RadioGroup<Value extends string>({
             disabled={disabled || option.disabled}
             tabIndex={option.value === tabValue ? 0 : -1}
             onChange={() => onChange(option.value)}
+            onClick={() => { if (option.value === value) onReselect?.(option.value); }}
             onKeyDown={(event) => selectWithKeyboard(event, option.value)}
           />
           <span className="ui-radio-content">{option.content ?? option.label}</span>

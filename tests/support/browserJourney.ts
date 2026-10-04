@@ -10,7 +10,8 @@ export interface BrowserJourneyPage {
 
 const commands: Record<string, readonly string[]> = {
   workspace_snapshot: [],
-  open_chosen_repository: [],
+  preferred_languages: [],
+  open_chosen_repository: ["locale"],
   select_context: ["entryId"],
   refresh_entry_availability: ["entryId"],
   observe_selected_context: ["entryId"],

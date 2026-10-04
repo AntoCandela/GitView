@@ -18,10 +18,12 @@ import { TreeEntryIcon } from "../../ui/file-icons/TreeEntryIcon";
 import { DisclosureSection } from "../../ui/DisclosureSection";
 import { RadioGroup } from "../../ui/RadioGroup";
 import { Tooltip } from "../../ui/Tooltip";
+import { useTranslation } from "../../i18n";
 
 type SyntaxChoice = CodeTheme | "match";
 
 export function AppearanceMenu() {
+  const { t } = useTranslation();
   const popup = useRef<HTMLDivElement>(null);
   const appearance = useAppearanceTheme();
   const icons = useIconTheme();
@@ -29,10 +31,12 @@ export function AppearanceMenu() {
   if (!icons) throw new Error("AppearanceMenu requires IconThemeProvider");
   const iconPreference = icons;
   const selected = appearanceTheme(appearance.theme);
+  const selectedLabel = t(selected.labelKey);
   const syntax = review.theme === "match" ? selected.syntax : review.theme;
   const code = codeTheme(syntax);
+  const codeLabel = code.id === "plain" ? t("appearance.syntax.plain") : code.label;
   const palette = code.preview;
-  const iconLabel = iconThemes.find(({ id }) => id === icons.theme)!.label;
+  const iconLabel = icons.theme === "classic" ? t("appearance.icons.classic") : iconThemes.find(({ id }) => id === icons.theme)!.label;
   const preset = review.theme === "match" && icons.theme === selected.icons ? selected.id : null;
 
   function applyPreset(theme: AppearanceTheme) {
@@ -43,74 +47,74 @@ export function AppearanceMenu() {
   }
 
   return <Popover.Root>
-    <Tooltip content="Choose appearance" trigger={
-      <Popover.Trigger className="ui-kebab-trigger" aria-label="Appearance"><AppearanceIcon aria-hidden="true" /></Popover.Trigger>
+    <Tooltip content={t("appearance.choose")} trigger={
+      <Popover.Trigger className="ui-kebab-trigger" aria-label={t("appearance.title")}><AppearanceIcon aria-hidden="true" /></Popover.Trigger>
     } />
     <Popover.Portal>
       <Popover.Positioner className="ui-menu-positioner" side="bottom" align="end" sideOffset={4} collisionPadding={8}>
         <Popover.Popup ref={popup} className="ui-menu appearance-menu"
           initialFocus={() => popup.current?.querySelector<HTMLElement>('.appearance-presets button[aria-pressed="true"]')
             ?? popup.current?.querySelector<HTMLElement>(".appearance-section .ui-disclosure summary") ?? true}>
-          <Popover.Title className="ui-choice-title">Appearance</Popover.Title>
-          <div className="appearance-preview" role="img" aria-label={`Preview: ${selected.label} interface, ${code.label} syntax, ${iconLabel} icons`}>
-            <div className="appearance-preview-heading"><TreeEntryIcon theme={icons.theme} kind="file" name="App.tsx" /> App.tsx <span>{selected.label}</span></div>
+          <Popover.Title className="ui-choice-title">{t("appearance.title")}</Popover.Title>
+          <div className="appearance-preview" role="img" aria-label={t("appearance.preview", { interface: selectedLabel, syntax: codeLabel, icons: iconLabel })}>
+            <div className="appearance-preview-heading"><TreeEntryIcon theme={icons.theme} kind="file" name="App.tsx" /> App.tsx <span>{selectedLabel}</span></div>
             <div className="appearance-preview-lines" style={{ "--code-bg": palette.background, "--code-ink": palette.foreground,
               "--code-add-bg": palette.addition, "--code-remove-bg": palette.removal } as CSSProperties}>
               <code><span>− </span><span style={{ color: palette.keyword }}>const</span> title = <span style={{ color: palette.string }}>"old"</span>;</code>
               <code><span>+ </span><span style={{ color: palette.keyword }}>const</span> title = <span style={{ color: palette.string }}>"new"</span>;</code>
             </div>
           </div>
-          <section className="appearance-section" aria-label="Coordinated presets">
-            <h3>Presets <small>{preset ? selected.label : "Custom"}</small></h3>
+          <section className="appearance-section" aria-label={t("appearance.coordinatedPresets")}>
+            <h3>{t("appearance.presets")} <small>{preset ? selectedLabel : t("appearance.custom")}</small></h3>
             <div className="appearance-presets">
-              {appearanceThemes.map((theme) => <Tooltip key={theme.id} content={`Apply ${theme.label} appearance preset`} trigger={
+              {appearanceThemes.map((theme) => <Tooltip key={theme.id} content={t("appearance.applyPreset", { theme: t(theme.labelKey) })} trigger={
                 <button type="button" name="appearance-presets"
                 aria-pressed={preset === theme.id} onClick={() => applyPreset(theme.id)}>
                 <span className="appearance-swatch" style={{ background: theme.swatch, color: theme.ink }} aria-hidden="true">Aa</span>
-                {theme.label}
+                {t(theme.labelKey)}
               </button>} />)}
             </div>
           </section>
-          <section className="appearance-section" aria-label="Independent choices">
-            <h3>Customize <small>Choices stay independent</small></h3>
-            <DisclosureSection title="Interface" detail={selected.label}>
-            <RadioGroup<AppearanceTheme> label="Interface palette" value={appearance.theme}
-              options={appearanceThemes.map(({ id, label, family, swatch, ink }) => ({ value: id, label,
-                content: <span className="appearance-option"><span>{label} · {family}</span><span className="appearance-swatch" style={{ background: swatch, color: ink }} aria-hidden="true">Aa</span></span> }))}
+          <section className="appearance-section" aria-label={t("appearance.independentChoices")}>
+            <h3>{t("appearance.customize")} <small>{t("appearance.choicesStayIndependent")}</small></h3>
+            <DisclosureSection title={t("appearance.interface")} detail={selectedLabel}>
+            <RadioGroup<AppearanceTheme> label={t("appearance.interfacePalette")} value={appearance.theme}
+              options={appearanceThemes.map(({ id, labelKey, familyKey, swatch, ink }) => ({ value: id, label: t(labelKey),
+                content: <span className="appearance-option"><span>{t("appearance.paletteFamily", { palette: t(labelKey), family: t(familyKey) })}</span><span className="appearance-swatch" style={{ background: swatch, color: ink }} aria-hidden="true">Aa</span></span> }))}
               onChange={appearance.setTheme} />
             </DisclosureSection>
-            <DisclosureSection title="Syntax" detail={review.theme === "match" ? `Match · ${code.label}` : code.label}>
-            <RadioGroup<SyntaxChoice> label="Syntax palette" value={review.theme}
-              options={[{ value: "match", label: "Match interface", content: <span>Match interface · {codeTheme(selected.syntax).label}</span> },
-                ...codeThemes.map(({ id, label, preview }) => ({ value: id, label,
-                  content: <span className="code-theme-choice"><span>{label}</span>
+            <DisclosureSection title={t("appearance.syntax")} detail={review.theme === "match" ? t("appearance.matchSyntax", { syntax: codeLabel }) : codeLabel}>
+            <RadioGroup<SyntaxChoice> label={t("appearance.syntaxPalette")} value={review.theme}
+              options={[{ value: "match", label: t("appearance.matchInterface"), content: <span>{t("appearance.matchInterfaceSyntax", { syntax: codeTheme(selected.syntax).label })}</span> },
+                ...codeThemes.map(({ id, label, preview }) => ({ value: id, label: id === "plain" ? t("appearance.syntax.plain") : label,
+                  content: <span className="code-theme-choice"><span>{id === "plain" ? t("appearance.syntax.plain") : label}</span>
                     <code className="code-theme-preview" aria-hidden="true" style={{ background: preview.background, color: preview.foreground }}>
                       <span style={{ color: preview.keyword }}>const</span>{" = "}<span style={{ color: preview.string }}>{'"code"'}</span>
                     </code></span> }))]}
               onChange={(theme) => review.change({ theme })} />
             </DisclosureSection>
-            <DisclosureSection title="File icons" detail={iconLabel}>
-            <RadioGroup<IconTheme> label="File icons" value={icons.theme}
-              options={iconThemes.map(({ id, label, preview }) => ({ value: id, label,
-                content: <span className="icon-theme-choice"><span>{label}</span><span className="icon-theme-preview" aria-hidden="true">
+            <DisclosureSection title={t("appearance.fileIcons")} detail={iconLabel}>
+            <RadioGroup<IconTheme> label={t("appearance.fileIcons")} value={icons.theme}
+              options={iconThemes.map(({ id, label, preview }) => ({ value: id, label: id === "classic" ? t("appearance.icons.classic") : label,
+                content: <span className="icon-theme-choice"><span>{id === "classic" ? t("appearance.icons.classic") : label}</span><span className="icon-theme-preview" aria-hidden="true">
                   <TreeEntryIcon theme={id} kind="folder" name={preview.folder} />
                   {preview.files.map((name) => <TreeEntryIcon key={name} theme={id} kind="file" name={name} />)}
                 </span></span> }))}
               onChange={icons.setTheme} />
             </DisclosureSection>
           </section>
-          <DisclosureSection title="Sources and licenses">
-            {codeThemes.map(({ id, label, source }) => source && <a key={id} className="ui-choice-link" href={source} target="_blank" rel="noreferrer">{label} · upstream theme · MIT</a>)}
-            <a className="ui-choice-link" href={themeNotices} target="_blank" rel="noreferrer">Theme licenses and original notices</a>
-            {iconThemes.map(({ id, license }) => license && <a key={id} className="ui-choice-link" href={license.url} target="_blank" rel="noreferrer">{license.label}</a>)}
-            <a className="ui-choice-link" href={grammarNotices} target="_blank" rel="noreferrer">TextMate grammar original notices</a>
-            <a className="ui-choice-link" href={textmateLicense} target="_blank" rel="noreferrer">TextMate bundle license · YAML / TOML</a>
-            <a className="ui-choice-link" href={shikiLicense} target="_blank" rel="noreferrer">Shiki 4.4.3 · MIT license</a>
+          <DisclosureSection title={t("appearance.sourcesLicenses")}>
+            {codeThemes.map(({ id, label, source }) => source && <a key={id} className="ui-choice-link" href={source} target="_blank" rel="noreferrer">{t("appearance.upstreamTheme", { theme: label })}</a>)}
+            <a className="ui-choice-link" href={themeNotices} target="_blank" rel="noreferrer">{t("appearance.themeNotices")}</a>
+            {iconThemes.map(({ id, license }) => license && <a key={id} className="ui-choice-link" href={license.url} target="_blank" rel="noreferrer">{t("appearance.mitLicense", { name: id === "material" ? "Material Icon Theme" : "Catppuccin Icons" })}</a>)}
+            <a className="ui-choice-link" href={grammarNotices} target="_blank" rel="noreferrer">{t("appearance.grammarNotices")}</a>
+            <a className="ui-choice-link" href={textmateLicense} target="_blank" rel="noreferrer">{t("appearance.textmateLicense")}</a>
+            <a className="ui-choice-link" href={shikiLicense} target="_blank" rel="noreferrer">{t("appearance.mitLicense", { name: "Shiki 4.4.3" })}</a>
             <a className="ui-choice-link" href={onigurumaLicense} target="_blank" rel="noreferrer">VS Code Oniguruma · Microsoft · MIT</a>
             <a className="ui-choice-link" href={onigurumaNotices} target="_blank" rel="noreferrer">Oniguruma · K. Kosako · BSD-2-Clause</a>
           </DisclosureSection>
           {appearance.persistenceError || review.persistenceError || icons.persistenceError
-            ? <p className="ui-choice-warning" role="status">Choice applies to this session; storage is unavailable.</p> : null}
+            ? <p className="ui-choice-warning" role="status">{t("appearance.storageUnavailable")}</p> : null}
         </Popover.Popup>
       </Popover.Positioner>
     </Popover.Portal>

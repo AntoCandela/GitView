@@ -149,21 +149,24 @@ pub(crate) async fn wait_for_reaped_child(root: &Path) {
 /// Paused Tokio time with explicit advancement while real OS subprocesses reach their gates.
 #[cfg(unix)]
 pub(crate) struct ManualClock {
-    keep_alive: tokio::task::JoinHandle<()>,
+    stop: std::sync::mpsc::Sender<()>,
+    tick: tokio::sync::watch::Receiver<()>,
 }
 
 #[cfg(unix)]
 impl ManualClock {
     pub(crate) fn new() -> Self {
         tokio::time::pause();
-        // Paused time auto-advances when Tokio is idle, but OS subprocess gates use real time.
-        // A runnable task prevents that idle jump from consuming the deadline before release.
-        let keep_alive = tokio::spawn(async {
-            loop {
-                tokio::task::yield_now().await;
+        let (stop, stopped) = std::sync::mpsc::channel();
+        let (ticks, tick) = tokio::sync::watch::channel(());
+        // An outstanding blocking task inhibits Tokio's paused-time auto-advance.
+        // Real-time ticks bound OS gates without busy-spinning every test runtime.
+        tokio::task::spawn_blocking(move || {
+            while matches!(stopped.recv_timeout(Duration::from_millis(5)), Err(std::sync::mpsc::RecvTimeoutError::Timeout)) {
+                if ticks.send(()).is_err() { break; }
             }
         });
-        Self { keep_alive }
+        Self { stop, tick }
     }
 
     pub(crate) async fn advance(&self, duration: Duration) {
@@ -171,9 +174,10 @@ impl ManualClock {
     }
 
     pub(crate) async fn wait_for_file(&self, path: &Path) {
+        let mut tick = self.tick.clone();
         self.finish(async {
             while !path.exists() {
-                tokio::task::yield_now().await;
+                tick.changed().await.expect("manual clock ticker is alive");
             }
         }).await;
     }
@@ -181,11 +185,13 @@ impl ManualClock {
     pub(crate) async fn finish<T>(&self, future: impl Future<Output = T>) -> T {
         // A virtual timeout cannot detect a stuck gate while we intentionally prevent auto-advance.
         let started = std::time::Instant::now();
+        let mut tick = self.tick.clone();
         tokio::pin!(future);
         loop {
             tokio::select! {
                 result = &mut future => return result,
-                _ = tokio::task::yield_now() => {
+                result = tick.changed() => {
+                    result.expect("manual clock ticker is alive");
                     assert!(started.elapsed() < Duration::from_secs(15), "deadline test stalled in real time");
                 }
             }
@@ -196,7 +202,7 @@ impl ManualClock {
 #[cfg(unix)]
 impl Drop for ManualClock {
     fn drop(&mut self) {
-        self.keep_alive.abort();
+        let _ = self.stop.send(());
     }
 }
 
