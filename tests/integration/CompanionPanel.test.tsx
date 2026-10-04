@@ -88,6 +88,24 @@ test("Escape dismisses through native authority rather than resetting the admitt
   expect(host.surface.workspace.activeContextId).toBe("one");
 });
 
+test("Escape closes the repository picker before dismissing the companion", async () => {
+  const host = fixture();
+  const dismiss = vi.fn<CompanionClient["dismiss"]>().mockResolvedValue(undefined);
+  host.client.dismiss = dismiss;
+  render(<CompanionPanel client={host.client} surfaceClient={host.transport} />);
+  await settle();
+  const trigger = screen.getByRole("button", { name: "Current repository: Repository" });
+  fireEvent.click(trigger);
+  const search = screen.getByRole("searchbox", { name: "Search repositories" });
+  expect(screen.queryByRole("button", { name: /Open repository|Actions for/ })).not.toBeInTheDocument();
+  fireEvent.keyDown(search, { key: "Escape" });
+  expect(screen.queryByRole("searchbox")).not.toBeInTheDocument();
+  expect(trigger).toHaveFocus();
+  expect(dismiss).not.toHaveBeenCalled();
+  fireEvent.keyDown(trigger, { key: "Escape" });
+  expect(dismiss).toHaveBeenCalledTimes(1);
+});
+
 test("bare context is not clean and hands off without manufacturing a file identity", async () => {
   const host = fixture();
   host.update({ ...host.surface, observation: { kind: "bare", entryId: "one", observationRevision: 2 } }, { kind: "presentation", revision: 1 });
@@ -130,7 +148,7 @@ test("admitted-context selection invalidates old review immediately and cannot d
   const host = fixture();
   const oldReview = deferred<ReviewResult>();
   host.client.reviewFile = () => oldReview.promise;
-  const nextEntry = { ...host.surface.workspace.entries[0], id: "admitted-linked", locationLabel: "Linked worktree" };
+  const nextEntry = { ...host.surface.workspace.entries[0], id: "admitted-linked", repositoryLabel: "Linked repository", locationLabel: "Linked worktree" };
   host.update({ ...host.surface, workspace: { ...host.surface.workspace, entries: [...host.surface.workspace.entries, nextEntry] } }, { kind: "presentation", revision: 1 });
   const select = vi.fn<CompanionClient["selectContext"]>(async (entryId) => {
     host.update({ ...host.surface, workspace: { ...host.surface.workspace, revision: 2, contextEpoch: "context-2", activeContextId: entryId },
@@ -142,7 +160,9 @@ test("admitted-context selection invalidates old review immediately and cannot d
   await settle();
   fireEvent.click(screen.getByRole("button", { name: "Expand all" }));
   fireEvent.click(screen.getByRole("button", { name: "Review src/example.ts" }));
-  fireEvent.change(screen.getByRole("combobox"), { target: { value: "admitted-linked" } });
+  fireEvent.click(screen.getByRole("button", { name: "Current repository: Repository" }));
+  fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Linked" } });
+  fireEvent.click(screen.getByRole("button", { name: /Linked repository/ }));
   await settle();
   await act(async () => oldReview.resolve(textReview("wrong context")));
   expect(select).toHaveBeenCalledExactlyOnceWith("admitted-linked");
@@ -158,7 +178,7 @@ test("binary comparisons keep their unsupported outcome and compact controls rem
   } });
   render(<CompanionPanel client={host.client} surfaceClient={host.transport} />);
   await settle();
-  expect(screen.getByRole("combobox")).toHaveFocus();
+  expect(screen.getByRole("button", { name: "Current repository: Repository" })).toHaveFocus();
   fireEvent.click(screen.getByRole("button", { name: "Expand all" }));
   fireEvent.click(screen.getByRole("button", { name: "Review src/example.ts" }));
   await settle();
@@ -224,7 +244,7 @@ test("a same-scope ready ticket grants freshness after newer workspace and hando
   await settle();
   await act(async () => opening.resolve({ kind: "ready", surface: original }));
   expect(screen.queryByText("Checking current changes…")).not.toBeInTheDocument();
-  expect(screen.getByRole("option", { name: /Renamed repository/ })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Current repository: Renamed repository" })).toBeInTheDocument();
   expect(begin).toHaveBeenCalledTimes(1);
 });
 

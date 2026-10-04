@@ -620,6 +620,7 @@ test("keyboard menu dismissal and rename cancellation leave selection and displa
   await user.keyboard("{Escape}");
   await waitFor(() => expect(trigger).toHaveFocus());
   expect(screen.getByRole("button", { name: "Current repository: atlas" })).toBeVisible();
+  expect(screen.getByRole("button", { name: "Current repository: atlas" })).toHaveAttribute("aria-expanded", "true");
 
   await user.keyboard("{Enter}");
   await screen.findByRole("menuitem", { name: "Rename" });
@@ -638,6 +639,7 @@ test("keyboard menu dismissal and rename cancellation leave selection and displa
   await waitFor(() => expect(trigger).toHaveFocus());
   expect(screen.getByRole("button", { name: "atlas main" })).toHaveAttribute("aria-current", "true");
   expect(screen.getByRole("button", { name: "Current repository: atlas" })).toBeVisible();
+  expect(screen.getByRole("button", { name: "Current repository: atlas" })).toHaveAttribute("aria-expanded", "true");
 });
 
 test("renaming an inactive row waits for native state and survives reopening the workspace", async () => {

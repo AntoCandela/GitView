@@ -1,4 +1,4 @@
-/** Keeps three stable panes in configurable slots, with bounded pointer and keyboard splitters. */
+/** Keeps stable review panes in configurable slots, with bounded pointer and keyboard splitters. */
 
 import { useEffect, useId, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
 import { usePanelLayout } from "../../ui/resize/panelLayout";
@@ -20,8 +20,9 @@ function constrain(value: number, available: number, axis: Axis) {
   return Math.max(Math.min(min, max), Math.min(value, max));
 }
 
+/** Without history, comparison stays above files and the three-pane layout choice is ignored. */
 export function ResizableWorkbench({ files, history, comparison, layout = defaultWorkbenchLayout }: {
-  files: ReactNode; history: ReactNode; comparison: ReactNode; layout?: WorkbenchLayoutId;
+  files: ReactNode; history?: ReactNode; comparison: ReactNode; layout?: WorkbenchLayoutId;
 }) {
   const { t } = useTranslation();
   const root = useRef<HTMLElement>(null);
@@ -58,7 +59,8 @@ export function ResizableWorkbench({ files, history, comparison, layout = defaul
     observer.observe(element);
     return () => observer.disconnect();
   }, [resetVersion]);
-  const arrangement = workbenchLayouts.find((candidate) => candidate.id === layout)!;
+  const hasHistory = history !== undefined && history !== null && history !== false;
+  const arrangement = workbenchLayouts.find((candidate) => candidate.id === (hasHistory ? layout : defaultWorkbenchLayout))!;
   const snappedWidth = resizing !== null && resizing !== "height" && width === (available.width - dividerSize) / 2;
   const snappedHeight = resizing !== null && resizing !== "width" && height === (available.height - dividerSize) / 2;
   const paneId = (panel: string) => `${panePrefix}-${panel}`;
@@ -134,22 +136,24 @@ export function ResizableWorkbench({ files, history, comparison, layout = defaul
     />} />;
   }
 
-  return <section ref={root} className={`workbench${resizing ? ` is-resizing resizing-${resizing}` : ""}`}
-    aria-label={t("app.workbench")} data-workbench-layout={layout}
+  return <section ref={root} className={`workbench${hasHistory ? "" : " workbench-two-pane"}${resizing ? ` is-resizing resizing-${resizing}` : ""}`}
+    aria-label={t("app.workbench")} data-workbench-layout={hasHistory ? layout : "comparison-files"}
     style={{
       "--workbench-left-width": `${width}px`, "--workbench-top-height": `${height}px`,
-      gridTemplateAreas: `"${arrangement.top} ${arrangement.top} ${arrangement.top}" "rows rows rows" "${arrangement.left} columns ${arrangement.right}"`,
+      gridTemplateAreas: hasHistory
+        ? `"${arrangement.top} ${arrangement.top} ${arrangement.top}" "rows rows rows" "${arrangement.left} columns ${arrangement.right}"`
+        : `"comparison" "rows" "files"`,
     } as CSSProperties}>
     <div id={paneId("comparison")} className="comparison-panel workbench-pane" data-panel="comparison">{comparison}</div>
     <aside id={paneId("files")} className="file-sidebar workbench-pane" data-panel="files" aria-label={t("app.panel.files")}>{files}</aside>
-    <div id={paneId("history")} className="history-panel workbench-pane" data-panel="history"
+    {hasHistory && <div id={paneId("history")} className="history-panel workbench-pane" data-panel="history"
       style={{
         "--history-panel-width": `${arrangement.top === "history" ? available.width : arrangement.left === "history" ? width : available.width - width - dividerSize}px`,
         "--history-panel-height": `${arrangement.top === "history" ? height : available.height - height - dividerSize}px`,
-      } as CSSProperties}>{history}</div>
-    {splitter("width")}
+      } as CSSProperties}>{history}</div>}
+    {hasHistory && splitter("width")}
     {splitter("height")}
-    <Tooltip content={t("app.resizeAllHint")} trigger={<button type="button" className={`workbench-junction${snappedWidth || snappedHeight ? " is-snapped" : ""}`} aria-label={t("app.resizeAll")}
+    {hasHistory && <Tooltip content={t("app.resizeAllHint")} trigger={<button type="button" className={`workbench-junction${snappedWidth || snappedHeight ? " is-snapped" : ""}`} aria-label={t("app.resizeAll")}
       aria-controls={`${paneId("comparison")} ${paneId("files")} ${paneId("history")}`}
       aria-description={t("app.resizeAllDescription")}
       {...pointerHandlers("both")}
@@ -167,6 +171,6 @@ export function ResizableWorkbench({ files, history, comparison, layout = defaul
           setSize("width", bounds(available.width, "width")[limit]);
           setSize("height", bounds(available.height, "height")[limit]);
         }
-      }} />} />
+      }} />} />}
   </section>;
 }

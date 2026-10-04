@@ -1,6 +1,5 @@
 {
   "companion.title": "Quick review",
-  "companion.context": "Open repository or worktree",
   "companion.checking": "Checking current changes…",
   "companion.unavailable": "Current changes are unavailable. Open GitView to continue.",
   "companion.empty": "No current changes.",

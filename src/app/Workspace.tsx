@@ -10,6 +10,7 @@ import type { RepositoryFileSelection } from "../contracts/browsing";
 import { repositoryClient, reviewSurfaceClient, reviewHandoffClient } from "../platform/RepositoryClient";
 import { useObservation } from "../features/changes";
 import { Workbench } from "./workbench/Workbench";
+import { WorkbenchToolbar } from "./WorkbenchToolbar";
 import { WorkbenchLayoutMenu } from "./workbench/WorkbenchLayoutMenu";
 import { defaultWorkbenchLayout, type WorkbenchLayoutId } from "./workbench/workbenchLayout";
 import { HistoryGraph } from "../features/history";
@@ -22,12 +23,11 @@ import { resetPanelLayout } from "../ui/resize/panelLayout";
 import {
   AlertIcon,
   CloseIcon,
-  ChevronDownIcon,
   SidebarIcon,
   RefreshIcon,
   ResetLayoutIcon,
 } from "../ui/icons";
-import { RepositoryBrowser, RepositoryFiles, headLabel, useWorkspace, type RepositoryRenameState } from "../features/repositories";
+import { RepositoryBrowser, RepositorySelector, RepositoryFiles, headLabel, useWorkspace, type RepositoryRenameState } from "../features/repositories";
 import { WorkspaceSidebar } from "./WorkspaceSidebar";
 import { useTranslation, useLocale } from "../i18n";
 import { workspaceErrorMessage } from "../features/repositories";
@@ -139,14 +139,6 @@ export function Workspace({
     ?? (active ? { kind: "checking" as const, entryId: active.id, observationRevision: 0 } : null);
   const repositoryFile = browsedFile?.entryId === active?.id && browsedFile?.generation === selectionGeneration ? browsedFile.file : null;
   const workingBranch = active?.head.kind === "branch" || active?.head.kind === "unborn" ? active.head.name : null;
-  useEffect(() => {
-    if (!repositoriesOpen) return;
-    const dismiss = (event: PointerEvent) => {
-      if (!controlsRef.current?.contains(event.target as Node)) setRepositoriesOpen(false);
-    };
-    document.addEventListener("pointerdown", dismiss);
-    return () => document.removeEventListener("pointerdown", dismiss);
-  }, [repositoriesOpen]);
   const query = searchQuery.trim().toLocaleLowerCase();
   const visibleEntries = query
     ? snapshot.entries.filter(
@@ -161,8 +153,7 @@ export function Workspace({
       cancelRename(document.activeElement === document.body);
   }, [visibleEntries, renameState]);
 
-  function repositoryBrowser() {
-    return <RepositoryBrowser query={searchQuery} onQueryChange={setSearchQuery} opening={opening}
+  const repositoryBrowser = <RepositoryBrowser query={searchQuery} onQueryChange={setSearchQuery} opening={opening}
       onOpen={() => void openRepository()} list={{
         entries: visibleEntries,
         emptyMessage: t(snapshot.entries.length === 0 ? "app.noRepositories" : "app.noMatchingRepositories"),
@@ -172,24 +163,24 @@ export function Workspace({
           selectRepository(entryId);
           controlsRef.current?.querySelector<HTMLButtonElement>(".repository-selector")?.focus();
         },
-        onRename: (entry) => {
-          const draft = { entryId: entry.id, displayName: entry.repositoryLabel, busy: false, error: null };
-          renameStateRef.current = draft;
-          setRenameState(draft);
-        },
-        onRemove: (entryId) => void removeRepository(entryId),
         actionsDisabled: loading || mutating,
-        renameState,
-        onRenameChange: (displayName) => setRenameState((current) => current && { ...current, displayName, error: null }),
-        onRenameSave: () => void saveRename(),
-        onRenameCancel: cancelRename,
+        management: {
+          onRename: (entry) => {
+            const draft = { entryId: entry.id, displayName: entry.repositoryLabel, busy: false, error: null };
+            renameStateRef.current = draft;
+            setRenameState(draft);
+          },
+          onRemove: (entryId) => void removeRepository(entryId),
+          renameState,
+          onRenameChange: (displayName) => setRenameState((current) => current && { ...current, displayName, error: null }),
+          onRenameSave: () => void saveRename(),
+          onRenameCancel: cancelRename,
+        },
       }} />;
-  }
   return (
     <IconThemeProvider><div className="workspace-shell" ref={shellRef}>
       {client === repositoryClient ? <CompanionPresentationPublisher /> : null}
-      <header className={`workbench-toolbar${active ? " workbench-toolbar--branded" : ""}`}>
-        <div className="workbench-identity">
+      <WorkbenchToolbar branded={Boolean(active)} identity={<>
         {active ? <Brand compact /> : null}
         <Tooltip content={t(sidebarOpen ? "app.collapseSidebar" : "app.expandSidebar")} trigger={
           <button type="button" className="workspace-sidebar-toggle" aria-label={t(sidebarOpen ? "app.collapseSidebar" : "app.expandSidebar")}
@@ -198,26 +189,12 @@ export function Workspace({
             <SidebarIcon size={16} aria-hidden="true" />
           </button>
         } />
-        </div>
-        <div className="workspace-selectors">
-        <div className="repository-controls" ref={controlsRef} onKeyDown={(event) => {
-          if (event.key !== "Escape" || event.defaultPrevented) return;
-          setRepositoriesOpen(false);
-          controlsRef.current?.querySelector<HTMLButtonElement>(".repository-selector")?.focus();
-        }}>
-          <Tooltip content={active?.locationLabel ?? t("app.chooseRepository")} trigger={
-            <button type="button" className="repository-selector" aria-label={active ? t("app.currentRepository", { name: active.repositoryLabel }) : t("app.noCurrentRepository")}
-              aria-expanded={repositoriesOpen} aria-controls="repository-disclosure" onClick={() => setRepositoriesOpen(!repositoriesOpen)}>
-              <span>{active?.repositoryLabel ?? t("app.repositories")}</span>
-              <ChevronDownIcon aria-hidden="true" />
-            </button>
-          } />
-          {repositoriesOpen ? <div className="repository-disclosure" id="repository-disclosure">
-            {repositoryBrowser()}
-          </div> : null}
-        </div>
-        </div>
-        <div className="workbench-layout-control">
+        </>} selector={
+          <RepositorySelector active={active ?? null} open={repositoriesOpen}
+            onOpenChange={setRepositoriesOpen} controlsRef={controlsRef}>
+            {repositoryBrowser}
+          </RepositorySelector>
+        } actions={<>
           <Tooltip content={t("app.resetLayout")} trigger={
             <button type="button" className="ui-kebab-trigger" aria-label={t("app.resetLayout")}
               onClick={() => {
@@ -232,8 +209,7 @@ export function Workspace({
           <WorkbenchLayoutMenu value={layout} onChange={setLayout} />
           <LanguageMenu />
           {client === repositoryClient ? <CompanionSettings refreshRevision={surface.noticeRevision} /> : null}
-        </div>
-      </header>
+        </>} />
       <div className="workspace-body">
         <WorkspaceSidebar open={sidebarOpen}>
           {active && active.kind !== "unknown" ? <RepositoryFiles key={`${active.id}:${selectionGeneration}`}

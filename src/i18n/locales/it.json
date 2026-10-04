@@ -1,6 +1,5 @@
 {
   "companion.title": "Revisione rapida",
-  "companion.context": "Repository o albero di lavoro aperto",
   "companion.checking": "Verifica delle modifiche attuali…",
   "companion.unavailable": "Le modifiche attuali non sono disponibili. Apri GitView per continuare.",
   "companion.empty": "Nessuna modifica attuale.",

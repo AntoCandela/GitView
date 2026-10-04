@@ -15,32 +15,35 @@ import { headLabel } from "./headLabel";
 import { RepositoryNameEditor, type RepositoryRenameState } from "./RepositoryNameEditor";
 import { useTranslation } from "../../../i18n";
 
+/** Omission leaves repository rows selection-only, without management controls or drafts. */
+export interface RepositoryManagement {
+  onRename: (entry: RepositoryEntry) => void;
+  onRemove: (id: string) => void;
+  renameState: RepositoryRenameState | null;
+  onRenameChange: (value: string) => void;
+  onRenameSave: () => void;
+  onRenameCancel: (restoreFocus?: boolean) => void;
+}
+
 export function RepositoryList({
   entries,
   emptyMessage,
   selectedId,
   onSelect,
-  onRename,
-  onRemove,
+  management,
   actionsDisabled,
-  renameState,
-  onRenameChange,
-  onRenameSave,
-  onRenameCancel,
+  selectionDisabled = false,
 }: {
   entries: readonly RepositoryEntry[];
   emptyMessage: string;
   selectedId: string | null;
   onSelect: (id: string) => void;
-  onRename: (entry: RepositoryEntry) => void;
-  onRemove: (id: string) => void;
+  management?: RepositoryManagement;
   actionsDisabled: boolean;
-  renameState: RepositoryRenameState | null;
-  onRenameChange: (value: string) => void;
-  onRenameSave: () => void;
-  onRenameCancel: (restoreFocus?: boolean) => void;
+  selectionDisabled?: boolean;
 }) {
   const { locale, t } = useTranslation();
+  const renameState = management?.renameState;
   const scrollRef = useRef<HTMLElement>(null);
   const pendingFocusIndex = useRef<number | null>(null);
   const pathDescriptionId = useId();
@@ -137,16 +140,16 @@ export function RepositoryList({
               className={`repository-virtual-row${selected ? " is-selected" : ""}`}
               style={{ transform: `translateY(${row.start}px)` }}
             >
-              {renameState?.entryId === entry.id ? (
+              {management && renameState?.entryId === entry.id ? (
                 <RepositoryNameEditor
                   key={entry.id}
                   entry={entry}
                   state={renameState}
                   selected={selected}
                   pathDescriptionId={`${pathDescriptionId}-${row.index}`}
-                  onChange={onRenameChange}
-                  onSave={onRenameSave}
-                  onCancel={onRenameCancel}
+                  onChange={management.onRenameChange}
+                  onSave={management.onRenameSave}
+                  onCancel={management.onRenameCancel}
                 />
               ) : (
               <Tooltip
@@ -157,7 +160,8 @@ export function RepositoryList({
                     selected={selected}
                     type="button"
                     data-repository-index={row.index}
-                    onClick={() => onSelect(entry.id)}
+                    disabled={selectionDisabled}
+                    onClick={() => { if (!selectionDisabled) onSelect(entry.id); }}
                     onFocus={() => setFocusedIndex(row.index)}
                     tabIndex={row.index === tabStop ? 0 : -1}
                     aria-describedby={`${pathDescriptionId}-${row.index}`}
@@ -178,23 +182,23 @@ export function RepositoryList({
                 }
               />
               )}
-              <KebabMenu
+              {management ? <KebabMenu
                 label={t("repo.actions", { name: entry.repositoryLabel })}
                 disabled={actionsDisabled || renameState?.entryId === entry.id}
                 items={[
                   {
                     label: t("repo.rename"),
                     icon: <PencilIcon aria-hidden="true" />,
-                    onSelect: () => onRename(entry),
+                    onSelect: () => management.onRename(entry),
                   },
                   {
                     label: t("repo.remove"),
                     icon: <TrashIcon aria-hidden="true" />,
                     destructive: true,
-                    onSelect: () => onRemove(entry.id),
+                    onSelect: () => management.onRemove(entry.id),
                   },
                 ]}
-              />
+              /> : null}
               {/* Descriptions must remain available even when the tooltip popup is closed. */}
               <span hidden id={`${pathDescriptionId}-${row.index}`}>
                 {entry.locationLabel}
