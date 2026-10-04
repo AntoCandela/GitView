@@ -1,4 +1,5 @@
 /** Exercises compact opening, shared-context invalidation and hidden work through the real composition. */
+import "@testing-library/jest-dom/vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import type { BeginCompanionReviewResult, CompanionClient, ReviewSurfaceClient, ReviewSurfaceSnapshot, SurfaceNotice } from "../../src/contracts/companion";
@@ -15,7 +16,7 @@ function fixture() {
     workspace: { revision: 1, contextEpoch: "context-1", activeContextId: "one", restoring: false, persistenceError: null,
       entries: [{ id: "one", kind: "working_tree", repositoryLabel: "Repository", locationLabel: "Admitted worktree", head: { kind: "branch", name: "feature" }, availability: "available" }] },
     observation: readyObservation(),
-    presentation: { revision: 1, locale: "en-US", appearanceTheme: "cream", iconTheme: "classic", review: { mode: "changes", theme: "match", lineMode: "scroll" }, persistenceError: false, menuLabels: { openGitView: "Open in GitView", quit: "Quit" } },
+    presentation: { revision: 1, locale: "en-US", appearanceTheme: "cream", iconTheme: "classic", review: { mode: "changes", theme: "match", lineMode: "scroll" }, persistenceError: false, menuLabels: { openGitView: "Open GitView", quit: "Quit" } },
   };
   let listener: ((notice: SurfaceNotice) => void) | null = null;
   const transport: ReviewSurfaceClient = { bootstrap: async () => "companion", subscribe: async (next) => { listener = next; return () => { listener = null; }; }, snapshot: async () => surface };

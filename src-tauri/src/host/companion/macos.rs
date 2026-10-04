@@ -38,7 +38,7 @@ impl Drop for Monitors {
         unsafe {
             NSEvent::removeMonitor(&self.event);
             let center = NSNotificationCenter::defaultCenter();
-            for observer in &self.notifications { center.removeObserver(observer); }
+            for observer in &self.notifications { center.removeObserver(observer.as_ref()); }
         }
     }
 }
@@ -51,7 +51,7 @@ fn clear_access_observers() {
         let center = NSNotificationCenter::defaultCenter();
         for observer in slot.borrow_mut().drain(..) {
             // Tokens were created on this thread and remain retained until removal.
-            unsafe { center.removeObserver(&observer); }
+            unsafe { center.removeObserver(observer.as_ref()); }
         }
     });
 }

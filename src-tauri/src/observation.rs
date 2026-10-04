@@ -208,7 +208,9 @@ pub(crate) struct ObservationController {
 
 impl ObservationController {
     pub(crate) fn with_diagnostics(diagnostics: DiagnosticSink) -> Self {
-        Self { diagnostics, ..Self::default() }
+        let mut controller = Self::default();
+        controller.diagnostics = diagnostics;
+        controller
     }
 
     pub(crate) fn stop(&self) -> Option<tokio::task::JoinHandle<()>> {

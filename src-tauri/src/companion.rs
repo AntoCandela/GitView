@@ -163,7 +163,7 @@ impl ReviewState {
         let surface = &self.surfaces[scope.caller.index()];
         if scope.open_epoch != surface.epoch() { return Err(CompanionCode::StaleSurface); }
         if scope.caller == ReviewCaller::Companion && !self.available { return Err(CompanionCode::Disabled); }
-        if !surface.visible && (self.available || scope.caller == ReviewCaller::Companion) { return Err(CompanionCode::NotVisible); }
+        if !surface.visible { return Err(CompanionCode::NotVisible); }
         if context && scope.context_epoch != self.context_epoch { return Err(CompanionCode::StaleContext); }
         Ok(())
     }
@@ -207,7 +207,9 @@ impl ReviewCoordinator {
         for (listener, notice) in notices.into_iter().flatten() { listener(notice); }
     }
     pub(crate) fn demand(&self) -> bool {
-        let state = self.state.lock(); !state.available || state.surfaces.iter().any(|surface| surface.visible)
+        let state = self.state.lock();
+        state.surfaces[ReviewCaller::Main.index()].visible
+            || (state.available && state.surfaces[ReviewCaller::Companion.index()].visible)
     }
     pub(crate) fn set_available(&self, available: bool) {
         let (notice, visibility) = {

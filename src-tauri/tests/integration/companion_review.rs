@@ -319,3 +319,19 @@ async fn empty_handoff_preserves_empty_workspace_and_requires_claim_before_ack()
     assert!(matches!(result, ReviewHandoffResult::Applied { .. }));
     assert!(service.snapshot().await.active_context_id.is_none());
 }
+
+#[test]
+fn unavailable_companion_visibility_cannot_contribute_native_demand() {
+    let controller = ReviewCoordinator::new("context".into());
+    assert!(controller.demand());
+    controller.set_visibility(ReviewCaller::Main, false);
+    controller.set_visibility(ReviewCaller::Companion, true);
+    assert!(!controller.demand());
+    assert!(matches!(controller.capture(ReviewCaller::Companion), Err(CompanionCode::Disabled)));
+    controller.set_available(true);
+    assert!(controller.demand());
+    controller.set_available(false);
+    assert!(!controller.demand());
+    controller.set_visibility(ReviewCaller::Main, true);
+    assert!(controller.demand());
+}

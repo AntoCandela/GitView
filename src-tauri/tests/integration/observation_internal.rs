@@ -289,3 +289,38 @@ async fn hiding_an_open_waiter_cancels_it_while_visible_main_keeps_its_scan() {
     service.shutdown().await;
     wait_for_reaped_child(&root).await;
 }
+
+async fn assert_hidden_main_has_no_fallback_scan_demand(initially_available: bool) {
+    use crate::companion::ReviewCaller;
+    let (temp, root) = working_tree();
+    let (service, id) = selected_service(&root, &gated_status(temp.path())).await;
+    wait_for_probe(&root).await;
+    service.set_companion_available(initially_available);
+    service.set_surface_visibility(ReviewCaller::Main, false);
+    service.set_companion_available(false);
+    assert!(matches!(service.capture_surface_scope(ReviewCaller::Main), Err(crate::companion::CompanionCode::NotVisible)));
+    service.reconcile_surface_demand().await;
+    wait_for_reaped_child(&root).await;
+    tokio::time::sleep(Duration::from_millis(1200)).await;
+    assert_eq!(fs::read_to_string(temp.path().join("scans")).unwrap(), "scan\n");
+    fs::write(root.join(".gitview-release"), b"").unwrap();
+    service.set_surface_visibility(ReviewCaller::Main, true);
+    service.reconcile_surface_demand().await;
+    tokio::time::timeout(Duration::from_secs(5), async {
+        while !matches!(service.observe_selected_context(&id).await, ObservationSnapshot::Ready { .. }) {
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        }
+    }).await.unwrap();
+    assert_eq!(fs::read_to_string(temp.path().join("scans")).unwrap(), "scan\nscan\n");
+    service.shutdown().await;
+}
+
+#[tokio::test]
+async fn hidden_main_with_companion_disabled_stops_native_scans_until_main_is_visible() {
+    assert_hidden_main_has_no_fallback_scan_demand(false).await;
+}
+
+#[tokio::test]
+async fn companion_becoming_unavailable_does_not_restore_hidden_main_scan_demand() {
+    assert_hidden_main_has_no_fallback_scan_demand(true).await;
+}

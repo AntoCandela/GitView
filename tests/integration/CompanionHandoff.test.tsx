@@ -1,4 +1,5 @@
 /** Exercises discovery/claim application fences without treating main focus as delivery. */
+import "@testing-library/jest-dom/vitest";
 import { afterEach, expect, test, vi } from "vitest";
 import { act, cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react";
 import type { ClaimReviewHandoffResult, PendingReviewHandoffSnapshot, ReviewHandoffClient, ReviewHandoffTarget } from "../../src/contracts/companion";
