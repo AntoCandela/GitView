@@ -112,7 +112,7 @@ function ReferenceDetails({ refs, colors, head, preview = false }: {
         <h3>{label} <span>{entries.length}</span></h3>
         <ul>{shown.map((ref) => <li key={ref.name}>
           <Icon size={12} aria-hidden="true" style={{ color: colors.get(`${ref.kind}:${ref.name}`) }} />
-          <span className="history-ref-full-name">{ref.name}</span>
+          <span className={`history-ref-full-name${ref.kind === "tag" ? "" : " history-branch-name"}`}>{ref.name}</span>
         </li>)}</ul>
         {shown.length < entries.length && <div className="history-ref-hint">{entries.length - shown.length} more {label.toLowerCase()}</div>}
       </section>;
@@ -137,7 +137,7 @@ function ReferenceName({ reference }: { reference: Reference }) {
   const remoteEnd = reference.kind === "remote_tracking" ? reference.name.indexOf("/") + 1 : 0;
   const name = Array.from(reference.name.slice(remoteEnd));
   const split = Math.ceil(name.length / 2);
-  return <span className="history-ref-name" ref={label} aria-hidden="true">
+  return <span className={`history-ref-name${reference.kind === "tag" ? "" : " history-branch-name"}`} ref={label} aria-hidden="true">
     <span className="history-ref-name-measure" ref={measure}>{reference.name}</span>
     <span className="history-ref-name-display">{truncated ? <>
       {remoteEnd > 0 && <span className="history-ref-remote">{reference.name.slice(0, remoteEnd)}</span>}

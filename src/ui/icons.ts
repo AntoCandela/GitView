@@ -1,6 +1,7 @@
 /** Names the app's icon vocabulary; callers mark decorative instances aria-hidden. */
 
 export {
+  Check as CheckIcon,
   CircleAlert as AlertIcon,
   Cloud as RemoteBranchIcon,
   ChevronDown as ChevronDownIcon,
@@ -12,7 +13,6 @@ export {
   Folder as FolderIcon,
   GitBranch as BranchIcon,
   Tag as TagIcon,
-  FolderOpen as OpenWorktreeIcon,
   GitFork as WorktreeIcon,
   Palette as AppearanceIcon,
   PanelsTopLeft as LayoutIcon,

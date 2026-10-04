@@ -99,7 +99,7 @@ test("choosing an existing unadmitted worktree clears old views until its native
   const user = userEvent.setup();
   const switchResult = deferred<RepositoryMutationOutcome>();
   const client = workbenchClient();
-  client.listContexts = async () => ({ kind: "options", branches: [{ name: "main" }], worktrees: [
+  client.listContexts = async () => ({ kind: "options", branches: [{ name: "main" }, { name: "topic" }], worktrees: [
     { id: "opaque-worktree", label: "Topic worktree", branch: "topic", current: false },
   ] });
   let confirmed = snapshot;
@@ -114,7 +114,7 @@ test("choosing an existing unadmitted worktree clears old views until its native
   await user.click(screen.getByRole("button", { name: "Review src/example.ts" }));
   expect(await screen.findByText("working content")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "View branch or worktree: main" }));
-  await user.click(await screen.findByRole("button", { name: "Open worktree Topic worktree" }));
+  await user.click(await screen.findByRole("button", { name: "Open worktree Topic worktree for branch topic" }));
   expect(screen.queryByRole("region", { name: "Commit ancestry" })).not.toBeInTheDocument();
   expect(screen.queryByText("working content")).not.toBeInTheDocument();
   confirmed = {
@@ -131,7 +131,8 @@ test("choosing an existing unadmitted worktree clears old views until its native
 test("viewing a branch replaces ancestry but leaves the actual working-file selection and content untouched", async () => {
   const user = userEvent.setup();
   const client = workbenchClient();
-  client.listContexts = async () => ({ kind: "options", branches: [{ name: "main" }, { name: "topic" }], worktrees: [] });
+  client.listContexts = async () => ({ kind: "options", branches: [{ name: "main" }, { name: "topic" }],
+    worktrees: [{ id: "main-tree", label: "atlas", branch: "main", current: true }] });
   client.historyPage = async (entryId, _cursor, branch) => ({ kind: "page", page: historyPage(
     branch === "topic" ? [{ oid: historyOids.root, subject: "Topic-only history", parents: [], root: true }] : mergeHistory(),
     { entryId },
@@ -141,10 +142,15 @@ test("viewing a branch replaces ancestry but leaves the actual working-file sele
   await user.click(await screen.findByRole("button", { name: "Review src/example.ts" }));
   expect(await screen.findByText("working content")).toBeVisible();
   await user.click(screen.getByRole("button", { name: "View branch or worktree: main" }));
-  await user.click(await screen.findByRole("button", { name: "View branch topic" }));
+  const topic = await screen.findByRole("button", { name: "View branch topic" });
+  await user.click(topic);
   expect(await screen.findByRole("button", { name: `Topic-only history, Commit ${historyOids.root}` })).toBeVisible();
   expect(screen.getByRole("button", { name: "Review src/example.ts" })).toHaveAttribute("aria-pressed", "true");
   expect(screen.getByText("working content")).toBeVisible();
   expect(screen.getByRole("button", { name: "Current repository: atlas" })).toBeVisible();
   expect(screen.getByRole("button", { name: "View branch or worktree: topic" }).getAttribute("aria-description")).toMatch(/topic.*main/);
+  await user.click(screen.getByRole("button", { name: "View branch or worktree: topic" }));
+  const currentBranch = within(await screen.findByRole("group", { name: "Repository branches" }));
+  expect(currentBranch.getByRole("button", { name: "View branch main" })).toHaveAttribute("aria-current", "true");
+  expect(currentBranch.getByRole("button", { name: "View branch topic" })).toHaveAttribute("aria-pressed", "true");
 });

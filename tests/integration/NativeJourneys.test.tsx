@@ -236,8 +236,7 @@ test("view-only branch browsing and linked-worktree navigation preserve HEAD, in
   expect(await journey.request<JourneySafety>("fixture_verify")).toEqual({ repositoriesIntact: true, gitStateUnchanged: true, workingBytesExpected: true });
   await user.click(screen.getByRole("button", { name: `View branch or worktree: ${fixture.topicBranch}` }));
   await user.type(screen.getByRole("searchbox", { name: "Search branches and worktrees" }), "journey-linked");
-  const worktrees = within(await screen.findByRole("group", { name: "Worktrees" }, nativeWait));
-  await user.click(await worktrees.findByRole("button", { name: /^Open worktree / }, nativeWait));
+  await user.click(await screen.findByRole("button", { name: "Open worktree journey-linked for branch journey-linked" }, nativeWait));
   expect(await screen.findByRole("button", { name: "View branch or worktree: journey-linked" }, nativeWait)).toBeVisible();
   expect(await screen.findByRole("heading", { name: "Clean" }, nativeWait)).toBeVisible();
   expect(await activeEntryId()).not.toBe(mainEntryId);
