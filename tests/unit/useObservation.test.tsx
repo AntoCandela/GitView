@@ -15,6 +15,7 @@ function clientWith(observeSelectedContext: RepositoryClient["observeSelectedCon
   const snapshot = { revision: 0, entries: [], activeContextId: null, restoring: false, persistenceError: null };
   return {
     snapshot: async () => snapshot,
+    preferredLanguages: async () => ({ languages: [] }),
     openChosenRepository: async () => ({ kind: "cancelled", snapshot }),
     selectContext: async () => ({ kind: "not_found", snapshot }),
     refreshEntryAvailability: async () => snapshot,

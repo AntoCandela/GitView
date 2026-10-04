@@ -8,6 +8,7 @@ import type { HistoryPage, HistoryPageResult } from "../../src/contracts/history
 import type { CommitFilesResult, ContextOptionsResult } from "../../src/contracts/inspection";
 import type { RepositoryClient } from "../../src/contracts/repositories";
 import { HistoryGraph } from "../../src/features/history";
+import { setLocaleChoice, translate, type Locale } from "../../src/i18n";
 import { deferred } from "../support/deferred";
 import { historyClient, historyCommit, historyOids, historyPage, mergeHistory } from "../support/history";
 import { installVirtualLayout } from "../support/virtualLayout";
@@ -16,8 +17,9 @@ let restoreVirtualLayout: () => void;
 beforeEach(() => {
   restoreVirtualLayout = installVirtualLayout();
 });
-afterEach(() => {
+afterEach(async () => {
   cleanup();
+  await setLocaleChoice("en-US");
   restoreVirtualLayout();
   vi.restoreAllMocks();
 });
@@ -58,6 +60,52 @@ test("a viewed local branch name does not promote a coincident remote-tracking n
   const references = await screen.findByRole("dialog");
   expect(within(references).getByRole("region", { name: "Remote-tracking branches" })).toHaveTextContent("origin/topic");
   expect(ancestor).toHaveAttribute("aria-expanded", "false");
+});
+
+test.each<Locale>(["pt-BR", "pt-PT", "it", "es", "en-US", "en-GB"])("%s retranslates an existing history error without replacing expanded selection or raw commit data", async (locale) => {
+  const user = userEvent.setup();
+  const client = graphClient();
+  client.commitFiles = async () => ({ kind: "error", code: "missing_objects", message: "Private native message must not be shown" });
+  render(<HistoryGraph client={client} entryId="one" selectionGeneration={0} />);
+  const commit = await screen.findByRole("button", { name: `Merge topic, Commit ${merge}` });
+  await user.click(commit);
+  const alert = await screen.findByRole("alert");
+  const expansion = screen.getByRole("region", { name: `Changed files for commit ${merge}` });
+  await user.click(screen.getByRole("button", { name: "Show 2 more references" }));
+  const references = await screen.findByRole("dialog");
+  await act(async () => setLocaleChoice(locale));
+  expect(screen.getByRole("alert")).toBe(alert);
+  expect(alert).toHaveTextContent(translate(locale, "history.error.missing_objects"));
+  expect(alert).not.toHaveTextContent("Private native message");
+  expect(screen.getByRole("region", { name: translate(locale, "history.files.label", { oid: merge }) })).toBe(expansion);
+  expect(commit).toHaveAttribute("aria-expanded", "true");
+  expect(within(commit).getByText("Merge topic")).toBeVisible();
+  expect(screen.getByRole("dialog", { name: translate(locale, "history.refs.title") })).toBe(references);
+  expect(within(references).getByRole("region", { name: translate(locale, "history.refs.remoteBranches") })).toHaveTextContent("origin/main");
+  expect(within(references).getByRole("region", { name: translate(locale, "history.refs.tags") })).toHaveTextContent("release");
+  await user.keyboard("{Escape}");
+  await user.click(commit);
+  expect(commit).toHaveAttribute("aria-expanded", "false");
+});
+
+test.each<Locale>(["pt-BR", "pt-PT", "it", "es", "en-US", "en-GB"])("%s preserves committed parent, expanded folders and focus while translating controls", async (locale) => {
+  const user = userEvent.setup();
+  const client = graphClient();
+  render(<HistoryGraph client={client} entryId="one" selectionGeneration={0} />);
+  await user.click(await screen.findByRole("button", { name: `Merge topic, Commit ${merge}` }));
+  const parent = await screen.findByRole("combobox", { name: "Comparison parent" });
+  await user.selectOptions(parent, second);
+  await user.click(await screen.findByRole("button", { name: "Expand src" }));
+  await user.click(screen.getByRole("button", { name: "Expand src/nested" }));
+  const file = await screen.findByText("committed.ts");
+  act(() => parent.focus());
+  await act(async () => setLocaleChoice(locale));
+  expect(screen.getByRole("combobox", { name: translate(locale, "history.files.parent") })).toBe(parent);
+  expect(parent).toHaveValue(second);
+  expect(parent).toHaveFocus();
+  expect(screen.getByText("committed.ts")).toBe(file);
+  expect(file).toBeVisible();
+  expect(screen.getByRole("button", { name: translate(locale, "history.commitWithSubject", { subject: "Merge topic", oid: merge }) })).toHaveAttribute("aria-expanded", "true");
 });
 
 test("commit activation expands actual hierarchical file rows directly below it and toggles closed", async () => {
@@ -131,7 +179,7 @@ test("missing ancestry is not treated as an empty-tree root and native file erro
   client.commitFiles = async () => ({ kind: "error", code: "missing_objects", message: "Parent object unavailable." });
   render(<HistoryGraph client={client} entryId="one" selectionGeneration={0} />);
   await user.click(await screen.findByRole("button", { name: `Shallow commit, Commit ${first}` }));
-  expect(await screen.findByRole("alert")).toHaveTextContent("Parent object unavailable.");
+  expect(await screen.findByRole("alert")).toHaveTextContent(translate("en-US", "history.error.missing_objects"));
   expect(screen.queryByText(/Compared with the empty tree/)).not.toBeInTheDocument();
   await user.click(screen.getByText("Unresolved ancestry (1)"));
   expect(screen.getByText(missing)).toBeVisible();

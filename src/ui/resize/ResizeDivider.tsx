@@ -2,6 +2,7 @@
 import { useRef, useState, type PointerEvent, type RefObject } from "react";
 import { constrainResize, dividerSize, snapResizeToCenter } from "./resizeGeometry";
 import { Tooltip } from "../Tooltip";
+import { useTranslation } from "../../i18n";
 
 interface ResizeDividerProps {
   label: string;
@@ -20,6 +21,7 @@ interface ResizeDividerProps {
 /** `value` is the leading pane's pixel size within `root`; bounds use the same coordinate space. */
 export function ResizeDivider({ label, controls, root, axis = "width", value, min, max, onChange,
   snap = false, className = "", valueText }: ResizeDividerProps) {
+  const { t } = useTranslation();
   const [resizing, setResizing] = useState(false);
   const drag = useRef<{ pointerId: number; offset: number } | null>(null);
   const [snapped, setSnapped] = useState(false);
@@ -31,11 +33,11 @@ export function ResizeDivider({ label, controls, root, axis = "width", value, mi
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
     setSnapped(false);
   }
-  return <Tooltip content={snap ? `${label}. Drag near the center for a 50/50 split.` : label} trigger={<div className={`ui-resize-divider ${vertical ? "is-vertical" : "is-horizontal"}${resizing ? " is-resizing" : ""}${snapped ? " is-snapped" : ""} ${className}`}
+  return <Tooltip content={snap ? t("ui.resizeHint", { label }) : label} trigger={<div className={`ui-resize-divider ${vertical ? "is-vertical" : "is-horizontal"}${resizing ? " is-resizing" : ""}${snapped ? " is-snapped" : ""} ${className}`}
     role="separator" tabIndex={0} aria-label={label} aria-controls={controls}
     aria-orientation={vertical ? "vertical" : "horizontal"}
     aria-valuemin={Math.round(min)} aria-valuemax={Math.round(max)} aria-valuenow={Math.round(value)}
-    aria-valuetext={valueText ?? `${Math.round(value)} pixels`}
+    aria-valuetext={valueText ?? t("ui.pixels", { count: Math.round(value) })}
     onPointerDown={(event) => {
       if (drag.current || event.button !== 0 || !event.isPrimary) return;
       const rect = root.current?.getBoundingClientRect();

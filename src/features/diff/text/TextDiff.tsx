@@ -2,6 +2,7 @@
 
 import { useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { ReviewIdentity, ReviewText, TextHunk } from "../../../contracts/diff";
+import { useTranslation } from "../../../i18n";
 import { codeTheme, type CodeTheme, type ReviewMode, type LineMode } from "../../appearance";
 import type { Token, ChangedRange } from "../highlighting/highlighting";
 import { sourceLines } from "../highlighting/highlighting";
@@ -229,6 +230,7 @@ export function TextDiff({ review, updating = false, oldEndpointLabel, newEndpoi
   theme?: CodeTheme;
   lineMode?: LineMode;
 }) {
+  const { t } = useTranslation();
   const comparisonPane = useRef<HTMLDivElement>(null);
   const oldPaneId = useId();
   const { diffRatio } = usePanelLayout();
@@ -337,7 +339,7 @@ export function TextDiff({ review, updating = false, oldEndpointLabel, newEndpoi
   function renderPane(side: "old" | "new") {
     const width = sourceWidths[side];
     return <div id={side === "old" ? oldPaneId : undefined} className={`diff-source-pane ${side}`} ref={side === "old" ? oldPane : newPane}
-      role="region" aria-label={`${side === "old" ? "Old" : "New"} source ${mode === "full" ? "file" : "hunks"}`} tabIndex={0}
+      role="region" aria-label={t("diff.source.region", { side, mode })} tabIndex={0}
       onScroll={(event) => rememberReadingAnchor(event.currentTarget, side === "old" ? newPane.current : oldPane.current)}>
       <div className="diff-source-content" style={{ height: layout.height, width: lineMode === "wrap" ? "100%" : `max(100%, ${width}px)` }}>
         {rows.slice(visibleRange.start, visibleRange.end).map((row, index) => {
@@ -345,12 +347,12 @@ export function TextDiff({ review, updating = false, oldEndpointLabel, newEndpoi
           const rowIndex = visibleRange.start + index;
           if (row.kind === "hunk") return <div key={row.key} className="diff-hunk" style={{ top: row.top, height: row.height }}>{row.heading}</div>;
           if (row.kind === "newline") return <div key={row.key} className="diff-no-newline" style={{ top: row.top, height: row.height }}>
-            {line ? <span data-source-measure={rowIndex}>{`No final newline (${side} side)`}</span> : null}
+            {line ? <span data-source-measure={rowIndex}>{t("diff.source.noFinalNewline", { side })}</span> : null}
           </div>;
           return <div key={row.key} className={`diff-line ${line?.kind ?? "absent"}`} style={{ top: row.top, height: row.height }}
-            data-reading-index={rowIndex} aria-label={line ? `${side === "old" ? "Old" : "New"} ${line.kind} line ${line.number}` : `No ${side} line`}>
+            data-reading-index={rowIndex} aria-label={line ? t("diff.source.line", { side, kind: line.kind, number: String(line.number) }) : t("diff.source.noLine", { side })}>
             {line ? <>
-              <span className="diff-line-number" aria-label={`${side === "old" ? "Old" : "New"} line number`}>{line.number}</span>
+              <span className="diff-line-number" aria-label={t("diff.source.lineNumber", { side })}>{line.number}</span>
               <span className="diff-line-sign" aria-hidden="true">{line.kind === "addition" ? "+" : line.kind === "removal" ? "−" : " "}</span>
               <code data-source-measure={rowIndex}>{renderSource(line.text, highlight.code?.[side][line.number - 1],
                 highlight.code?.[side === "old" ? "oldChanges" : "newChanges"][line.number])}</code>
@@ -361,18 +363,18 @@ export function TextDiff({ review, updating = false, oldEndpointLabel, newEndpoi
     </div>;
   }
 
-  const oldLabel = oldEndpointLabel ?? (review?.fromAbsent || review?.from === "absent" ? "Absent" : review?.from === "HEAD" ? "HEAD" : "Index");
-  const newLabel = newEndpointLabel ?? (review?.toAbsent ? "Absent" : review?.to === "index" ? "Index" : "Working files");
+  const oldLabel = oldEndpointLabel ?? (review?.fromAbsent || review?.from === "absent" ? t("diff.endpoint.absent") : review?.from === "HEAD" ? "HEAD" : t("diff.endpoint.index"));
+  const newLabel = newEndpointLabel ?? (review?.toAbsent ? t("diff.endpoint.absent") : review?.to === "index" ? t("diff.endpoint.index") : t("diff.endpoint.workingFiles"));
   const codePalette = codeTheme(theme).preview;
   return <>
-    {notice && review ? <p className="diff-reading-notice" role="status">Reading position reset: the previously visible line changed.</p> : null}
-    {highlight.error && theme !== "plain" && review ? <p className="diff-reading-notice" role="status">Syntax highlighting unavailable; source remains readable.</p> : null}
+    {notice && review ? <p className="diff-reading-notice" role="status">{t("diff.source.positionReset")}</p> : null}
+    {highlight.error && theme !== "plain" && review ? <p className="diff-reading-notice" role="status">{t("diff.source.highlightUnavailable")}</p> : null}
     <div ref={comparisonPane} className="diff-comparison" hidden={!review}
       style={{ "--diff-columns": `minmax(0, ${visibleRatio}fr) ${dividerSize}px minmax(0, ${1 - visibleRatio}fr)` } as CSSProperties}>
-      <div className="diff-source-headings"><span>Old · {oldLabel}</span><span>New · {newLabel}</span></div>
-      <ResizeDivider label="Resize old and new versions" controls={oldPaneId} root={comparisonPane}
+      <div className="diff-source-headings"><span>{t("diff.endpoint.oldHeading", { endpoint: oldLabel })}</span><span>{t("diff.endpoint.newHeading", { endpoint: newLabel })}</span></div>
+      <ResizeDivider label={t("diff.source.resize")} controls={oldPaneId} root={comparisonPane}
         value={oldWidth} min={minimumWidth} max={usableWidth - minimumWidth} snap
-        className="diff-divider" valueText={`${Math.round(visibleRatio * 100)}% old, ${Math.round((1 - visibleRatio) * 100)}% new`}
+        className="diff-divider" valueText={t("diff.source.proportions", { old: Math.round(visibleRatio * 100), new: Math.round((1 - visibleRatio) * 100) })}
         onChange={(value) => {
           const available = (comparisonPane.current?.getBoundingClientRect().width ?? 0) - dividerSize;
           if (available > 0) setDiffRatio(value / available);
@@ -381,8 +383,8 @@ export function TextDiff({ review, updating = false, oldEndpointLabel, newEndpoi
         style={{ "--code-bg": codePalette.background, "--code-ink": codePalette.foreground,
           "--code-muted": codePalette.muted, "--code-add-bg": codePalette.addition, "--code-remove-bg": codePalette.removal,
           "--code-inline-add-bg": codePalette.inlineAdd, "--code-inline-remove-bg": codePalette.inlineRemove } as CSSProperties}
-        role="region" aria-label={updating ? "Last verified file comparison" : "Read-only file comparison"}
-        aria-description={`${mode === "full" ? "Complete verified file snapshots." : "Changed hunks only, not complete files."} Vertical scrolling is shared; ${lineMode === "wrap" ? "long source lines wrap within each pane." : "each source pane scrolls horizontally independently."}`}>
+        role="region" aria-label={t(updating ? "diff.source.lastVerified" : "diff.source.readOnly")}
+        aria-description={t("diff.source.description", { mode, lineMode })}>
         {renderPane("old")}{renderPane("new")}
       </div>
     </div>

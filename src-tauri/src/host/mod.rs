@@ -3,6 +3,7 @@
 //! Only the picker and Git discovery supply paths; renderer commands use opaque IDs.
 
 mod commands;
+mod languages;
 mod renderer_diagnostics;
 
 use std::{future::Future, time::Duration};
@@ -94,6 +95,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             commands::workspace_snapshot,
+            commands::preferred_languages,
             commands::open_chosen_repository,
             commands::select_context,
             commands::rename_repository,

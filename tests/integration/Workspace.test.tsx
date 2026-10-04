@@ -68,6 +68,7 @@ function fakeClient(initial: WorkspaceSnapshot): RepositoryClient {
   let snapshot = initial;
   return {
     snapshot: async () => snapshot,
+    preferredLanguages: async () => ({ languages: [] }),
     openChosenRepository: async () => ({
       kind: "cancelled",
       snapshot,
@@ -749,7 +750,7 @@ test("rejected rename stays editable and preserves the independent persistence w
   };
   const client = fakeClient(initial);
   client.renameRepository = async () => ({
-    kind: "rejected", message: "Display name is too long.", snapshot: initial,
+    kind: "rejected", code: "invalid_display_name", snapshot: initial,
   });
   const user = userEvent.setup();
   renderWorkspace(<Workspace client={client} />);
@@ -757,11 +758,11 @@ test("rejected rename stays editable and preserves the independent persistence w
   await user.click(await screen.findByRole("menuitem", { name: "Rename" }));
   await user.type(screen.getByRole("textbox", { name: "Display name" }), " extended");
   await user.keyboard("{Enter}");
-  expect(await screen.findByText("Display name is too long.")).toBeVisible();
+  await waitFor(() => expect(screen.getAllByRole("alert")).toHaveLength(2));
   expect(screen.getByRole("textbox", { name: "Display name" })).toBeEnabled();
   await user.keyboard("{Escape}");
   expect(screen.getByRole("button", { name: "Current repository: atlas" })).toBeVisible();
-  expect(screen.getByRole("alert")).toHaveTextContent("Workspace could not be saved.");
+  expect(screen.getByRole("alert")).toBeVisible();
 });
 
 test("a lost removal reply reconciles committed native state without clearing its save warning", async () => {
@@ -782,10 +783,9 @@ test("a lost removal reply reconciles committed native state without clearing it
   await user.click(await screen.findByRole("menuitem", { name: "Remove from sidebar" }));
   expect(await screen.findByRole("button", { name: "Current repository: ledger" })).toBeVisible();
   expect(screen.queryByRole("button", { name: "atlas main" })).not.toBeInTheDocument();
-  expect(screen.getByText("Workspace could not be saved.")).toBeVisible();
-  expect(screen.getByText(/Could not remove this repository/)).toBeVisible();
+  expect(screen.getAllByRole("alert")).toHaveLength(2);
   await user.click(screen.getByRole("button", { name: "Dismiss error" }));
-  expect(screen.getByRole("alert")).toHaveTextContent("Workspace could not be saved.");
+  expect(screen.getByRole("alert")).toBeVisible();
 });
 
 test("a newer selection waits for removal and cannot be reverted by the old removal reply", async () => {

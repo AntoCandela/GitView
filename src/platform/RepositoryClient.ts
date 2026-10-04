@@ -27,7 +27,8 @@ import type {
 
 export const repositoryClient: RepositoryClient & DiagnosticHealthClient = {
   snapshot: () => invokeRepository<WorkspaceSnapshot>("workspace_snapshot"),
-  openChosenRepository: () => invokeRepository<OpenOutcome>("open_chosen_repository"),
+  preferredLanguages: () => invoke<{ languages: string[] }>("preferred_languages"),
+  openChosenRepository: (locale) => invokeRepository<OpenOutcome>("open_chosen_repository", { locale }),
   selectContext: (entryId) =>
     invokeRepository<SelectOutcome>("select_context", { entryId }),
   refreshEntryAvailability: (entryId) =>

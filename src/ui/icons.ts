@@ -14,6 +14,7 @@ export {
   GitBranch as BranchIcon,
   Tag as TagIcon,
   GitFork as WorktreeIcon,
+  Languages as LanguageIcon,
   Palette as AppearanceIcon,
   PanelsTopLeft as LayoutIcon,
   PanelLeft as SidebarIcon,

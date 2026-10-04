@@ -3,6 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { RepositoryClient } from "../../../contracts/repositories";
 import type { RepositoryDirectory, RepositoryFile, RepositoryFilesRequest } from "../../../contracts/browsing";
+import type { HistoryErrorCode } from "../../../contracts/history";
+
+export type RepositoryFilesError =
+  | { readonly domain: "listing"; readonly code: HistoryErrorCode }
+  | { readonly domain: "transport"; readonly code: "interrupted" }
+  | { readonly domain: "verification"; readonly code: "mismatch" };
 
 interface DirectoryProgress {
   directory: RepositoryDirectory | null;
@@ -15,7 +21,7 @@ interface ListingView {
   directories: RepositoryDirectory[];
   complete: boolean;
   loading: boolean;
-  error: string | null;
+  error: RepositoryFilesError | null;
 }
 interface ListingSession {
   client: RepositoryClient;
@@ -28,7 +34,7 @@ interface ListingSession {
   expanded: Set<string>;
   busy: boolean;
   disposed: boolean;
-  error: string | null;
+  error: RepositoryFilesError | null;
   timer: number | undefined;
 }
 const emptyView: ListingView = { listingId: null, files: [], directories: [], complete: false, loading: false, error: null };
@@ -91,12 +97,12 @@ export function useRepositoryFiles(client: RepositoryClient, entryId: string, en
       void client.listRepositoryFiles(entryId, request).then((result) => {
         if (current.disposed || desired.current !== scope) return;
         if (result.kind === "stale_selection") {
-          current.error = "Repository listing expired or selection changed. Refresh the file tree.";
+          current.error = { domain: "listing", code: "stale_selection" };
         } else if (result.kind === "unavailable") {
-          current.error = result.message;
+          current.error = { domain: "listing", code: result.code };
         } else if (result.entryId !== entryId || result.directoryId !== directoryId
           || (current.listingId !== null && result.listingId !== current.listingId)) {
-          current.error = "The repository listing could not be verified.";
+          current.error = { domain: "verification", code: "mismatch" };
         } else {
           current.listingId = result.listingId;
           for (const file of result.files) current.files.set(file.id, file);
@@ -109,7 +115,7 @@ export function useRepositoryFiles(client: RepositoryClient, entryId: string, en
           progress.complete = result.cursor === null;
         }
       }).catch(() => {
-        if (!current.disposed && desired.current === scope) current.error = "Desktop connection interrupted. Refresh the file tree.";
+        if (!current.disposed && desired.current === scope) current.error = { domain: "transport", code: "interrupted" };
       }).finally(() => {
         current.busy = false;
         if (current.disposed || desired.current !== scope) return;

@@ -6,9 +6,20 @@ export interface ChangeTreeDirectory {
   segments: string[];
 }
 
+/** Locale-independent status facts; source categories and marker identity never depend on prose. */
+export type ChangeStatusFact =
+  | { readonly kind: "untracked" | "conflict" | "unchanged" | "unavailable" }
+  | { readonly kind: "staged" | "unstaged"; readonly change: "added" | "modified" | "deleted" }
+  | { readonly kind: "unsupported"; readonly change: "rename_or_copy" | "submodule" | "type_change" }
+  | { readonly kind: "committed"; readonly change: "added" | "modified" | "deleted" | "type_change" };
+
+export interface ChangeStatusCount {
+  readonly fact: ChangeStatusFact;
+  readonly count: number;
+}
+
 export interface ChangeTreeFile extends ChangeTreeDirectory {
-  /** Presentation labels separated by ", " when a file has multiple change categories. */
-  status: string;
+  readonly statuses: readonly ChangeStatusFact[];
   marker: string;
   unsupported?: boolean;
 }
@@ -43,21 +54,23 @@ export function changeDirectoryId(segments: readonly string[]): string {
 }
 
 /** Counts every descendant independently of expansion and progressive directory listing. */
-export function summarizeDirectoryChanges(files: readonly ChangeTreeFile[]): ReadonlyMap<string, string> {
-  const counts = new Map<string, Map<string, number>>();
+export function summarizeDirectoryChanges(files: readonly ChangeTreeFile[]): ReadonlyMap<string, readonly ChangeStatusCount[]> {
+  const counts = new Map<string, Map<string, ChangeStatusCount>>();
   for (const file of files) {
-    if (file.status === "Unchanged") continue;
-    const statuses = file.status ? file.status.split(", ") : ["Status unavailable"];
-    for (let depth = 1; depth < file.segments.length; depth++) {
-      const id = changeDirectoryId(file.segments.slice(0, depth));
-      let directory = counts.get(id);
-      if (!directory) { directory = new Map(); counts.set(id, directory); }
-      for (const status of statuses) directory.set(status, (directory.get(status) ?? 0) + 1);
+    const facts: readonly ChangeStatusFact[] = file.statuses.length ? file.statuses : [{ kind: "unavailable" }];
+    for (const fact of facts) {
+      if (fact.kind === "unchanged") continue;
+      const key = "change" in fact ? `${fact.kind}:${fact.change}` : fact.kind;
+      for (let depth = 1; depth < file.segments.length; depth++) {
+        const id = changeDirectoryId(file.segments.slice(0, depth));
+        let directory = counts.get(id);
+        if (!directory) { directory = new Map(); counts.set(id, directory); }
+        directory.set(key, { fact, count: (directory.get(key)?.count ?? 0) + 1 });
+      }
     }
   }
   return new Map([...counts].map(([id, statuses]) => [
-    id, [...statuses].sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0)
-      .map(([status, count]) => `${status}: ${count}`).join(" · "),
+    id, [...statuses].sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0).map(([, value]) => value),
   ]));
 }
 

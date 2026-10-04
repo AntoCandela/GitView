@@ -105,6 +105,8 @@ Follow [CODE-STYLE.md](../CODE-STYLE.md) for Rust/frontend headers, API document
 | Module | Responsibility |
 | --- | --- |
 | `src/main.tsx` | React bootstrap and global stylesheet entry. |
+| `src/i18n/` | Bundled six-locale ICU catalogs, ordered locale resolution, formatter caches and one injected-source external preference store. No app, feature, contract or platform imports. |
+| `src/app/LanguageMenu.tsx` | Persistent language/System choice, pending discovery and session-only feedback; does not own repository state. |
 | `src/app/Workspace.tsx` and `WorkspaceSidebar.tsx` | Screen composition, full-bleed workbench and independently mounted repository-file sidebar. |
 | `src/features/repositories/useWorkspace.ts` | Snapshot ordering, serialized selection/sidebar mutations, restoration polling and transport recovery through the curated repository API. |
 | `src/features/repositories/catalog/RepositoryList.tsx` | Virtualized repository rows, keyboard navigation and per-row actions. |
@@ -132,6 +134,7 @@ Follow [CODE-STYLE.md](../CODE-STYLE.md) for Rust/frontend headers, API document
 | `scripts/fileIconThemes.ts` | Build-time upstream icon associations, local SVG assets and canonical license imports. |
 | `src/ui/KebabMenu.tsx` | Reusable configurable Base UI action menu, keyboard/dismissal behavior and event isolation. |
 | `src-tauri/src/lib.rs` and `host/` | Library declarations and supported `run` entry; host-only Tauri setup, picker, restricted commands and renderer diagnostics. |
+| `src-tauri/src/host/languages.rs` and `src-tauri/build.rs` | Native OS language preferences and supported-locale-only picker titles generated from the same catalogs. |
 | `src-tauri/src/application.rs` | Opening, restoration/recovery, ordered persistence and selected-context observation orchestration. |
 | `src-tauri/src/workspace/mod.rs` | In-memory authoritative choices, app names, atomic admission/selection/removal and snapshots. |
 | `src-tauri/src/workspace/persistence.rs` | Bounded versioned JSON validation and complete private-file replacement. |
@@ -160,6 +163,19 @@ Git probes run outside the workspace state lock. Selection immediately publishes
 The 30-second budget spans an entire probe and both opening-verification passes, not each subprocess. Each output stream is capped at 1 MiB. Failed HEAD verification is an unborn branch only when a separate reference inspection establishes that its symbolic target is absent; other reference-read failures reject the probe.
 
 `src/style.scss` owns tokens and global rules, then emits shared styles from `src/ui/styles.scss` and styles kept with their feature owners. The shared tooltip uses generic `ui-tooltip` selectors.
+
+## Interface localization
+
+`src/main.tsx` injects `RepositoryClient.preferredLanguages()` before mounting the workspace. The main-window-only native command reads macOS `NSLocale.preferredLanguages`, Windows `GetUserPreferredUILanguages`, or Linux desktop-process language settings. Linux honors nonempty `LC_ALL` before `LC_MESSAGES` before `LANG`; C/POSIX disables localization, otherwise `LANGUAGE` supplies the priority list ahead of the effective message locale. Preferences are not logged, and Git subprocess parsing retains fixed `LC_ALL=C`.
+
+All six catalogs are bundled locally. `en-US` defines `MessageKey`; ICU formatter instances are cached by locale/key. Runtime missing entries fall back to canonical English, while `scripts/check-locales.mjs` rejects missing/extra keys, malformed ICU, incompatible arguments/select cases and invalid plural contracts in the normal build/shared verifier. Catalog validation cannot establish linguistic quality.
+
+One locale snapshot owns the committed choice, resolved locale, pending System intent and persistence warning. The versioned `gitview.locale` override stores manual choices; committing System removes it. Current-generation results atomically update document language/title/description and app presentation; stale native replies cannot overwrite a newer manual or external-storage choice. Reads, writes and native failures remain distinct. Native discovery is bounded; unavailable preferences fall back to `en-US` without stranding bootstrap.
+
+Workspace/history/listing/review errors retain stable codes and are translated when rendered, never by parsing English or exposing native private prose. Folder summaries aggregate immutable status facts before translation; markers and repository identities stay stable. Language changes preserve mounted panels, history parents, source bytes, selection and presentation preference identifiers. Required app text includes accessible names, tooltips, endpoint captions and no-final-newline notices; product/proper names and original legal text remain unchanged.
+
+`openChosenRepository(locale)` accepts only the supported enum. Native build preparation validates and generates the six picker titles from `native.pickerTitle`; arbitrary renderer title strings and runtime catalog downloads are not accepted. Native dialog buttons remain controlled by the OS. `OpenOutcome` and mutation rejections expose closed `GitErrorCode`/`WorkspaceRejectionCode` facts, not display-message fields.
+
 
 ## Repository-file browsing
 
@@ -313,5 +329,7 @@ npm run preview:evidence -- --artifact path/to/preview --platform macos-arm64 --
 ```
 
 Supported evidence platforms are `macos-arm64`, `windows-x64` and `ubuntu-24.04-x64`. Reports use `schemaVersion: 1`, `boundary: "packaged-native"`, the platform, revision and matching SHA-256 `artifactHash`; human observer/time metadata; OS, architecture, WebView and Git versions; and `installedGit`/`supportedOs` prerequisite statuses. Required scenarios are `install_launch`, `native_picker`, `native_ipc`, `secondary_window_denied`, `repository_open`, `linked_and_bare`, `live_observation`, `read_only_repository`, `diagnostics_correlation`, `diagnostics_privacy` and `diagnostics_health`. Each must have `status: "passed"` and `observed: true`; failed, blocked, missing or not-run observations leave readiness false and exit nonzero.
+
+Reports also require `localization`, keyed by each of `pt-BR`, `pt-PT`, `it`, `es`, `en-US` and `en-GB`. Each locale contains `selection_persistence`, `interface_errors_counts_accessibility`, `native_picker_title`, `repository_data_unchanged` and `linguistic_review`, each with `status: "passed"` and `observed: true` only after the actual human observation. Selection evidence includes System, restart, failed-save feedback and preserved review context. Linguistic review is independent of schema/key coverage. Missing locale cells, failed journeys or unreviewed translations add `localization_unverified` and keep readiness false. These observations are bound to the report's exact native artifact/platform; do not fill them from browser fixtures or generated translations.
 
 The tool hashes the actual artifact and strips private/free-form report details. A validated report is attributed human evidence, not independent certification. Signing, notarization and public-release readiness remain separately unassessed.

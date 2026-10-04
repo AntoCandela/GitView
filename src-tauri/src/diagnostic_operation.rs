@@ -78,7 +78,7 @@ impl DiagnosticOutcome for OpenOutcome {
     fn diagnostic_outcome(&self) -> (Event, Option<Code>) {
         match self {
             Self::Cancelled { .. } => (Event::Cancelled, None),
-            Self::Rejected { code, .. } => (Event::Failed, Some(Code::from_str(code).unwrap_or(Code::RepositoryUnavailable))),
+            Self::Rejected { code, .. } => (Event::Failed, Some(Code::from_str(code.code()).unwrap_or(Code::RepositoryUnavailable))),
             _ => (Event::Completed, None),
         }
     }

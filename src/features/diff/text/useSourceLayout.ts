@@ -1,6 +1,7 @@
 /** Owns font-aware source widths and aligned variable-height rows without expanding the virtual DOM window. */
 import { useLayoutEffect, useMemo, useState, type RefObject } from "react";
 import type { LineMode } from "../../appearance";
+import { useTranslation } from "../../../i18n";
 
 export interface SourceLayoutRow {
   key: string;
@@ -40,6 +41,9 @@ function sourceTextWidth(context: CanvasRenderingContext2D, text: string) {
 export function useSourceLayout<Row extends SourceLayoutRow>(base: SourceLayout<Row>,
   oldPane: RefObject<HTMLDivElement | null>, newPane: RefObject<HTMLDivElement | null>, lineMode: LineMode,
   visibleRange: { start: number; end: number }): { layout: SourceLayout<Row>; sourceWidths: Widths } {
+  const { t } = useTranslation();
+  const oldNewlineLabel = t("diff.source.noFinalNewline", { side: "old" });
+  const newNewlineLabel = t("diff.source.noFinalNewline", { side: "new" });
   const [measurements, setMeasurements] = useState<Measurements | null>(null);
   const [heights, setHeights] = useState<MeasuredHeights>(() => ({ scope: null, rows: new Map() }));
 
@@ -81,8 +85,8 @@ export function useSourceLayout<Row extends SourceLayoutRow>(base: SourceLayout<
             width.old = width.new = textWidth(row.heading, sourceFont);
             padding = 16;
           } else if (row.kind === "newline") {
-            if (row.old) width.old = textWidth("No final newline (old side)", noteFont);
-            if (row.new) width.new = textWidth("No final newline (new side)", noteFont);
+            if (row.old) width.old = textWidth(oldNewlineLabel, noteFont);
+            if (row.new) width.new = textWidth(newNewlineLabel, noteFont);
             padding = 64;
           } else {
             if (row.old) width.old = textWidth(row.old.text, sourceFont);
@@ -109,7 +113,7 @@ export function useSourceLayout<Row extends SourceLayoutRow>(base: SourceLayout<
       fonts?.removeEventListener("loadingdone", fontsChanged);
       fonts?.removeEventListener("loadingerror", fontsChanged);
     };
-  }, [base.rows, oldPane, newPane]);
+  }, [base.rows, oldPane, newPane, oldNewlineLabel, newNewlineLabel]);
 
   const layout = useMemo(() => {
     if (lineMode === "scroll" || !measurements) return base;

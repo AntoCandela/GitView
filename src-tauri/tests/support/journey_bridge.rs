@@ -122,6 +122,8 @@ impl Bridge {
         }
         match request.command.as_str() {
             "workspace_snapshot" => service_result!(self.service.snapshot()),
+            // Explicit isolated fixture, not evidence of the host OS language preference.
+            "preferred_languages" => Ok(json!({ "languages": ["en-US"] })),
             "open_chosen_repository" => match self.choices.pop_front().ok_or("No fixture picker choice queued.")? {
                 Choice::Main => service_result!(self.service.open_chosen(&self.fixture.main)),
                 Choice::Other => service_result!(self.service.open_chosen(&self.fixture.other)),

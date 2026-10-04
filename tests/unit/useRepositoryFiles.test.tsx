@@ -105,7 +105,7 @@ test("a delayed refresh keeps the previous listing usable and reports a replacem
   expect(result.current.files).toEqual([first]);
   expect(result.current.listingId).toBe("old");
   expect(result.current.complete).toBe(false);
-  expect(result.current.error).toBe("Refresh unavailable.");
+  expect(result.current.error).toEqual({ domain: "listing", code: "inaccessible" });
 });
 
 test("replacement commits the reachable pages without waiting for collapsed branches or accumulating older rows", async () => {

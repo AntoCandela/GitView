@@ -26,6 +26,13 @@
     padding: 4px 8px 8px;
     font: 600 12px/1.4 var(--font-ui);
   }
+  .language-popup {
+    width: 288px;
+    .ui-radio-group { grid-template-columns: minmax(0, 1fr); }
+    .ui-radio-option { min-width: 0; }
+    .ui-radio-content { white-space: normal; overflow-wrap: anywhere; }
+    p { margin: 8px; font-size: 12px; }
+  }
   .workbench-layout-options {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
@@ -56,6 +63,8 @@
     background: var(--canvas);
     color: var(--ink);
     font: 500 10px/1.2 var(--font-ui);
+    text-align: center;
+    overflow-wrap: anywhere;
 
     &.is-top {
       grid-column: 1 / -1;

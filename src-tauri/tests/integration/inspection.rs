@@ -1,7 +1,7 @@
 //! Exercises real local Git context discovery, pinned branch views and parent-specific file lists.
 
 use super::*;
-use crate::{application::RepositoryService, history::{HistoryPage, HistoryPageResult}, test_support::{self, ManualClock}, workspace::{MutationOutcome, OpenOutcome}};
+use crate::{application::RepositoryService, history::{HistoryPage, HistoryPageResult}, test_support::{self, ManualClock}, workspace::{MutationOutcome, OpenOutcome, WorkspaceRejectionCode}};
 use std::{fs, path::Path, sync::Arc, time::Duration};
 
 fn head(root: &Path) -> String { String::from_utf8(test_support::git_output(root, &["rev-parse", "HEAD"]).stdout).unwrap().trim_end().to_owned() }
@@ -223,7 +223,7 @@ exec git "$@"
     clock.wait_for_file(&temp.path().join("entered")).await;
     clock.finish(service.select(&entry)).await;
     fs::write(temp.path().join("release"), "").unwrap();
-    assert!(matches!(clock.finish(request).await.unwrap(), MutationOutcome::Rejected { .. }));
+    assert!(matches!(clock.finish(request).await.unwrap(), MutationOutcome::Rejected { code: WorkspaceRejectionCode::RepositoryChanged, .. }));
     assert_eq!(service.snapshot().await.entries.len(), 1);
     fs::remove_file(temp.path().join("entered")).unwrap();
     fs::remove_file(temp.path().join("release")).unwrap();
@@ -249,7 +249,7 @@ async fn replaced_worktree_location_cannot_be_admitted_with_an_old_issued_id() {
     fs::rename(&linked, temp.path().join("old-linked")).unwrap();
     fs::create_dir(&linked).unwrap();
     test_support::git(&linked, &["init", "-b", "unrelated"]);
-    assert!(matches!(clock.finish(service.select_worktree(&entry, &target)).await, MutationOutcome::Rejected { .. }));
+    assert!(matches!(clock.finish(service.select_worktree(&entry, &target)).await, MutationOutcome::Rejected { code: WorkspaceRejectionCode::RepositoryUnavailable, .. }));
     assert_eq!(service.snapshot().await.active_context_id.as_deref(), Some(entry.as_str()));
     assert_eq!(service.snapshot().await.entries.len(), 1);
     service.shutdown().await;
@@ -409,5 +409,65 @@ exec git "$@"
     let entry = select(&service, &root, &clock).await;
     assert!(matches!(clock.finish(service.list_contexts(&entry)).await,
         ContextOptionsResult::Unavailable { code: HistoryErrorCode::Inaccessible, .. }));
+    service.shutdown().await;
+}
+
+#[tokio::test]
+async fn removing_an_admitted_target_during_worktree_verification_reports_superseded_selection() {
+    let clock = ManualClock::new();
+    let (temp, root) = test_support::working_tree();
+    let linked = temp.path().join("linked");
+    test_support::git(&root, &["worktree", "add", "-b", "topic", linked.to_str().unwrap()]);
+    let gate = test_support::executable(temp.path(), &format!(r#"
+case "$*" in
+  *" rev-parse --absolute-git-dir"*)
+    if [ -f {block} ]; then
+      git "$@" || exit $?
+      : > {entered}
+      while [ ! -f {release} ]; do sleep 0.01; done
+      exit 0
+    fi ;;
+esac
+exec git "$@"
+"#, block = test_support::quote(&temp.path().join("block")), entered = test_support::quote(&temp.path().join("entered")), release = test_support::quote(&temp.path().join("release"))));
+    let service = Arc::new(RepositoryService::new().with_inspection_executable(&gate));
+    let OpenOutcome::Opened { entry_id: target_entry, .. } = clock.finish(service.open_chosen(&linked)).await else { panic!("target must open") };
+    let entry = select(&service, &root, &clock).await;
+    let ContextOptionsResult::Options { worktrees, .. } = clock.finish(service.list_contexts(&entry)).await else { panic!("options") };
+    let target = worktrees.iter().find(|worktree| !worktree.current).unwrap().id.clone();
+    fs::write(temp.path().join("block"), "").unwrap();
+    let child = Arc::clone(&service); let child_entry = entry.clone();
+    let request = tokio::spawn(async move { child.select_worktree(&child_entry, &target).await });
+    clock.wait_for_file(&temp.path().join("entered")).await;
+    assert!(matches!(clock.finish(service.remove(&target_entry)).await, MutationOutcome::Updated { .. }));
+    fs::write(temp.path().join("release"), "").unwrap();
+    let outcome = clock.finish(request).await.unwrap();
+    assert!(matches!(outcome, MutationOutcome::Rejected { code: WorkspaceRejectionCode::SupersededSelection, .. }));
+    let json = serde_json::to_value(outcome).unwrap();
+    assert_eq!(json["code"], "superseded_selection");
+    assert!(json.get("message").is_none());
+    assert_eq!(service.snapshot().await.active_context_id.as_deref(), Some(entry.as_str()));
+    assert_eq!(service.snapshot().await.entries.len(), 1);
+    service.shutdown().await;
+}
+
+#[tokio::test]
+async fn worktree_admission_preserves_the_coded_rejection_of_a_replaced_stored_identity() {
+    let clock = ManualClock::new();
+    let (temp, root) = test_support::working_tree();
+    let linked = temp.path().join("linked");
+    test_support::git(&root, &["worktree", "add", "-b", "topic", linked.to_str().unwrap()]);
+    let service = RepositoryService::new();
+    assert!(matches!(clock.finish(service.open_chosen(&linked)).await, OpenOutcome::Opened { .. }));
+    let entry = select(&service, &root, &clock).await;
+    fs::rename(&linked, temp.path().join("old-linked")).unwrap();
+    test_support::git(&root, &["worktree", "prune"]);
+    test_support::git(&root, &["worktree", "add", "-b", "replacement", linked.to_str().unwrap()]);
+    let ContextOptionsResult::Options { worktrees, .. } = clock.finish(service.list_contexts(&entry)).await else { panic!("options") };
+    let target = worktrees.iter().find(|worktree| !worktree.current).unwrap().id.clone();
+    let outcome = clock.finish(service.select_worktree(&entry, &target)).await;
+    assert!(matches!(outcome, MutationOutcome::Rejected { code: WorkspaceRejectionCode::RepositoryChanged, .. }));
+    assert_eq!(service.snapshot().await.active_context_id.as_deref(), Some(entry.as_str()));
+    assert_eq!(service.snapshot().await.entries.len(), 2);
     service.shutdown().await;
 }

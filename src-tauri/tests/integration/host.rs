@@ -71,6 +71,34 @@ fn renderer_terminal(operation: Uuid, phase: &str) -> serde_json::Value {
 }
 
 #[test]
+fn preferred_languages_is_main_only_and_returns_only_language_tags() {
+    let app = mock_builder()
+        .invoke_handler(tauri::generate_handler![commands::preferred_languages])
+        .build(app_context()).unwrap();
+    let main = tauri::WebviewWindowBuilder::new(&app, "main", Default::default()).build().unwrap();
+    let secondary = tauri::WebviewWindowBuilder::new(&app, "secondary", Default::default()).build().unwrap();
+    let result = response(&main, "preferred_languages", serde_json::json!({}));
+    assert_eq!(result.as_object().unwrap().len(), 1);
+    for language in result["languages"].as_array().unwrap() {
+        let language = language.as_str().unwrap();
+        assert_eq!(languages::normalize_language(language).as_deref(), Some(language));
+    }
+    assert!(get_ipc_response(&secondary, request(&secondary, "preferred_languages", serde_json::json!({}))).is_err());
+}
+
+#[test]
+fn picker_rejects_unknown_locale_before_opening_a_dialog() {
+    let app = mock_builder()
+        .manage(RepositoryService::new())
+        .invoke_handler(tauri::generate_handler![commands::open_chosen_repository])
+        .build(app_context()).unwrap();
+    let main = tauri::WebviewWindowBuilder::new(&app, "main", Default::default()).build().unwrap();
+    for body in [serde_json::json!({}), serde_json::json!({"locale": "fr-FR"}), serde_json::json!({"locale": "Arbitrary title"})] {
+        assert!(get_ipc_response(&main, request(&main, "open_chosen_repository", body)).is_err());
+    }
+}
+
+#[test]
 fn observation_command_is_allowed_only_from_main_webview() {
     let app = mock_builder()
         .manage(RepositoryService::new())
@@ -143,6 +171,7 @@ fn every_host_command_denies_secondary_webviews_including_diagnostics() {
         let mut body = renderer_terminal(Uuid::new_v4(), "completed");
         body["entryId"] = serde_json::json!("unknown");
         body["displayName"] = serde_json::json!("Local label");
+        body["locale"] = serde_json::json!("en-US");
         assert!(get_ipc_response(&secondary, request(&secondary, command, body)).is_err(), "{command}");
     }
 }
@@ -169,7 +198,7 @@ fn malformed_operation_metadata_cannot_mutate_workspace_or_enter_capture() {
         serde_json::json!(42),
     ] {
         let body = serde_json::json!({
-            "operationId": metadata, "entryId": "unknown", "displayName": "Private label",
+            "operationId": metadata, "entryId": "unknown", "displayName": "Private label", "locale": "en-US",
         });
         for command in [
             "workspace_snapshot", "open_chosen_repository", "select_context", "rename_repository",

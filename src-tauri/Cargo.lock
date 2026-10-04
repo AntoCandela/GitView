@@ -1083,6 +1083,7 @@ name = "gitview"
 version = "0.1.0"
 dependencies = [
  "libc",
+ "objc2-foundation",
  "parking_lot",
  "rusqlite",
  "serde",
@@ -1093,6 +1094,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "uuid",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

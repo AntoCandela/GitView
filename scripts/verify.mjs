@@ -28,6 +28,7 @@ export function selectChecks(suite = 'all', infrastructureFiles = ['tests/infras
   if (suite === 'integration') return integration;
   return [
     check('frontend_build', 'build', 'npm', ['run', 'build']),
+    check('locale_catalogs', 'build', 'node', ['scripts/check-locales.mjs']),
     check('native_build', 'build', 'cargo', ['build', ...cargo]),
     check('agent_documentation', 'documentation', 'node', ['.agents/scripts/check-docs.mjs', '--output', '.verification/doc-examples'], 'documentation'),
     ...unit,

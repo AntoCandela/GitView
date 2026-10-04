@@ -252,7 +252,7 @@ async fn restored_verified_identity_does_not_accept_a_replacement_at_the_same_lo
     let unavailable = service.refresh(&restored.entries[0].id).await;
     assert_eq!(unavailable.entries[0].availability, Availability::Unavailable);
     assert_eq!(unavailable.entries[0].head, HeadLabel::Branch { name: "original".into() });
-    assert!(matches!(service.open_chosen(&root).await, OpenOutcome::Rejected { code: "repository_changed", .. }));
+    assert!(matches!(service.open_chosen(&root).await, OpenOutcome::Rejected { code: gitview_lib::git::GitError::RepositoryChanged, .. }));
     assert_eq!(fs::read(file).unwrap(), bytes);
 }
 
@@ -279,7 +279,7 @@ async fn app_display_name_survives_refresh_reuse_and_restart_without_renaming_fi
     assert_eq!(fs::read(root.join(".git").join("HEAD")).unwrap(), head_before);
     assert!(!temp.path().join("Work context").exists());
     let bytes = fs::read(&file).unwrap();
-    assert!(matches!(service.rename(&id, " \t\n ").await, MutationOutcome::Rejected { .. }));
+    assert!(matches!(service.rename(&id, " \t\n ").await, MutationOutcome::Rejected { code: gitview_lib::workspace::WorkspaceRejectionCode::InvalidDisplayName, .. }));
     assert!(matches!(service.rename("unknown", "Another").await, MutationOutcome::NotFound { .. }));
     assert!(matches!(service.remove("unknown").await, MutationOutcome::NotFound { .. }));
     assert_eq!(fs::read(&file).unwrap(), bytes);

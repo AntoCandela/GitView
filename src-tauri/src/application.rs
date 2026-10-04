@@ -18,7 +18,7 @@ use crate::history::{self, HistoryController, HistoryErrorCode, HistoryPageResul
 use crate::inspection::{self, CommitFilesResult, ContextController, ContextOptionsResult};
 use crate::observation::{ObservationController, ObservationSnapshot};
 use crate::git::process::{GitProcess, ProbeDeadline};
-use crate::workspace::{MutationOutcome, NativeIdentity, OpenOutcome, RefreshPublication, RefreshTicket, SelectOutcome, WorkspaceSnapshot, WorkspaceStore};
+use crate::workspace::{MutationOutcome, NativeIdentity, OpenOutcome, RefreshPublication, RefreshTicket, SelectOutcome, WorkspaceRejectionCode, WorkspaceSnapshot, WorkspaceStore};
 use crate::workspace::persistence::{self, PersistenceError};
 
 /// Application boundary for native picker paths and opaque workspace entry IDs.
@@ -372,8 +372,7 @@ impl RepositoryService {
     /// Reports a sanitized failure alongside the current, unchanged workspace.
     pub async fn rejected(&self, error: GitError) -> OpenOutcome {
         OpenOutcome::Rejected {
-            code: error.code(),
-            message: error.message(),
+            code: error,
             snapshot: self.snapshot().await,
         }
     }
@@ -717,11 +716,11 @@ impl RepositoryService {
             let outcome = {
                 let _selection = self.selection.lock().await;
                 if !self.inspection_current(&context, generation).await || !self.contexts.selection_current(epoch) {
-                    return MutationOutcome::Rejected { message: "The selected repository changed.", snapshot: self.snapshot().await };
+                    return MutationOutcome::Rejected { code: WorkspaceRejectionCode::RepositoryChanged, snapshot: self.snapshot().await };
                 }
                 let (facts, identity) = match verified {
                     Ok(verified) => verified,
-                    Err(_) => return MutationOutcome::Rejected { message: "This worktree is no longer available.", snapshot: self.snapshot().await },
+                    Err(_) => return MutationOutcome::Rejected { code: WorkspaceRejectionCode::RepositoryUnavailable, snapshot: self.snapshot().await },
                 };
                 let admitted = self.workspace.admit(ticket, facts, identity).await;
                 match admitted {
@@ -733,8 +732,8 @@ impl RepositoryService {
                             MutationOutcome::Updated { snapshot: self.snapshot().await }
                         } else { MutationOutcome::NotFound { snapshot: self.snapshot().await } }
                     }
-                    OpenOutcome::Rejected { message, .. } => MutationOutcome::Rejected { message, snapshot: self.snapshot().await },
-                    OpenOutcome::Cancelled { .. } => MutationOutcome::Rejected { message: "This worktree selection was superseded.", snapshot: self.snapshot().await },
+                    OpenOutcome::Rejected { code, .. } => MutationOutcome::Rejected { code: code.into(), snapshot: self.snapshot().await },
+                    OpenOutcome::Cancelled { .. } => MutationOutcome::Rejected { code: WorkspaceRejectionCode::SupersededSelection, snapshot: self.snapshot().await },
                 }
             };
             self.save_mutation(outcome).await

@@ -4,6 +4,7 @@
  * never native paths to send back to the host.
  */
 
+import type { Locale } from "../i18n";
 import type { ObservationSnapshot } from "./changes";
 import type { RepositoryFileResult, RepositoryFilesRequest, RepositoryFilesResult } from "./browsing";
 import type { ReviewCategory, ReviewResult } from "./diff";
@@ -47,14 +48,26 @@ export interface WorkspaceSnapshot {
   persistenceError: PersistenceError | null;
 }
 
+/** Closed native admission vocabulary; these are stable facts, not display text. */
+export type GitErrorCode =
+  | "git_unavailable"
+  | "not_repository"
+  | "inaccessible"
+  | "unsafe_repository"
+  | "probe_timeout"
+  | "repository_changed"
+  | "unsupported_path_encoding"
+  | "repository_unavailable";
+
+export type WorkspaceRejectionCode = GitErrorCode | "invalid_display_name" | "superseded_selection";
+
 /** Picker/admission result, always accompanied by current state, even after rejection. */
 export type OpenOutcome =
   | { kind: "cancelled"; snapshot: WorkspaceSnapshot }
   | { kind: "opened" | "reused"; entryId: string; snapshot: WorkspaceSnapshot }
   | {
       kind: "rejected";
-      code: string;
-      message: string;
+      code: GitErrorCode;
       snapshot: WorkspaceSnapshot;
     };
 
@@ -66,7 +79,7 @@ export type SelectOutcome =
 /** Display-name edits and sidebar removal affect app state only, never filesystem paths. */
 export type RepositoryMutationOutcome =
   | { kind: "updated" | "not_found"; snapshot: WorkspaceSnapshot }
-  | { kind: "rejected"; message: string; snapshot: WorkspaceSnapshot };
+  | { kind: "rejected"; code: WorkspaceRejectionCode; snapshot: WorkspaceSnapshot };
 
 /**
  * Desktop operations return complete snapshots rather than renderer-owned mutations.
@@ -74,8 +87,10 @@ export type RepositoryMutationOutcome =
  */
 export interface RepositoryClient {
   snapshot(): Promise<WorkspaceSnapshot>;
+  /** Ordered OS UI-language preferences; never logged or used for Git subprocesses. */
+  preferredLanguages(): Promise<{ languages: string[] }>;
   /** Opens the native folder picker; cancellation is a normal outcome. */
-  openChosenRepository(): Promise<OpenOutcome>;
+  openChosenRepository(locale: Locale): Promise<OpenOutcome>;
   /** Activates an admitted context; callers must preserve user-intent order. */
   selectContext(entryId: string): Promise<SelectOutcome>;
   /** Reprobes a location without changing selection; the host rejects stale probes. */

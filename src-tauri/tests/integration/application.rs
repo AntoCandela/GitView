@@ -260,7 +260,7 @@ exec git "$@"
         let OpenOutcome::Rejected { code, snapshot, .. } = outcome else {
             panic!("double verification escaped its operation deadline");
         };
-        assert_eq!(code, "probe_timeout");
+        assert_eq!(code, GitError::ProbeTimeout);
         assert!(snapshot.entries.is_empty());
         assert_eq!(snapshot.revision, 0);
         assert_eq!(snapshot.active_context_id, None);

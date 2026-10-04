@@ -6,9 +6,11 @@ import { buildChangeHierarchy, flattenChangeRows, summarizeDirectoryChanges, typ
 import { ChevronDownIcon, ChevronRightIcon } from "../icons";
 import { TreeEntryIcon } from "../file-icons/TreeEntryIcon";
 import { Tooltip } from "../Tooltip";
+import { useTranslation } from "../../i18n";
+import { changeStatusMessage } from "./changeStatusMessage";
 
 export { changeDirectoryId } from "./changeTreeRows";
-export type { ChangeTreeDirectory, ChangeTreeFile } from "./changeTreeRows";
+export type { ChangeTreeDirectory, ChangeTreeFile, ChangeStatusFact } from "./changeTreeRows";
 
 const ROW_HEIGHT = 28;
 const NO_DIRECTORIES: ChangeTreeDirectory[] = [];
@@ -29,6 +31,7 @@ interface TreeProps extends ChangeTreeSummaryProps {
 }
 
 export function ChangeTree({ files, directories = NO_DIRECTORIES, summaryFiles = files, label, selectedId, onSelect, view = "tree", directoryExpansion, virtualScrollRef, virtualScrollMargin }: TreeProps) {
+  const { locale, t } = useTranslation();
   const hierarchy = useMemo(() => buildChangeHierarchy(files, directories), [files, directories]);
   const directorySummaries = useMemo(() => summaryFiles === null ? null : summarizeDirectoryChanges(summaryFiles), [summaryFiles]);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
@@ -233,8 +236,11 @@ export function ChangeTree({ files, directories = NO_DIRECTORIES, summaryFiles =
         const naturalTop = virtualRow.start - margin;
         const top = sticky && !row.file && row.expanded
           ? Math.max(naturalTop, Math.min(scrollOffset + row.depth * ROW_HEIGHT, (row.end - 1) * ROW_HEIGHT)) : naturalTop;
-        const status = row.file ? row.file.status || "Status unavailable"
-          : directorySummaries === null ? "Status unavailable" : directorySummaries.get(row.item.id) ?? "No known changes";
+        const status = row.file ? row.file.statuses.length
+          ? row.file.statuses.map((fact) => changeStatusMessage(locale, fact)).join(t("tree.status.separator"))
+          : t("tree.status.unavailable")
+          : directorySummaries === null ? t("tree.status.unavailable")
+            : directorySummaries.get(row.item.id)?.map(({ fact, count }) => t("tree.status.count", { status: changeStatusMessage(locale, fact), count })).join(t("tree.status.summarySeparator")) ?? t("tree.status.noChanges");
         return <MountedChangeRow key={row.key} row={row} index={virtualRow.index} count={rows.length}
           top={top} sticky={sticky} selected={row.file !== undefined && selectedId === row.file.id}
           status={status} onSelect={onSelect} onToggle={onToggle} onFocus={focusRow} />;
@@ -257,21 +263,22 @@ interface MountedChangeRowProps {
 }
 
 const MountedChangeRow = memo(function MountedChangeRow({ row, index, count, top, sticky, selected, status, onSelect, onToggle, onFocus }: MountedChangeRowProps) {
+  const { t } = useTranslation();
   const name = row.item.segments[row.item.segments.length - 1];
   const style = { top, "--row-depth": row.depth, zIndex: sticky && !row.file ? 1000 - row.depth : undefined } as CSSProperties;
   const content = row.file ? <>
     <TreeEntryIcon kind="file" name={name} /><span>{name}</span>
-    <span className={`change-marker${row.file.unsupported ? " unsupported" : ""}`} aria-label={row.file.status}>{row.file.marker}</span>
+    <span className={`change-marker${row.file.unsupported ? " unsupported" : ""}`} aria-label={status}>{row.file.marker}</span>
   </> : null;
   return <li data-tree-index={index} className={`change-virtual-row ${row.file ? "change-file" : "change-directory"}`}
     aria-posinset={index + 1} aria-setsize={count} style={style}
     onFocus={() => onFocus(index)}>
     <Tooltip content={<><div>{row.item.displayPath}</div><div>{status}</div></>}
-      trigger={row.file ? onSelect ? <button type="button" className="change-file-name" aria-label={`Review ${row.file.displayPath}`}
+      trigger={row.file ? onSelect ? <button type="button" className="change-file-name" aria-label={t("tree.review", { path: row.file.displayPath })}
         aria-pressed={selected} onClick={() => onSelect(row.file!)}>{content}</button>
         : <div className="change-file-name">{content}</div>
         : <button type="button" className="directory-toggle" aria-expanded={row.expanded}
-          aria-label={`${row.expanded ? "Collapse" : "Expand"} ${row.item.displayPath}`}
+          aria-label={t(row.expanded ? "tree.collapse" : "tree.expand", { path: row.item.displayPath })}
           onClick={() => onToggle(row.item.id)}>
           {row.expanded ? <ChevronDownIcon aria-hidden="true" /> : <ChevronRightIcon aria-hidden="true" />}
           <TreeEntryIcon kind="folder" name={name} expanded={row.expanded} /><span>{name}</span>
