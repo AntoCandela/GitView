@@ -299,16 +299,19 @@ async fn bare_and_linked_contexts_discover_only_their_shared_repository_worktree
     test_support::git(temp.path(), &["clone", "--bare", root.to_str().unwrap(), bare.to_str().unwrap()]);
     let linked = temp.path().join("linked");
     test_support::git(&bare, &["worktree", "add", "-b", "topic", linked.to_str().unwrap()]);
+    let head_before = fs::read(bare.join("HEAD")).unwrap();
     let service = RepositoryService::new();
     let entry = select(&service, &bare, &clock).await;
-    let ContextOptionsResult::Options { worktrees, .. } = clock.finish(service.list_contexts(&entry)).await else { panic!("bare options") };
+    let ContextOptionsResult::Options { branches, worktrees } = clock.finish(service.list_contexts(&entry)).await else { panic!("bare options") };
+    assert_eq!(branches.iter().map(|branch| branch.name.as_str()).collect::<Vec<_>>(), ["main", "topic"]);
     assert_eq!(worktrees.iter().map(|worktree| (worktree.label.as_str(), worktree.branch.as_deref(), worktree.current)).collect::<Vec<_>>(),
-        [("bare.git", None, true), ("linked", Some("topic"), false)]);
+        [("linked", Some("topic"), false)]);
     let linked_id = worktrees.iter().find(|worktree| !worktree.current).unwrap().id.clone();
     let MutationOutcome::Updated { snapshot } = clock.finish(service.select_worktree(&entry, &linked_id)).await else { panic!("linked selection") };
     let linked_entry = snapshot.active_context_id.unwrap();
     let ContextOptionsResult::Options { worktrees, .. } = clock.finish(service.list_contexts(&linked_entry)).await else { panic!("linked options") };
-    assert_eq!(worktrees.iter().map(|worktree| (worktree.label.as_str(), worktree.current)).collect::<Vec<_>>(), [("bare.git", false), ("linked", true)]);
+    assert_eq!(worktrees.iter().map(|worktree| (worktree.label.as_str(), worktree.current)).collect::<Vec<_>>(), [("linked", true)]);
+    assert_eq!(fs::read(bare.join("HEAD")).unwrap(), head_before);
     service.shutdown().await;
 }
 

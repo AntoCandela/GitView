@@ -162,7 +162,8 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
       <div className="history-toolbar">
         <ContextSelector key={`${entryId}:${selectionGeneration}`} client={client} entryId={entryId}
           branch={branch ?? page?.head.branch ?? (page?.head.state === "detached" ? "Detached" : "HEAD")}
-          description={branch === null ? "View local branch history or navigate to an existing worktree. Branch viewing never checks out files."
+          refColors={colors.refs}
+          description={branch === null ? "Choose a branch. Branches checked out elsewhere open their worktrees; other branches show history without checkout."
             : `Viewing ${branch}; working files remain on ${workingBranch ?? page?.head.branch ?? "the current HEAD"}. No checkout.`}
           onBranch={(next) => {
             invalidateComparison?.(); setSelection(null);
