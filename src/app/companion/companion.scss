@@ -72,7 +72,7 @@
   .companion-files { min-height: 28px; flex-basis: 30%; }
 }
 
-.companion-settings-trigger, .companion-action {
+.companion-action {
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -88,10 +88,24 @@
   svg { width: 14px; height: 14px; flex-shrink: 0; }
   &:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 }
-.companion-settings-popup {
+.workbench-layout-popup.companion-settings-popup {
+  width: 288px;
   p, label { overflow-wrap: anywhere; white-space: normal; }
-  p { font-size: 12px; margin: 8px 0; }
-  label { display: flex; align-items: flex-start; gap: 8px; }
-  input { flex-shrink: 0; }
+  p { margin: 8px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+  p[role="alert"] { color: var(--error); }
+  label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: var(--radius-control);
+    font-size: 12px;
+    line-height: 1.4;
+    cursor: pointer;
+    &:hover:not(:has(input:disabled)) { background: var(--pill-bg); }
+    &:has(input:disabled) { color: var(--muted); cursor: default; opacity: 0.6; }
+  }
+  input { flex-shrink: 0; margin: 0; accent-color: var(--accent); }
+  > .companion-action { margin: 0 8px 8px; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 }

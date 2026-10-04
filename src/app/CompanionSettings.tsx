@@ -4,7 +4,7 @@ import { Popover } from "@base-ui/react/popover";
 import type { CompanionSettingsClient, CompanionState } from "../contracts/companion";
 import { useTranslation } from "../i18n";
 import { companionSettingsClient } from "../platform/RepositoryClient";
-import { AlertIcon } from "../ui/icons";
+import { AlertIcon, CompanionIcon } from "../ui/icons";
 import { Tooltip } from "../ui/Tooltip";
 import { useCompanionPublicationRevision } from "./CompanionPresentation";
 
@@ -74,8 +74,8 @@ export function CompanionSettings({ client = companionSettingsClient, refreshRev
   const hasError = transportError || nativeUnavailable || Boolean(state?.persistenceError);
   return <Popover.Root onOpenChange={(open) => { if (open) void refresh(); }}>
     <Tooltip content={t("companion.settings")} trigger={
-      <Popover.Trigger className="companion-settings-trigger" aria-label={t("companion.settings")}>
-        {hasError ? <AlertIcon aria-hidden="true" /> : null}{t("companion.settings")}
+      <Popover.Trigger className="ui-kebab-trigger" aria-label={t("companion.settings")}>
+        {hasError ? <AlertIcon aria-hidden="true" /> : <CompanionIcon aria-hidden="true" />}
       </Popover.Trigger>
     } />
     <Popover.Portal>

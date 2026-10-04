@@ -18,6 +18,7 @@ export {
   Palette as AppearanceIcon,
   PanelsTopLeft as LayoutIcon,
   PanelLeft as SidebarIcon,
+  PanelTop as CompanionIcon,
   Plus as PlusIcon,
   Pencil as PencilIcon,
   RotateCw as RefreshIcon,

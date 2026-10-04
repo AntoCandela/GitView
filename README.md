@@ -73,7 +73,7 @@ Catalog completeness is enforced during `npm run build` and shared verification.
 
 ### macOS menu-bar companion
 
-The companion is off by default. Enable it from **Menu-bar companion** in the main toolbar; it does not register login startup. Click its menu-bar icon to toggle the compact review panel. The native context menu offers **Open GitView** and **Quit**.
+The companion is off by default. Enable it using the **Menu-bar companion** icon beside the language selector in the main toolbar; its tooltip and compact settings popover identify the option. It does not register login startup. Click its menu-bar icon to toggle the compact review panel. The native context menu offers **Open GitView** and **Quit**.
 
 The panel selects only already-admitted repositories/worktrees and reuses the changed-file tree and live comparison viewer. Repository admission, removal, worktree management, history, file browsing and preference controls remain in the main window. Language, appearance, icons and reading choices follow the main window, including session-only choices after a failed save.
 
