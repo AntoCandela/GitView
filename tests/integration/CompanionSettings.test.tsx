@@ -1,6 +1,6 @@
 /** Exercises opt-in intent, durable-save warnings and native reachability without workspace ownership. */
 import "@testing-library/jest-dom/vitest";
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, expect, test } from "vitest";
@@ -43,11 +43,10 @@ test("keyboard opt-in is discoverable and preserves the current reading context 
   }
   render(<Workspace />);
   const user = await openSettings();
-  const toggle = screen.getByRole("checkbox", { name: "Keep GitView in the menu bar" });
+  const toggle = screen.getByRole("switch");
   toggle.focus();
   await user.keyboard(" ");
   expect(toggle).toBeChecked();
-  expect(await screen.findByText("Available in the menu bar")).toBeVisible();
   expect(screen.getByRole("button", { name: "Repository A / src/example.ts / staged" })).toBeVisible();
   await user.keyboard(" ");
   expect(toggle).not.toBeChecked();
@@ -57,19 +56,18 @@ test("keyboard opt-in is discoverable and preserves the current reading context 
 test("failed saves retain effective availability but clearly report a session-only preference", async () => {
   render(<CompanionSettings client={client({ persistenceError: "save_failed" })} />);
   const user = await openSettings();
-  await user.click(screen.getByRole("checkbox", { name: "Keep GitView in the menu bar" }));
-  expect(await screen.findByText("Available in the menu bar")).toBeVisible();
-  expect(screen.getByRole("alert")).toHaveTextContent("session only");
+  await user.click(screen.getByRole("switch"));
+  expect(await screen.findByRole("alert")).toHaveTextContent("session only");
+  expect(screen.getByRole("switch")).toBeChecked();
   expect(screen.queryByText("The menu-bar companion is unavailable. GitView remains open.")).not.toBeInTheDocument();
 });
 
 test("native activation failure never claims availability or durable-save failure", async () => {
   render(<CompanionSettings client={client({ nativeError: "tray_failed", available: false })} />);
   const user = await openSettings();
-  await user.click(screen.getByRole("checkbox", { name: "Keep GitView in the menu bar" }));
+  await user.click(screen.getByRole("switch"));
   expect(await screen.findByRole("alert")).toHaveTextContent("unavailable");
-  expect(screen.queryByText("Available in the menu bar")).not.toBeInTheDocument();
-  expect(screen.getByRole("checkbox")).toBeChecked();
+  expect(screen.getByRole("switch")).toBeChecked();
   expect(screen.getByRole("button", { name: "Try again" })).toBeEnabled();
 });
 
@@ -90,9 +88,9 @@ test("non-macOS surfaces offer no companion lifecycle control", async () => {
 test("transport failures remain recoverable without claiming a successful toggle", async () => {
   render(<CompanionSettings client={{ ...client(), async setEnabled() { throw new Error("private path must not render"); } }} />);
   const user = await openSettings();
-  await user.click(screen.getByRole("checkbox", { name: "Keep GitView in the menu bar" }));
+  await user.click(screen.getByRole("switch"));
   expect(await screen.findByRole("alert")).toHaveTextContent("could not be updated");
-  expect(screen.getByRole("checkbox")).not.toBeChecked();
+  expect(screen.getByRole("switch")).not.toBeChecked();
   expect(document.body).not.toHaveTextContent("private path");
 });
 
@@ -107,11 +105,11 @@ test("retry preserves a failed disable intent while the native main window is un
   };
   render(<CompanionSettings client={settings} />);
   const user = await openSettings();
-  await user.click(screen.getByRole("checkbox", { name: "Keep GitView in the menu bar" }));
+  await user.click(screen.getByRole("switch"));
   expect(await screen.findByRole("alert")).toHaveTextContent("main window could not be shown");
   await user.click(screen.getByRole("button", { name: "Try again" }));
   expect(requests).toEqual([false, false]);
-  expect(screen.getByRole("checkbox")).toBeChecked();
+  expect(screen.getByRole("switch")).toBeChecked();
 });
 
 test("restored opt-in becomes available after publication completes without another focus or open action", async () => {
@@ -130,9 +128,8 @@ test("restored opt-in becomes available after publication completes without anot
   await openSettings();
   expect(await screen.findByRole("alert")).toHaveTextContent("unavailable");
   await act(async () => activation.resolve());
-  expect(await screen.findByText("Available in the menu bar")).toBeVisible();
-  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-  expect(screen.getByRole("checkbox")).toBeChecked();
+  await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+  expect(screen.getByRole("switch")).toBeChecked();
 });
 
 test("a controlled native invalidation refreshes effective state without a second surface subscription", async () => {
@@ -140,9 +137,8 @@ test("a controlled native invalidation refreshes effective state without a secon
   const settings = { ...client(), state: async () => current };
   const view = render(<CompanionSettings client={settings} refreshRevision={1} />);
   await openSettings();
-  expect(await screen.findByText("Available in the menu bar")).toBeVisible();
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   current = state({ enabled: true, available: false, nativeError: "panel_failed", revision: 2 });
   view.rerender(<CompanionSettings client={settings} refreshRevision={2} />);
   expect(await screen.findByRole("alert")).toHaveTextContent("unavailable");
-  expect(screen.queryByText("Available in the menu bar")).not.toBeInTheDocument();
 });

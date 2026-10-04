@@ -1,6 +1,7 @@
 /** Presents native opt-in intent and reachability; it never owns workspace or persisted preference state. */
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Popover } from "@base-ui/react/popover";
+import { Switch } from "@base-ui/react/switch";
 import type { CompanionSettingsClient, CompanionState } from "../contracts/companion";
 import { useTranslation } from "../i18n";
 import { companionSettingsClient } from "../platform/RepositoryClient";
@@ -24,7 +25,8 @@ export function CompanionSettings({ client = companionSettingsClient, refreshRev
   const changing = useRef(false);
   const requestedEnabled = useRef<boolean | null>(null);
   const descriptionId = useId();
-  const checkbox = useRef<HTMLInputElement>(null);
+  const labelId = useId();
+  const toggle = useRef<HTMLElement>(null);
 
   const refresh = useCallback(async () => {
     if (changing.current) return;
@@ -80,14 +82,17 @@ export function CompanionSettings({ client = companionSettingsClient, refreshRev
     } />
     <Popover.Portal>
       <Popover.Positioner className="workbench-layout-positioner" side="bottom" align="end" sideOffset={4} collisionPadding={8}>
-        <Popover.Popup className="workbench-layout-popup companion-settings-popup" initialFocus={() => checkbox.current ?? true}>
-          <Popover.Title className="workbench-layout-title">{t("companion.settings")}</Popover.Title>
+        <Popover.Popup className="workbench-layout-popup companion-settings-popup" initialFocus={() => toggle.current ?? true}>
+          <div className="companion-setting-row">
+            <Popover.Title id={labelId} className="workbench-layout-title">{t("companion.settings")}</Popover.Title>
+            <Switch.Root ref={toggle} className="companion-setting-switch" checked={state?.enabled ?? false}
+              disabled={busy || !state} aria-labelledby={labelId} aria-describedby={descriptionId}
+              onCheckedChange={(enabled) => void change(enabled)}>
+              <Switch.Thumb className="companion-setting-thumb" />
+            </Switch.Root>
+          </div>
           <p id={descriptionId}>{t("companion.description")}</p>
-          <label><input ref={checkbox} type="checkbox" checked={state?.enabled ?? false} disabled={busy || !state}
-            aria-describedby={descriptionId} onChange={(event) => void change(event.currentTarget.checked)} />
-            {t("companion.enable")}</label>
           {busy ? <p role="status">{t("companion.updating")}</p> : null}
-          {state?.available && !nativeUnavailable ? <p role="status">{t("companion.available")}</p> : null}
           {state?.persistenceError ? <p role="alert">{t(protectedPreference ? "companion.preferenceProtected" : "companion.sessionOnly")}</p> : null}
           {nativeUnavailable ? <p role="alert">{t(state?.nativeError === "main_unavailable" ? "companion.mainUnavailable" : "companion.nativeUnavailable")}</p> : null}
           {transportError ? <p role="alert">{t("companion.settingsUnavailable")}</p> : null}
