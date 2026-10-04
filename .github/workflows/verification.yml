@@ -52,33 +52,6 @@ jobs:
         run: node --input-type=module -e "if (process.arch !== process.env.EXPECTED_ARCHITECTURE) process.exit(1)"
       - name: Install locked frontend dependencies
         run: npm ci
-      - name: Diagnose worker lifecycle failure
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          cat > "$RUNNER_TEMP/gitview-worker-diagnostic.mjs" <<'NODE'
-          import { run } from 'node:test';
-          const files = ['tests/infrastructure/agent-worker.test.mjs'];
-          const codes = new Set(['EADDRINUSE', 'ECONNREFUSED', 'ERR_ASSERTION', 'ERR_TEST_FAILURE', 'ERR_INPUT_TYPE_NOT_ALLOWED', 'ENOENT']);
-          const messages = new Set(['worker_web_not_ready', 'worker_port_busy', 'worker_child_failed', 'worker_dirty', 'worker_untracked_files', 'runtime exited before readiness']);
-          for (let attempt = 0; attempt < 20 && !process.exitCode; attempt++) {
-          for await (const event of run({ files, execArgv: [], testNamePatterns: ['worker lifecycle terminates POSIX'] })) {
-            if (event.type !== 'test:fail') continue;
-            const errors = [];
-            for (let error = event.data.details?.error; error && errors.length < 4; error = error.cause) {
-              errors.push({
-                code: codes.has(error.code) ? error.code : 'other',
-                category: messages.has(error.message) ? error.message : 'omitted',
-                workerSourceLines: [...String(error.stack ?? '').matchAll(/agent-worker\.test\.mjs:(\d+):\d+/g)].map(match => Number(match[1])),
-              });
-            }
-            console.log(JSON.stringify({ diagnostic: 'infrastructure_failure', errors }));
-            process.exitCode = 1;
-          }
-          }
-          console.log(JSON.stringify({ diagnostic: 'infrastructure_completed', passed: !process.exitCode }));
-          NODE
-          node "$RUNNER_TEMP/gitview-worker-diagnostic.mjs"
       - name: Run shared required verification
         if: ${{ !cancelled() }}
         run: node scripts/verify.mjs --suite all --output .verification/${{ matrix.platform }}
