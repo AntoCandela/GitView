@@ -1,19 +1,20 @@
 /** Presents category endpoints and distinct live review outcomes without treating failures as empty diffs. */
 
-import { useRef } from "react";
+import { useRef, type ReactNode } from "react";
 import type { ReviewCategory, ReviewIdentity, ReviewSelection } from "../../contracts/diff";
 import type { RepositoryClient } from "../../contracts/repositories";
+import type { PresentationInput } from "../../contracts/companion";
 import { useTranslation } from "../../i18n";
 import { Tooltip } from "../../ui/Tooltip";
 import { appearanceTheme, useAppearanceTheme, useReviewChoices } from "../appearance";
 import type { ObservationView } from "../changes";
 import { ReviewControls } from "./ReviewControls";
 import { TextDiff } from "./text/TextDiff";
-import { useFileReview } from "./useFileReview";
+import { useFileReview, type LiveReviewAuthority } from "./useFileReview";
 import { unavailableMessageKeys, unsupportedMessageKeys } from "./reviewOutcomeLabels";
 
-export function FileReview({ client, entryId, selectionGeneration, contextLabel, observation, selection, categories, onCategoryChange }: {
-  client: RepositoryClient;
+interface FileReviewProps {
+  client: Pick<RepositoryClient, "reviewFile">;
   entryId: string;
   selectionGeneration: number;
   contextLabel: string;
@@ -21,13 +22,32 @@ export function FileReview({ client, entryId, selectionGeneration, contextLabel,
   selection: ReviewSelection | null;
   categories: ReviewCategory[];
   onCategoryChange: (category: ReviewCategory) => void;
-}) {
-  const { t } = useTranslation();
-  const view = useFileReview(client, entryId, selectionGeneration, observation, selection);
+  presentation?: Pick<PresentationInput, "review" | "appearanceTheme">;
+  enabled?: boolean;
+  outcome?: "no_remaining";
+  onVerified?: (authority: LiveReviewAuthority) => void;
+  initialAuthority?: LiveReviewAuthority;
+}
+
+/** Compact callers supply immutable presentation and never mount preference-owning hooks. */
+export function FileReview(props: FileReviewProps) {
+  return props.presentation ? <PresentedFileReview {...props} presentation={props.presentation} /> : <PreferredFileReview {...props} />;
+}
+
+function PreferredFileReview(props: FileReviewProps) {
   const choices = useReviewChoices();
   const appearance = useAppearanceTheme();
+  return <PresentedFileReview {...props} presentation={{ review: choices, appearanceTheme: appearance.theme }} controls={<ReviewControls choices={choices} />} />;
+}
+
+function PresentedFileReview({ client, entryId, selectionGeneration, contextLabel, observation, selection, categories, onCategoryChange,
+  presentation, controls, enabled = true, outcome, onVerified, initialAuthority }: FileReviewProps & { presentation: Pick<PresentationInput, "review" | "appearanceTheme">; controls?: ReactNode }) {
+  const { t } = useTranslation();
+  const requestedView = useFileReview(client, entryId, selectionGeneration, observation, selection, enabled && outcome !== "no_remaining", onVerified, initialAuthority);
+  const view = outcome === "no_remaining" ? { kind: "no_remaining" as const } : requestedView;
+  const choices = presentation.review;
   const previousIdentity = useRef<{
-    client: RepositoryClient; entryId: string; generation: number; stablePathId: string; category: ReviewCategory; identity: ReviewIdentity;
+    client: Pick<RepositoryClient, "reviewFile">; entryId: string; generation: number; stablePathId: string; category: ReviewCategory; identity: ReviewIdentity;
   } | null>(null);
   if (!selection || view.kind === "idle") return null;
   const currentIdentity = view.kind === "text" ? view : view.kind === "updating" ? view.previous
@@ -66,7 +86,7 @@ export function FileReview({ client, entryId, selectionGeneration, contextLabel,
             aria-label={t("diff.category.comparison", { category })} aria-pressed={selection.category === category}
             onClick={() => onCategoryChange(category)}>{t("diff.category.label", { category })}</button>} />)}
       </div>
-      <ReviewControls choices={choices} />
+      {controls}
     </header>
     {title ? <div className={`diff-state ${view.kind}`} role="status"><h3>{title}</h3>{description ? <p>{description}</p> : null}
       {view.kind === "unavailable" ? <p>{t("diff.state.checkingAgain")}</p> : null}
@@ -74,6 +94,6 @@ export function FileReview({ client, entryId, selectionGeneration, contextLabel,
     <TextDiff key={JSON.stringify([entryId, selectionGeneration, selection.stablePathId, selection.category])}
       review={view.kind === "text" ? view : view.kind === "updating" ? view.previous : null} updating={view.kind === "updating"}
       oldEndpointLabel={fromLabel} newEndpointLabel={toLabel} mode={choices.mode}
-      theme={choices.theme === "match" ? appearanceTheme(appearance.theme).syntax : choices.theme} lineMode={choices.lineMode} />
+      theme={choices.theme === "match" ? appearanceTheme(presentation.appearanceTheme).syntax : choices.theme} lineMode={choices.lineMode} />
   </section>;
 }

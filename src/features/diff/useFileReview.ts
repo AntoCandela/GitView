@@ -15,8 +15,17 @@ export type FileReviewView =
   | { kind: "observation_unavailable" }
   | Extract<ReviewResult, { kind: "text" | "unsupported" | "unavailable" }>;
 
+/** Last issued identity is retained only for fresh native revalidation, not direct historical reads. */
+export interface LiveReviewAuthority {
+  entryId: string;
+  stablePathId: string;
+  category: ReviewCategory;
+  observationRevision: number;
+  pathId: string;
+}
+
 interface ReviewRequest {
-  client: RepositoryClient;
+  client: Pick<RepositoryClient, "reviewFile">;
   entryId: string;
   selectionGeneration: number;
   stablePathId: string;
@@ -63,31 +72,40 @@ export function hasReviewCategory(file: ChangedPath, selection: ReviewSelection)
 
 /** Reads immediately on authority changes and checks live bytes again one second after each completion. */
 export function useFileReview(
-  client: RepositoryClient,
+  client: Pick<RepositoryClient, "reviewFile">,
   entryId: string,
   selectionGeneration: number,
   observation: ObservationView,
   selection: ReviewSelection | null,
+  enabled = true,
+  onVerified?: (authority: LiveReviewAuthority) => void,
+  initialAuthority?: LiveReviewAuthority,
 ): FileReviewView {
   const file = observation.kind === "ready" && selection
     ? observation.files.find((candidate) => candidate.stablePathId === selection.stablePathId)
     : undefined;
   const stablePathId = selection?.stablePathId;
   const category = selection?.category;
-  const observationRevision = observation.kind === "ready" ? observation.observationRevision : null;
-  const pathId = observation.kind === "ready" && observation.entryId === entryId && selection && file && hasReviewCategory(file, selection)
-    ? file.pathId : null;
+  const claimedAuthority = initialAuthority && initialAuthority.entryId === entryId &&
+    initialAuthority.stablePathId === stablePathId && initialAuthority.category === category &&
+    (observation.kind === "transport_unavailable" || observation.entryId !== entryId ||
+      observation.observationRevision <= initialAuthority.observationRevision) ? initialAuthority : null;
+  const observationRevision = claimedAuthority?.observationRevision ?? (observation.kind === "ready" ? observation.observationRevision : null);
+  const pathId = claimedAuthority?.pathId ?? (observation.kind === "ready" && observation.entryId === entryId && selection && file && hasReviewCategory(file, selection)
+    ? file.pathId : null);
   const request = useMemo<ReviewRequest | null>(() => {
-    if (stablePathId === undefined || category === undefined || observationRevision === null || pathId === null) return null;
+    if (!enabled || stablePathId === undefined || category === undefined || observationRevision === null || pathId === null) return null;
     return { client, entryId, selectionGeneration, stablePathId, category, observationRevision, pathId };
-  }, [client, entryId, selectionGeneration, stablePathId, category, observationRevision, pathId]);
+  }, [client, entryId, selectionGeneration, stablePathId, category, observationRevision, pathId, enabled]);
   const desired = useRef<ReviewRequest | null>(request);
   desired.current = request;
-  const [running] = useState(() => new Map<RepositoryClient, ReviewRequest>());
+  const [running] = useState(() => new Map<Pick<RepositoryClient, "reviewFile">, ReviewRequest>());
   const [attempted] = useState(() => new WeakSet<ReviewRequest>());
   const mounted = useRef(false);
   const timer = useRef<number | undefined>(undefined);
   const [completed, setCompleted] = useState<{ request: ReviewRequest; view: FileReviewView } | null>(null);
+  const verified = useRef(onVerified);
+  verified.current = onVerified;
 
   useEffect(() => {
     mounted.current = true;
@@ -120,6 +138,10 @@ export function useFileReview(
         }
         // Render-time desired identity also invalidates completions before effect cleanup.
         if (mounted.current && desired.current === latest) {
+          if (view.kind === "text" || view.kind === "unsupported" || view.kind === "unavailable") {
+            verified.current?.({ entryId: latest.entryId, stablePathId: latest.stablePathId, category: latest.category,
+              observationRevision: latest.observationRevision, pathId: latest.pathId });
+          }
           setCompleted((previous) => {
             // Stale authority cannot certify content, but need not erase this reading scope's last verified text.
             const retained = previous && sameScope(previous.request, latest)
@@ -147,11 +169,13 @@ export function useFileReview(
     };
   }, [request, running, attempted]);
 
-  if (!selection) return { kind: "idle" };
-  if (observation.kind === "transport_unavailable") return { kind: "transport_unavailable" };
-  if (observation.entryId !== entryId) return { kind: "checking" };
-  if (observation.kind === "unavailable" || observation.kind === "bare") return { kind: "observation_unavailable" };
-  if (observation.kind === "checking") return { kind: "checking" };
+  if (!selection || !enabled) return { kind: "idle" };
+  if (!claimedAuthority) {
+    if (observation.kind === "transport_unavailable") return { kind: "transport_unavailable" };
+    if (observation.entryId !== entryId) return { kind: "checking" };
+    if (observation.kind === "unavailable" || observation.kind === "bare") return { kind: "observation_unavailable" };
+    if (observation.kind === "checking") return { kind: "checking" };
+  }
   if (!request) return { kind: "no_remaining" };
   if (completed?.request === request) return completed.view;
   const retained = completed && sameScope(completed.request, request)

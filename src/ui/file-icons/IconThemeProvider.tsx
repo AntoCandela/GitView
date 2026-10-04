@@ -1,5 +1,5 @@
 /** Owns the browser-local presentation preference shared by working and committed file trees. */
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { isIconTheme, type IconTheme } from "./iconThemes";
 export type { IconTheme } from "./iconThemes";
 const storageKey = "gitview.icon-theme";
@@ -31,6 +31,15 @@ export function IconThemeProvider({ children }: { children: ReactNode }) {
   }
 
   return <IconThemeContext.Provider value={{ ...preference, setTheme }}>{children}</IconThemeContext.Provider>;
+}
+
+/** Requires an explicit authoritative icon choice; it never reads or persists a default. */
+export function ReadOnlyIconThemeProvider({ theme, persistenceError, children }: {
+  theme: IconTheme; persistenceError: boolean; children: ReactNode;
+}) {
+  const value = useMemo(() => ({ theme, persistenceError: persistenceError ? "session_only" : null,
+    setTheme() { throw new Error("Read-only icons cannot change preferences"); } }), [theme, persistenceError]);
+  return <IconThemeContext.Provider value={value}>{children}</IconThemeContext.Provider>;
 }
 
 export function useIconTheme() {

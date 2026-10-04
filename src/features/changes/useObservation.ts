@@ -18,12 +18,13 @@ export function useObservation(
   client: RepositoryClient,
   entryId: string | null,
   selectionGeneration: number,
+  enabled = true,
 ): ObservationView | null {
   const [current, setCurrent] = useState<ScopedObservation | null>(null);
   const [inFlight] = useState(() => new Map<RepositoryClient, Promise<void>>());
 
   useEffect(() => {
-    if (entryId === null) return;
+    if (entryId === null || !enabled) return;
     const observedEntryId = entryId;
     let active = true;
     let timer: number | undefined;
@@ -70,10 +71,10 @@ export function useObservation(
       active = false;
       clearTimeout(timer);
     };
-  }, [client, entryId, selectionGeneration, inFlight]);
+  }, [client, entryId, selectionGeneration, enabled, inFlight]);
 
   // Render guards clear the old tree immediately, before effect cleanup runs.
-  if (entryId === null) return null;
+  if (entryId === null || !enabled) return null;
   if (current?.client !== client || current.entryId !== entryId || current.selectionGeneration !== selectionGeneration) {
     return { entryId, observationRevision: 0, kind: "checking" };
   }

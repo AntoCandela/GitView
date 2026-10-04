@@ -250,6 +250,7 @@ async function main() {
         return result;
       }),
       addInitScript: (script) => page.addInitScript(script),
+      evaluate: (script, notice) => page.evaluate(script, notice),
     }, journey);
     controller.signal.throwIfAborted();
     clearTimeout(deadline);
@@ -320,12 +321,12 @@ async function main() {
         report.fixtureSafe = true;
       } catch { report.status = "failed"; }
     }
-    if (browser) {
-      try { await browser.close(); report.cleanup.browser = !browser.isConnected(); }
-      catch { report.status = "failed"; }
-    }
     if (journey) {
       try { await journey.close(); report.cleanup.native = true; }
+      catch { report.status = "failed"; }
+    }
+    if (browser) {
+      try { await browser.close(); report.cleanup.browser = !browser.isConnected(); }
       catch { report.status = "failed"; }
     }
     if (server) {

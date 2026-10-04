@@ -6,6 +6,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use parking_lot::Mutex;
@@ -183,8 +184,14 @@ impl EntryObservation {
 struct ObservationState {
     generation: u64,
     selected_id: Option<String>,
+    context_epoch: String,
     observing: bool,
     entries: HashMap<String, EntryObservation>,
+    started_scan: u64,
+    completed_start: u64,
+    completed_scan_sequence: u64,
+    requested_start: u64,
+    recovery_failures: u64,
 }
 
 /// Owns the only scan task. The task never owns this controller or the service.
@@ -194,11 +201,14 @@ pub(crate) struct ObservationController {
     task: Mutex<Option<tokio::task::JoinHandle<()>>>,
     reader: GitStatusReader,
     diagnostics: DiagnosticSink,
+    demand_suspended: AtomicBool,
+    scan_requested: Arc<tokio::sync::Notify>,
+    state_changed: Arc<tokio::sync::Notify>,
 }
 
 impl ObservationController {
     pub(crate) fn with_diagnostics(diagnostics: DiagnosticSink) -> Self {
-        Self { state: Arc::default(), task: Mutex::default(), reader: GitStatusReader::default(), diagnostics }
+        Self { diagnostics, ..Self::default() }
     }
 
     pub(crate) fn stop(&self) -> Option<tokio::task::JoinHandle<()>> {
@@ -207,6 +217,7 @@ impl ObservationController {
         state.generation += 1;
         state.observing = false;
         if let Some(task) = &task { task.abort(); }
+        self.state_changed.notify_waiters();
         task
     }
 
@@ -226,13 +237,14 @@ impl ObservationController {
     }
 
     /// Changes the cached selected context without issuing I/O for an unverified root.
-    pub(crate) fn select_unverified(&self, entry_id: &str) {
+    pub(crate) fn select_unverified(&self, entry_id: &str, context_epoch: String) {
         if let Some(previous) = self.task.lock().take() {
             previous.abort();
         }
         let mut state = self.state.lock();
         state.generation += 1;
         state.selected_id = Some(entry_id.to_owned());
+        state.context_epoch = context_epoch;
         state.observing = false;
         let entry = state.entries.entry(entry_id.to_owned()).or_default();
         entry.revision += 1;
@@ -247,16 +259,73 @@ impl ObservationController {
         state.observing && state.selected_id.as_deref() == Some(entry_id)
     }
 
+    /// Host visibility changes synchronously stop native producers before asynchronous reconciliation.
+    pub(crate) fn set_demand(&self, demanded: bool) {
+        self.demand_suspended.store(!demanded, Ordering::SeqCst);
+        if !demanded { self.stop(); }
+    }
+
+    /// A ticket requires a scan STARTED after this call, not merely an old scan finishing.
+    pub(crate) fn request_fresh_scan(&self, entry_id: &str) -> Option<(u64, u64)> {
+        let mut state = self.state.lock();
+        if !state.observing || state.selected_id.as_deref() != Some(entry_id) { return None; }
+        let required_start = state.started_scan + 1;
+        state.requested_start = required_start;
+        let ticket = (state.generation, required_start);
+        self.scan_requested.notify_one();
+        Some(ticket)
+    }
+
+    /// Waits for this opening's pending recovery without treating a cached failure as a new attempt.
+    pub(crate) async fn fresh_scan_after_recovery(&self, entry_id: &str, context_epoch: &str) -> Option<(u64, u64)> {
+        let previous_failures = self.state.lock().recovery_failures;
+        loop {
+            let notified = self.state_changed.notified();
+            tokio::pin!(notified);
+            notified.as_mut().enable();
+            {
+                let mut state = self.state.lock();
+                if state.context_epoch != context_epoch || state.selected_id.as_deref() != Some(entry_id) { return None; }
+                if state.observing {
+                    let required_start = state.started_scan + 1;
+                    state.requested_start = required_start;
+                    self.scan_requested.notify_one();
+                    return Some((state.generation, required_start));
+                }
+                if state.recovery_failures > previous_failures { return None; }
+            }
+            notified.await;
+        }
+    }
+
+    pub(crate) async fn await_fresh_scan(&self, ticket: (u64, u64)) -> bool {
+        loop {
+            let notified = self.state_changed.notified();
+            tokio::pin!(notified);
+            notified.as_mut().enable();
+            {
+                let state = self.state.lock();
+                if state.generation != ticket.0 || !state.observing { return false; }
+                if state.completed_start >= ticket.1 { return true; }
+            }
+            notified.await;
+        }
+    }
+
     pub(crate) fn unverified_unavailable(&self, entry_id: &str) {
         let mut state = self.state.lock();
         if !state.observing && state.selected_id.as_deref() == Some(entry_id) {
             state.entries.entry(entry_id.to_owned()).or_default()
                 .publish(entry_id, Err(ObservationErrorCode::Inaccessible));
+            state.recovery_failures += 1;
+            self.state_changed.notify_waiters();
         }
     }
 
-    pub(crate) fn select(&self, context: SelectedContext) {
-        let previous = self.task.lock().take();
+    pub(crate) fn select(&self, context: SelectedContext, context_epoch: String) {
+        let mut task_slot = self.task.lock();
+        if self.demand_suspended.load(Ordering::SeqCst) { return; }
+        let previous = task_slot.take();
         if let Some(task) = &previous {
             task.abort();
         }
@@ -264,6 +333,7 @@ impl ObservationController {
             let mut state = self.state.lock();
             state.generation += 1;
             state.selected_id = Some(context.entry_id.clone());
+            state.context_epoch = context_epoch;
             state.observing = true;
             let generation = state.generation;
             let entry = state.entries.entry(context.entry_id.clone()).or_default();
@@ -274,8 +344,11 @@ impl ObservationController {
             });
             generation
         };
+        self.state_changed.notify_waiters();
         let state = Arc::clone(&self.state);
         let reader = self.reader.clone();
+        let scan_requested = Arc::clone(&self.scan_requested);
+        let state_changed = Arc::clone(&self.state_changed);
         let parent = OperationContext::current()
             .or_else(|| diagnostic_operation::context(&self.diagnostics, OperationKind::ScanContext));
         let task = tokio::spawn(crate::native_work::inherit(async move {
@@ -286,6 +359,17 @@ impl ObservationController {
             }
             let probe = GitProbe::default();
             loop {
+                {
+                    let wake = scan_requested.notified();
+                    tokio::pin!(wake);
+                    wake.as_mut().enable();
+                }
+                let started_scan = {
+                    let mut state = state.lock();
+                    if state.generation != generation { return; }
+                    state.started_scan += 1;
+                    state.started_scan
+                };
                 let operation = parent.as_ref().map(|parent| parent.child().with_kind(OperationKind::ScanContext));
                 let superseded = diagnostic_operation::scoped(operation.as_ref(), async {
                     let mut trace = operation.as_ref().map(|context| OperationTrace::new(context.clone(), Component::Observation));
@@ -301,6 +385,9 @@ impl ObservationController {
                                 Some(ObservationSnapshot::Unavailable { error_code, .. }) => Some((*error_code).into()),
                                 _ => None,
                             };
+                            state.completed_start = started_scan;
+                            state.completed_scan_sequence += 1;
+                            state_changed.notify_waiters();
                             (if code.is_some() { Event::Failed } else { Event::Completed }, code, false)
                         }
                     };
@@ -308,11 +395,15 @@ impl ObservationController {
                     superseded
                 }).await;
                 if superseded { return; }
-                // Sleep after completion: a slow scan cannot accumulate ticks or queued subprocesses.
-                tokio::time::sleep(SCAN_INTERVAL).await;
+                // A fresh-opening ticket coalesces with the next scan, never the one already started.
+                if state.lock().requested_start > started_scan { continue; }
+                tokio::select! {
+                    _ = tokio::time::sleep(SCAN_INTERVAL) => {},
+                    _ = scan_requested.notified() => {},
+                }
             }
         }));
-        *self.task.lock() = Some(task);
+        *task_slot = Some(task);
     }
 
     /// Selection authority independent of the periodically changing file observation revision.
@@ -344,6 +435,35 @@ impl ObservationController {
             return Err(ReviewResult::StaleObservation);
         }
         Ok(())
+    }
+
+    pub(crate) fn handoff_authority(&self, selection: &crate::companion::HandoffSelection) -> Option<StatusPath> {
+        let state = self.state.lock();
+        if !state.observing || state.selected_id.as_deref() != Some(&selection.entry_id) { return None; }
+        let entry = state.entries.get(&selection.entry_id)?;
+        if entry.revision != selection.observation_revision { return None; }
+        let path = entry.tokens.get(&selection.path_id)?;
+        if !selection.category.authorizes(path) || entry.stable_paths.get(&path.native_path) != Some(&selection.stable_path_id) { return None; }
+        Some(path.clone())
+    }
+
+    pub(crate) fn review_provenance(&self, entry_id: &str, revision: u64, path_id: &str, category: ReviewCategory) -> Option<crate::companion::IssuedReview> {
+        let state = self.state.lock();
+        if !state.observing || state.selected_id.as_deref() != Some(entry_id) { return None; }
+        let entry = state.entries.get(entry_id)?;
+        if entry.revision != revision { return None; }
+        let path = entry.tokens.get(path_id)?.clone();
+        if !category.authorizes(&path) { return None; }
+        let stable_path_id = entry.stable_paths.get(&path.native_path)?.clone();
+        Some(crate::companion::IssuedReview {
+            selection: crate::companion::HandoffSelection { entry_id: entry_id.to_owned(), stable_path_id, observation_revision: revision, path_id: path_id.to_owned(), category }, path,
+        })
+    }
+
+    pub(crate) fn surface_snapshot(&self, entry_id: &str, context_epoch: &str) -> Option<ObservationSnapshot> {
+        let state = self.state.lock();
+        if state.context_epoch != context_epoch || state.selected_id.as_deref() != Some(entry_id) { return None; }
+        state.entries.get(entry_id)?.snapshot.clone()
     }
 
     pub(crate) fn snapshot(&self, entry_id: &str) -> ObservationSnapshot {

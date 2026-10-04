@@ -5,8 +5,9 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { RepositoryClient } from "../contracts/repositories";
+import type { ReviewSurfaceClient, ReviewHandoffClient } from "../contracts/companion";
 import type { RepositoryFileSelection } from "../contracts/browsing";
-import { repositoryClient } from "../platform/RepositoryClient";
+import { repositoryClient, reviewSurfaceClient, reviewHandoffClient } from "../platform/RepositoryClient";
 import { useObservation } from "../features/changes";
 import { Workbench } from "./workbench/Workbench";
 import { WorkbenchLayoutMenu } from "./workbench/WorkbenchLayoutMenu";
@@ -31,21 +32,33 @@ import { WorkspaceSidebar } from "./WorkspaceSidebar";
 import { useTranslation, useLocale } from "../i18n";
 import { workspaceErrorMessage } from "../features/repositories";
 import { LanguageMenu } from "./LanguageMenu";
+import { CompanionSettings } from "./CompanionSettings";
+import { CompanionPresentationPublisher } from "./CompanionPresentation";
+import { useMainReviewSurface, type AppliedReviewHandoff } from "./companion/useMainReviewSurface";
+import { useReviewSurface } from "./companion/useReviewSurface";
+import "./companion/companion.scss";
 
 export function Workspace({
   client = repositoryClient,
+  surfaceClient = client === repositoryClient ? reviewSurfaceClient : null,
+  handoffClient = reviewHandoffClient,
 }: {
   client?: RepositoryClient;
+  surfaceClient?: ReviewSurfaceClient | null;
+  handoffClient?: ReviewHandoffClient;
 }) {
   const { locale, t } = useTranslation();
   const localeState = useLocale();
   const appearance = useAppearanceTheme();
+  const surface = useReviewSurface(surfaceClient);
+  const surfaceVisible = surfaceClient === null || (surface.snapshot?.visible ?? false);
   useLayoutEffect(() => {
     document.documentElement.dataset.appearance = appearance.theme;
     return () => { if (document.documentElement.dataset.appearance === appearance.theme) delete document.documentElement.dataset.appearance; };
   }, [appearance.theme]);
   const {
     snapshot,
+    acceptExternalSnapshot,
     loading,
     opening,
     mutating,
@@ -59,12 +72,17 @@ export function Workspace({
     removeRepository,
     refreshAvailability,
     dismissError,
-  } = useWorkspace(client);
+  } = useWorkspace(client, surfaceVisible);
   const [searchQuery, setSearchQuery] = useState("");
   const [layout, setLayout] = useState<WorkbenchLayoutId>(defaultWorkbenchLayout);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [browsedFile, setBrowsedFile] = useState<{ entryId: string; generation: number; file: RepositoryFileSelection } | null>(null);
   const dismissBrowsedFile = useCallback(() => setBrowsedFile(null), []);
+  const [handoff, setHandoff] = useState<AppliedReviewHandoff | null>(null);
+  useMainReviewSurface(surface.connection, handoffClient, acceptExternalSnapshot, (incoming) => {
+    setBrowsedFile(null);
+    setHandoff(incoming);
+  });
   const shellRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
   const [repositoriesOpen, setRepositoriesOpen] = useState(false);
@@ -113,7 +131,12 @@ export function Workspace({
     pendingId === null
       ? snapshot.entries.find((entry) => entry.id === snapshot.activeContextId)
       : undefined;
-  const observation = useObservation(client, active?.id ?? null, selectionGeneration);
+  const observed = useObservation(client, active?.id ?? null, selectionGeneration, surfaceVisible && surfaceClient === null);
+  const sharedObservation = surfaceVisible && !surface.reconciling && surface.snapshot && active
+    && surface.snapshot.workspace.contextEpoch === snapshot.contextEpoch && surface.snapshot.observation?.entryId === active.id
+    ? surface.snapshot.observation : null;
+  const observation = (surfaceClient ? sharedObservation : observed)
+    ?? (active ? { kind: "checking" as const, entryId: active.id, observationRevision: 0 } : null);
   const repositoryFile = browsedFile?.entryId === active?.id && browsedFile?.generation === selectionGeneration ? browsedFile.file : null;
   const workingBranch = active?.head.kind === "branch" || active?.head.kind === "unborn" ? active.head.name : null;
   useEffect(() => {
@@ -164,6 +187,7 @@ export function Workspace({
   }
   return (
     <IconThemeProvider><div className="workspace-shell" ref={shellRef}>
+      {client === repositoryClient ? <CompanionPresentationPublisher /> : null}
       <header className={`workbench-toolbar${active ? " workbench-toolbar--branded" : ""}`}>
         <div className="workbench-identity">
         {active ? <Brand compact /> : null}
@@ -207,12 +231,13 @@ export function Workspace({
           <AppearanceMenu />
           <WorkbenchLayoutMenu value={layout} onChange={setLayout} />
           <LanguageMenu />
+          {client === repositoryClient ? <CompanionSettings refreshRevision={surface.noticeRevision} /> : null}
         </div>
       </header>
       <div className="workspace-body">
         <WorkspaceSidebar open={sidebarOpen}>
           {active && active.kind !== "unknown" ? <RepositoryFiles key={`${active.id}:${selectionGeneration}`}
-            client={client} entryId={active.id} enabled={sidebarOpen} observation={observation} selected={repositoryFile}
+            client={client} entryId={active.id} enabled={sidebarOpen && surfaceVisible} observation={observation} selected={repositoryFile}
             onSelect={(file) => setBrowsedFile({ entryId: active.id, generation: selectionGeneration, file })} />
             : <p className="empty-list">{t(pendingId ? "app.switchingRepository" : "app.chooseFilesRepository")}</p>}
         </WorkspaceSidebar>
@@ -261,12 +286,14 @@ export function Workspace({
             observation={observation} client={client} entryId={active.id}
             selectionGeneration={selectionGeneration} contextLabel={active.repositoryLabel}
             layout={layout}
+            handoff={handoff?.contextEpoch === snapshot.contextEpoch ? handoff : null}
+            enabled={surfaceVisible}
             repositoryFile={repositoryFile} onRepositoryFileDismiss={dismissBrowsedFile}
             onRecheck={active.availability === "unavailable" ? () => refreshAvailability(active.id) : undefined}>
-            {(comparison) => <HistoryGraph client={client} entryId={active.id} selectionGeneration={selectionGeneration}
+            {(comparison) => surfaceVisible ? <HistoryGraph client={client} entryId={active.id} selectionGeneration={selectionGeneration}
               comparison={comparison}
               workingBranch={workingBranch}
-              onSelectWorktree={(worktreeId) => selectWorktree(active.id, worktreeId)} />}
+              onSelectWorktree={(worktreeId) => selectWorktree(active.id, worktreeId)} /> : null}
           </Workbench> : null
         ) : (
           <section className="workspace-state workspace-state--branded" role="status">

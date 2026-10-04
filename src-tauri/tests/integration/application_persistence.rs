@@ -46,6 +46,100 @@ fn opened(outcome: OpenOutcome) -> String {
 }
 
 #[tokio::test]
+async fn restored_context_gets_session_authority_without_persisting_review_epochs() {
+    let (temp, root) = working_tree();
+    let file = temp.path().join("workspace.json");
+    let service = RepositoryService::with_workspace_file(file.clone()).await;
+    let id = opened(service.open_chosen(&root).await);
+    service.select(&id).await;
+    let before = service.snapshot().await;
+    service.shutdown().await;
+    let document: Value = serde_json::from_slice(&fs::read(&file).unwrap()).unwrap();
+    assert!(document.get("contextEpoch").is_none());
+    let restored = RepositoryService::with_workspace_file(file).await;
+    let snapshot = wait_for(&restored, |snapshot| !snapshot.restoring).await;
+    assert!(snapshot.active_context_id.is_some());
+    assert_ne!(snapshot.context_epoch, before.context_epoch);
+    assert_eq!(serde_json::to_value(&snapshot).unwrap()["contextEpoch"], snapshot.context_epoch);
+    restored.shutdown().await;
+}
+
+#[tokio::test]
+async fn companion_open_waits_for_gated_restoration_then_completes_without_reopening() {
+    use crate::companion::{BeginCompanionReviewResult, ReviewCaller};
+    let (temp, root) = working_tree();
+    let file = temp.path().join("workspace.json");
+    seed(&file, std::slice::from_ref(&root), Some(&root));
+    block(&root);
+    let service = RepositoryService::load_workspace(file, GitProbe::with_executable(&gated_git(temp.path()))).await;
+    wait_for_probe(&root).await;
+    service.set_companion_available(true);
+    let epoch = service.set_surface_visibility(ReviewCaller::Companion, true);
+    let before = service.snapshot().await.context_epoch;
+    let opening = service.begin_companion_review(&epoch);
+    tokio::pin!(opening);
+    assert!(tokio::time::timeout(Duration::from_millis(40), &mut opening).await.is_err());
+    allow_new_probes(&root);
+    release(&root);
+    let BeginCompanionReviewResult::Ready { surface } = tokio::time::timeout(Duration::from_secs(10), opening).await.unwrap() else { panic!("recovered opening did not become ready") };
+    assert_eq!(surface.open_epoch, epoch);
+    assert_eq!(surface.workspace.context_epoch, before);
+    assert!(matches!(surface.observation, Some(ObservationSnapshot::Ready { .. })));
+}
+
+#[tokio::test]
+async fn accepted_verified_selection_refreshes_workspace_facts_without_a_renderer_request() {
+    let (temp, root) = working_tree();
+    let service = RepositoryService::with_probe_and_diagnostics(GitProbe::with_executable(&gated_git(temp.path())), Default::default());
+    let id = opened(service.open_chosen(&root).await);
+    block(&root);
+    let selected = tokio::time::timeout(Duration::from_secs(1), service.select(&id)).await.unwrap();
+    assert!(matches!(selected, SelectOutcome::Selected { .. }));
+    wait_for_probe(&root).await;
+    git(&root, &["branch", "-m", "updated-native-head"]);
+    allow_new_probes(&root);
+    release(&root);
+    let ready = wait_for(&service, |snapshot| snapshot.entries[0].availability == Availability::Available).await;
+    assert_eq!(ready.active_context_id.as_deref(), Some(id.as_str()));
+    assert_eq!(ready.entries[0].head, HeadLabel::Branch { name: "updated-native-head".into() });
+}
+
+#[tokio::test]
+async fn selection_refresh_stops_when_both_hidden_and_resumes_with_visible_demand() {
+    use crate::companion::ReviewCaller;
+    let (temp, root) = working_tree();
+    let service = RepositoryService::with_probe_and_diagnostics(GitProbe::with_executable(&gated_git(temp.path())), Default::default());
+    let id = opened(service.open_chosen(&root).await);
+    block(&root);
+    service.select(&id).await;
+    wait_for_probe(&root).await;
+    service.set_companion_available(true);
+    service.set_surface_visibility(ReviewCaller::Main, false);
+    wait_for_reaped_child(&root).await;
+    assert_eq!(service.snapshot().await.entries[0].availability, Availability::Checking);
+    allow_new_probes(&root);
+    release(&root);
+    service.set_surface_visibility(ReviewCaller::Main, true);
+    service.reconcile_surface_demand().await;
+    let ready = wait_for(&service, |snapshot| snapshot.entries[0].availability == Availability::Available).await;
+    assert_eq!(ready.active_context_id.as_deref(), Some(id.as_str()));
+}
+
+#[tokio::test]
+async fn explicit_refresh_supersedes_the_owned_selection_refresh() {
+    let (temp, root) = working_tree();
+    let service = RepositoryService::with_probe_and_diagnostics(GitProbe::with_executable(&gated_git(temp.path())), Default::default());
+    let id = opened(service.open_chosen(&root).await);
+    block(&root);
+    service.select(&id).await;
+    wait_for_probe(&root).await;
+    allow_new_probes(&root);
+    let current = service.refresh(&id).await;
+    wait_for_reaped_child(&root).await;
+    assert_eq!(current.entries[0].availability, Availability::Available);
+}
+
+#[tokio::test]
 async fn pending_selected_restore_is_responsive_and_never_reselects_after_new_user_intent() {
     let (temp, root) = working_tree();
     let root = fs::canonicalize(root).unwrap();
@@ -522,4 +616,77 @@ async fn dropping_service_detaches_accepted_save_without_retaining_the_service()
     assert_eq!(serde_json::from_slice::<Value>(&fs::read(file).unwrap()).unwrap(), json!({
         "version": 1, "repositories": [{ "root": root }], "activeRoot": root,
     }));
+}
+
+#[tokio::test]
+async fn unverified_selection_canceled_while_hidden_recovers_on_companion_reveal() {
+    use crate::companion::{BeginCompanionReviewResult, ReviewCaller};
+    let (temp, root) = working_tree();
+    let root = fs::canonicalize(root).unwrap();
+    let file = temp.path().join("workspace.json");
+    seed(&file, std::slice::from_ref(&root), None);
+    let parked = temp.path().join("parked");
+    fs::rename(&root, &parked).unwrap();
+    let service = RepositoryService::load_workspace(file, GitProbe::with_executable(&gated_git(temp.path()))).await;
+    let initial = wait_for(&service, |snapshot| !snapshot.restoring).await;
+    assert_eq!(initial.entries[0].availability, Availability::Unavailable);
+    let id = initial.entries[0].id.clone();
+    block(&parked);
+    fs::rename(&parked, &root).unwrap();
+    service.select(&id).await;
+    wait_for_probe(&root).await;
+    service.set_surface_visibility(ReviewCaller::Main, false);
+    wait_for_reaped_child(&root).await;
+    let hidden = service.snapshot().await;
+    assert_eq!(hidden.entries[0].kind, EntryKind::Unknown);
+    assert_eq!(hidden.entries[0].availability, Availability::Checking);
+    allow_new_probes(&root);
+    release(&root);
+    service.set_companion_available(true);
+    let epoch = service.set_surface_visibility(ReviewCaller::Companion, true);
+    let opening = tokio::time::timeout(Duration::from_secs(10), service.begin_companion_review(&epoch)).await.unwrap();
+    let BeginCompanionReviewResult::Ready { surface } = opening else { panic!("revealed unverified selection did not recover") };
+    assert_eq!(surface.workspace.active_context_id.as_deref(), Some(id.as_str()));
+    assert_eq!(surface.workspace.context_epoch, hidden.context_epoch);
+    assert_eq!(surface.workspace.entries[0].availability, Availability::Available);
+    assert!(matches!(surface.observation, Some(ObservationSnapshot::Ready { .. })));
+    service.shutdown().await;
+}
+
+#[tokio::test]
+async fn resumed_user_selection_does_not_wait_for_another_entry_initial_restoration() {
+    use crate::companion::{BeginCompanionReviewResult, ReviewCaller};
+    let (temp, root) = working_tree();
+    let root = fs::canonicalize(root).unwrap();
+    let other = other_repository(&temp.path().join("other"));
+    let file = temp.path().join("workspace.json");
+    seed(&file, &[root.clone(), other.clone()], None);
+    let parked = temp.path().join("parked");
+    fs::rename(&root, &parked).unwrap();
+    block(&other);
+    let service = RepositoryService::load_workspace(file, GitProbe::with_executable(&gated_git(temp.path()))).await;
+    wait_for_probe(&other).await;
+    let initial = service.snapshot().await;
+    assert!(initial.restoring);
+    assert_eq!(initial.entries[0].availability, Availability::Unavailable);
+    let id = initial.entries[0].id.clone();
+    block(&parked);
+    fs::rename(&parked, &root).unwrap();
+    service.select(&id).await;
+    wait_for_probe(&root).await;
+    service.set_surface_visibility(ReviewCaller::Main, false);
+    wait_for_reaped_child(&root).await;
+    allow_new_probes(&root);
+    release(&root);
+    service.set_companion_available(true);
+    let epoch = service.set_surface_visibility(ReviewCaller::Companion, true);
+    let opening = tokio::time::timeout(Duration::from_secs(10), service.begin_companion_review(&epoch)).await.unwrap();
+    let BeginCompanionReviewResult::Ready { surface } = opening else { panic!("selected recovery was blocked by unrelated restoration") };
+    assert!(surface.workspace.restoring);
+    assert_eq!(surface.workspace.active_context_id.as_deref(), Some(id.as_str()));
+    assert_eq!(surface.workspace.entries[0].availability, Availability::Available);
+    assert!(matches!(surface.observation, Some(ObservationSnapshot::Ready { .. })));
+    allow_new_probes(&other);
+    release(&other);
+    service.shutdown().await;
 }

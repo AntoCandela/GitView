@@ -19,6 +19,7 @@ export interface LocaleStoreOptions {
 }
 export interface LocaleStore {
   getSnapshot: () => LocaleSnapshot;
+  isReady: () => boolean;
   subscribe: (listener: () => void) => () => void;
   initialize: (source: PreferredLanguageSource) => Promise<void>;
   setChoice: (choice: LocaleChoice) => Promise<void>;
@@ -60,9 +61,11 @@ export function createLocaleStore(options: LocaleStoreOptions): LocaleStore {
   let source: PreferredLanguageSource = async () => [];
   let unsubscribeStorage: (() => void) | undefined;
   let disposed = false;
+  let ready = false;
 
   function publish(snapshot: LocaleSnapshot) {
     current = snapshot;
+    if (snapshot.pendingChoice === null) ready = true;
     if (options.document) {
       options.document.documentElement.lang = snapshot.locale;
       options.document.title = translate(snapshot.locale, "app.documentTitle");
@@ -111,6 +114,7 @@ export function createLocaleStore(options: LocaleStoreOptions): LocaleStore {
 
   return {
     getSnapshot: () => current,
+    isReady: () => ready,
     subscribe(listener) {
       listeners.add(listener);
       return () => { listeners.delete(listener); };

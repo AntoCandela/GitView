@@ -39,6 +39,8 @@ export interface PersistenceError {
 /** Complete authoritative state, ordered by the host's monotonic workspace revision. */
 export interface WorkspaceSnapshot {
   revision: number;
+  /** Native lifecycle authority; reselection changes it even when the entry ID is unchanged. */
+  contextEpoch: string;
   entries: RepositoryEntry[];
   /** Selection is independent of admission; opening an entry does not select it. */
   activeContextId: string | null;

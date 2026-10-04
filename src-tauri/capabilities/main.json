@@ -1,8 +1,9 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main",
-  "description": "GitView repository commands are only available to the main window.",
-  "windows": ["main"],
+  "description": "Local main-webview workspace, preferences and acknowledged review handoff.",
+  "local": true,
+  "webviews": ["main"],
   "permissions": [
     "allow-workspace-snapshot",
     "allow-preferred-languages",
@@ -21,6 +22,15 @@
     "allow-list-repository-files",
     "allow-review-repository-file",
     "allow-record-renderer-diagnostic",
-    "allow-diagnostic-health"
+    "allow-diagnostic-health",
+    "allow-review-surface-bootstrap",
+    "allow-review-surface-snapshot",
+    "allow-subscribe-review-surface",
+    "allow-companion-state",
+    "allow-set-companion-enabled",
+    "allow-publish-companion-presentation",
+    "allow-pending-review-handoff",
+    "allow-claim-review-handoff",
+    "allow-ack-review-handoff"
   ]
 }

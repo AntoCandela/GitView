@@ -205,3 +205,87 @@ async fn same_id_reselection_resets_revision_and_drop_reaps_the_new_scan() {
     drop(service);
     wait_for_reaped_child(&root).await;
 }
+
+#[tokio::test]
+async fn companion_open_during_old_scan_waits_for_a_new_start_even_when_status_is_unchanged() {
+    use crate::companion::{BeginCompanionReviewResult, ReviewCaller};
+    let (temp, root) = working_tree();
+    fs::write(root.join(".git/info/exclude"), b".gitview-*\n").unwrap();
+    let (service, _) = selected_service(&root, &gated_status(temp.path())).await;
+    wait_for_probe(&root).await;
+    service.set_companion_available(true);
+    let epoch = service.set_surface_visibility(ReviewCaller::Companion, true);
+    let opening = service.begin_companion_review(&epoch);
+    tokio::pin!(opening);
+    assert!(tokio::time::timeout(Duration::from_millis(40), &mut opening).await.is_err());
+    fs::write(root.join(".gitview-release"), b"").unwrap();
+    let BeginCompanionReviewResult::Ready { surface } = tokio::time::timeout(Duration::from_secs(5), opening).await.unwrap() else { panic!("fresh opening failed") };
+    assert!(matches!(surface.observation, Some(ObservationSnapshot::Ready { files, .. }) if files.is_empty()));
+    assert_eq!(fs::read_to_string(temp.path().join("scans")).unwrap(), "scan\nscan\n");
+}
+
+#[tokio::test]
+async fn both_hidden_cancels_the_scan_and_two_visible_surfaces_share_one_controller() {
+    use crate::companion::{CompanionCode, ReviewCaller};
+    let (temp, root) = working_tree();
+    let (service, id) = selected_service(&root, &gated_status(temp.path())).await;
+    wait_for_probe(&root).await;
+    service.set_companion_available(true);
+    service.set_surface_visibility(ReviewCaller::Companion, true);
+    service.reconcile_surface_demand().await;
+    assert_eq!(fs::read_to_string(temp.path().join("scans")).unwrap(), "scan\n");
+    let scope = service.capture_surface_scope(ReviewCaller::Companion).unwrap();
+    service.set_surface_visibility(ReviewCaller::Companion, false);
+    assert!(matches!(service.run_surface_request(&scope, std::future::pending::<()>()).await, Err(CompanionCode::StaleSurface)));
+    assert!(matches!(service.observe_selected_context(&id).await, ObservationSnapshot::Checking { .. }));
+    service.set_surface_visibility(ReviewCaller::Main, false);
+    service.reconcile_surface_demand().await;
+    wait_for_reaped_child(&root).await;
+    tokio::time::sleep(Duration::from_millis(1200)).await;
+    assert_eq!(fs::read_to_string(temp.path().join("scans")).unwrap(), "scan\n");
+    fs::write(root.join(".gitview-release"), b"").unwrap();
+    service.set_surface_visibility(ReviewCaller::Main, true);
+    service.reconcile_surface_demand().await;
+    tokio::time::timeout(Duration::from_secs(5), async {
+        while !matches!(service.observe_selected_context(&id).await, ObservationSnapshot::Ready { .. }) {
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        }
+    }).await.unwrap();
+    assert_eq!(fs::read_to_string(temp.path().join("scans")).unwrap(), "scan\nscan\n");
+}
+
+#[tokio::test]
+async fn reopening_with_unchanged_status_finishes_without_a_semantic_revision_bump() {
+    use crate::companion::{BeginCompanionReviewResult, ReviewCaller};
+    let (_temp, root) = working_tree();
+    let service = RepositoryService::new();
+    let OpenOutcome::Opened { entry_id, .. } = service.open_chosen(&root).await else { panic!("admission failed") };
+    service.select(&entry_id).await;
+    service.set_companion_available(true);
+    let first_epoch = service.set_surface_visibility(ReviewCaller::Companion, true);
+    let BeginCompanionReviewResult::Ready { surface: first } = service.begin_companion_review(&first_epoch).await else { panic!("first open failed") };
+    service.set_surface_visibility(ReviewCaller::Companion, false);
+    let second_epoch = service.set_surface_visibility(ReviewCaller::Companion, true);
+    assert_ne!(first_epoch, second_epoch);
+    let BeginCompanionReviewResult::Ready { surface: second } = service.begin_companion_review(&second_epoch).await else { panic!("unchanged open failed") };
+    assert_eq!(first.observation, second.observation);
+    assert_eq!(first.workspace.context_epoch, second.workspace.context_epoch);
+}
+
+#[tokio::test]
+async fn hiding_an_open_waiter_cancels_it_while_visible_main_keeps_its_scan() {
+    use crate::companion::{BeginCompanionReviewResult, CompanionCode, ReviewCaller};
+    let (temp, root) = working_tree();
+    let (service, _) = selected_service(&root, &gated_status(temp.path())).await;
+    wait_for_probe(&root).await;
+    service.set_companion_available(true);
+    let epoch = service.set_surface_visibility(ReviewCaller::Companion, true);
+    let opening = service.begin_companion_review(&epoch);
+    tokio::pin!(opening);
+    assert!(tokio::time::timeout(Duration::from_millis(30), &mut opening).await.is_err());
+    service.set_surface_visibility(ReviewCaller::Companion, false);
+    assert!(matches!(opening.await, BeginCompanionReviewResult::Stale { code: CompanionCode::StaleSurface }));
+    assert_eq!(fs::read_to_string(temp.path().join("scans")).unwrap(), "scan\n");
+    service.shutdown().await;
+    wait_for_reaped_child(&root).await;
+}

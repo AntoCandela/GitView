@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::Duration;
 
+use crate::companion::{self, AckReviewHandoffResult, BeginCompanionReviewResult, ClaimReviewHandoffResult, CompanionCode, HandoffOutcome, HandoffSelection, PendingReviewHandoffSnapshot, PresentationInput, PresentationSnapshot, RequestReviewHandoff, ReviewCaller, ReviewHandoffResult, ReviewHandoffTarget, ReviewSelection, ReviewSurfaceSnapshot, SurfaceListener, SurfaceScope};
 use crate::diagnostic_operation::{self, DiagnosticOutcome, OperationTrace};
 use crate::diagnostics::{Component, DiagnosticDetails, DiagnosticSink, Event, OperationContext, OperationKind};
 use crate::browsing::{self, BrowsingController, RepositoryFileResult, RepositoryFilesRequest, RepositoryFilesResult};
@@ -41,6 +42,7 @@ pub struct RepositoryService {
     diagnostics: DiagnosticSink,
     native_work: NativeWork,
     shutdown: tokio::sync::Mutex<bool>,
+    handoff_preparation: tokio::sync::Mutex<()>,
 }
 
 struct WorkspacePersistence {
@@ -65,6 +67,7 @@ impl Drop for OwnedTask {
 #[derive(Default)]
 struct RecoveryController {
     task: parking_lot::Mutex<Option<(String, tokio::task::JoinHandle<()>)>>,
+    demand_suspended: std::sync::atomic::AtomicBool,
 }
 
 #[derive(Clone, Copy)]
@@ -80,12 +83,20 @@ impl RecoveryController {
         }
     }
 
+    fn cancel_entry(&self, entry_id: &str) {
+        let mut current = self.task.lock();
+        if current.as_ref().is_some_and(|(id, _)| id == entry_id) {
+            if let Some((_, task)) = current.take() { task.abort(); }
+        }
+    }
+
     fn start(
         &self, entry_id: String, probe: GitProbe, workspace: Arc<WorkspaceStore>,
         observation: Arc<ObservationController>, selection: Arc<tokio::sync::Mutex<()>>,
         reason: RecoveryStart,
     ) {
         let mut current = self.task.lock();
+        if self.demand_suspended.load(std::sync::atomic::Ordering::SeqCst) { return; }
         if matches!(reason, RecoveryStart::AfterRestoreFailure)
             && current.as_ref().is_some_and(|(id, task)| id == &entry_id && !task.is_finished()) {
             return;
@@ -114,7 +125,7 @@ impl RecoveryController {
                     let _selection = selection.lock().await;
                     if let Some(context) = workspace.selected_context(&selected_id).await {
                         if !observation.is_observing(&selected_id) {
-                            observation.select(context);
+                            observation.select(context, workspace.review.context_epoch());
                         }
                         return true;
                     }
@@ -182,7 +193,7 @@ async fn activate_verified_selection(
     if let Some(entry_id) = workspace.active_context_id().await {
         if !observation.is_observing(&entry_id) {
             if let Some(context) = workspace.selected_context(&entry_id).await {
-                observation.select(context);
+                observation.select(context, workspace.review.context_epoch());
             }
         }
     }
@@ -216,6 +227,7 @@ impl RepositoryService {
             diagnostics,
             native_work: NativeWork::default(),
             shutdown: tokio::sync::Mutex::new(false),
+            handoff_preparation: tokio::sync::Mutex::new(()),
         }
     }
 
@@ -241,6 +253,198 @@ impl RepositoryService {
         self.native_work.admit()
     }
 
+
+    /// Supplies effective native companion access, not the saved preference alone.
+    pub fn set_companion_available(&self, available: bool) {
+        self.workspace.review.set_available(available);
+        self.update_surface_demand();
+    }
+
+    /// Must run synchronously before a native hide; cancellation does not wait for a runtime task.
+    pub fn set_surface_visibility(&self, caller: ReviewCaller, visible: bool) -> String {
+        let epoch = self.workspace.review.set_visibility(caller, visible);
+        self.update_surface_demand();
+        epoch
+    }
+
+    fn update_surface_demand(&self) {
+        let demand = self.workspace.review.demand();
+        self.observation.set_demand(demand);
+        self.recovery.demand_suspended.store(!demand, std::sync::atomic::Ordering::SeqCst);
+        if !demand { self.recovery.cancel(); }
+    }
+
+    pub fn surface_open_epoch(&self, caller: ReviewCaller) -> String { self.workspace.review.open_epoch(caller) }
+    pub fn capture_surface_scope(&self, caller: ReviewCaller) -> Result<SurfaceScope, CompanionCode> { self.workspace.review.capture(caller) }
+    pub fn surface_scope_is_current(&self, scope: &SurfaceScope) -> bool { self.workspace.review.is_current(scope) }
+    pub fn subscribe_review_surface(&self, caller: ReviewCaller, listener: SurfaceListener) { self.workspace.review.subscribe(caller, Some(listener)); }
+    pub fn unsubscribe_review_surface(&self, caller: ReviewCaller) { self.workspace.review.subscribe(caller, None); }
+
+    /// Coalesces both visible surfaces into the existing selected-context producer.
+    pub async fn reconcile_surface_demand(&self) {
+        let _selection = self.selection.lock().await;
+        self.update_surface_demand();
+        if !self.workspace.review.demand() { return; }
+        activate_verified_selection(&self.workspace, &self.observation).await;
+        if let Some(entry_id) = self.workspace.selected_pending_refresh_id().await {
+            self.recovery.start(entry_id, self.probe.clone(), Arc::clone(&self.workspace),
+                Arc::clone(&self.observation), Arc::clone(&self.selection), RecoveryStart::AfterRestoreFailure);
+        }
+    }
+
+    /// Drops in-flight native work on invalidation and validates again before publishing its reply.
+    pub async fn run_surface_request<T>(&self, scope: &SurfaceScope, future: impl Future<Output = T>) -> Result<T, CompanionCode> {
+        self.workspace.review.validate(scope, true)?;
+        let result = tokio::select! {
+            biased;
+            _ = scope.cancelled() => return Err(self.workspace.review.validate(scope, true).err().unwrap_or(CompanionCode::StaleSurface)),
+            result = self.native_work.scope(future) => result,
+        };
+        self.workspace.review.validate(scope, true)?;
+        Ok(result)
+    }
+
+    /// Selection invalidates its own context scope, but never its caller's native visibility scope.
+    pub async fn select_context_for_surface(&self, caller: ReviewCaller, entry_id: &str) -> Result<SelectOutcome, CompanionCode> {
+        let scope = self.capture_surface_scope(caller)?;
+        let outcome = self.trace_operation(OperationKind::SelectContext, self.select_entry(entry_id, Some(&scope))).await;
+        self.workspace.review.validate(&scope, false)?;
+        Ok(outcome)
+    }
+
+    pub async fn review_surface_snapshot(&self, caller: ReviewCaller) -> ReviewSurfaceSnapshot {
+        let _selection = self.selection.lock().await;
+        let workspace = self.workspace.snapshot().await;
+        let observation = workspace.active_context_id.as_deref().and_then(|entry_id| self.observation.surface_snapshot(entry_id, &workspace.context_epoch));
+        self.workspace.review.surface_snapshot(caller, workspace, observation)
+    }
+
+    pub fn publish_companion_presentation(&self, presentation: PresentationInput) -> Result<PresentationSnapshot, CompanionCode> {
+        self.workspace.review.presentation(presentation)
+    }
+
+    pub async fn begin_companion_review(&self, open_epoch: &str) -> BeginCompanionReviewResult {
+        let scope = match self.capture_surface_scope(ReviewCaller::Companion) {
+            Ok(scope) if scope.open_epoch == open_epoch => scope,
+            Ok(_) => return BeginCompanionReviewResult::Stale { code: CompanionCode::StaleSurface },
+            Err(code) => return BeginCompanionReviewResult::Unavailable { code },
+        };
+        let operation = async {
+            self.reconcile_surface_demand().await;
+            let workspace = self.workspace.snapshot().await;
+            if let Some(entry_id) = workspace.active_context_id.as_deref() {
+                let Some(ticket) = self.observation.fresh_scan_after_recovery(entry_id, &scope.context_epoch).await else {
+                    return Err(CompanionCode::Unavailable);
+                };
+                if !self.observation.await_fresh_scan(ticket).await { return Err(CompanionCode::StaleContext); }
+            }
+            Ok(self.review_surface_snapshot(ReviewCaller::Companion).await)
+        };
+        match tokio::time::timeout_at(ProbeDeadline::new().instant(), self.run_surface_request(&scope, operation)).await {
+            Ok(Ok(Ok(surface))) => BeginCompanionReviewResult::Ready { surface },
+            Ok(Err(code)) | Ok(Ok(Err(code))) => match code {
+                CompanionCode::StaleSurface | CompanionCode::StaleContext | CompanionCode::NotVisible => BeginCompanionReviewResult::Stale { code },
+                _ => BeginCompanionReviewResult::Unavailable { code },
+            },
+            Err(_) => BeginCompanionReviewResult::Unavailable { code: CompanionCode::Unavailable },
+        }
+    }
+
+    pub async fn review_file_for_surface(&self, scope: &SurfaceScope, entry_id: &str, revision: u64, path_id: &str, category: ReviewCategory) -> Result<ReviewResult, CompanionCode> {
+        self.run_surface_request(scope, async {
+            let issued = self.observation.review_provenance(entry_id, revision, path_id, category);
+            let result = self.review_file(entry_id, revision, path_id, category).await;
+            if matches!(result, ReviewResult::Text { .. } | ReviewResult::Unsupported { .. }) {
+                if let Some(issued) = issued { self.workspace.review.record_review(scope, issued); }
+            }
+            result
+        }).await
+    }
+
+    pub fn pending_review_handoff(&self) -> PendingReviewHandoffSnapshot { self.workspace.review.pending() }
+    pub fn claim_review_handoff(&self, request_id: &str, context_epoch: &str) -> ClaimReviewHandoffResult { self.workspace.review.claim(request_id, context_epoch) }
+    pub fn ack_review_handoff(&self, request_id: &str, context_epoch: &str, outcome: HandoffOutcome) -> AckReviewHandoffResult { self.workspace.review.ack(request_id, context_epoch, outcome) }
+
+    /// Validates native provenance, reveals the existing main surface, then awaits exact claimed delivery.
+    pub async fn request_review_handoff<F, Fut>(&self, request: RequestReviewHandoff, reveal: F) -> ReviewHandoffResult
+    where F: FnOnce(String, String) -> Fut, Fut: Future<Output = Result<(), CompanionCode>> {
+        let scope = match self.capture_surface_scope(ReviewCaller::Companion) {
+            Ok(scope) => scope,
+            Err(code) => return ReviewHandoffResult::Failed { code },
+        };
+        if scope.open_epoch != request.open_epoch { return ReviewHandoffResult::Failed { code: CompanionCode::StaleSurface }; }
+        if scope.context_epoch != request.context_epoch { return ReviewHandoffResult::Failed { code: CompanionCode::StaleContext }; }
+        let prepared = tokio::time::timeout_at(ProbeDeadline::new().instant(), self.run_surface_request(&scope, async {
+            let _preparation = self.handoff_preparation.lock().await;
+            if self.pending_review_handoff().pending.is_some_and(|pending| pending.phase == companion::HandoffPhase::Claimed) { return Err(CompanionCode::Busy); }
+            let workspace = self.workspace.snapshot().await;
+            let target = match request.selection {
+                Some(selection) => Some(self.validate_handoff_target(&scope, &selection).await?),
+                None => None,
+            };
+            self.workspace.review.create_handoff(&scope, workspace.active_context_id, target)
+        })).await;
+        let (pending, completion) = match prepared {
+            Ok(Ok(Ok(delivery))) => delivery,
+            Ok(Ok(Err(code))) | Ok(Err(code)) => return ReviewHandoffResult::Failed { code },
+            Err(_) => return ReviewHandoffResult::Failed { code: CompanionCode::Unavailable },
+        };
+        let deadline = tokio::time::Instant::now() + companion::HANDOFF_TIMEOUT;
+        let delivery = async {
+            if let Err(code) = reveal(pending.request_id.clone(), pending.source_open_epoch.clone()).await {
+                self.workspace.review.fail(&pending.request_id, code);
+                return ReviewHandoffResult::Failed { code };
+            }
+            completion.await.unwrap_or(ReviewHandoffResult::Failed { code: CompanionCode::Unavailable })
+        };
+        match tokio::time::timeout_at(deadline, delivery).await {
+            Ok(result) => result,
+            Err(_) => {
+                self.workspace.review.fail(&pending.request_id, CompanionCode::DeliveryTimeout);
+                ReviewHandoffResult::Failed { code: CompanionCode::DeliveryTimeout }
+            }
+        }
+    }
+
+    async fn validate_handoff_target(&self, scope: &SurfaceScope, selection: &HandoffSelection) -> Result<ReviewHandoffTarget, CompanionCode> {
+        let path = self.observation.handoff_authority(selection)
+            .or_else(|| self.workspace.review.issued_review(scope, selection).map(|issued| issued.path))
+            .ok_or(CompanionCode::InvalidRequest)?;
+        let context = self.workspace.selected_context(&selection.entry_id).await.ok_or(CompanionCode::StaleContext)?;
+        let ticket = self.observation.request_fresh_scan(&selection.entry_id).ok_or(CompanionCode::Unavailable)?;
+        let fresh = tokio::time::timeout_at(ProbeDeadline::new().instant(), self.observation.await_fresh_scan(ticket)).await;
+        if !matches!(fresh, Ok(true)) { return Err(CompanionCode::Unavailable); }
+        self.workspace.review.validate(scope, true)?;
+        let ObservationSnapshot::Ready { files, observation_revision, .. } = self.observation.snapshot(&selection.entry_id) else {
+            return Ok(ReviewHandoffTarget::Unavailable { entry_id: selection.entry_id.clone(), code: CompanionCode::Unavailable });
+        };
+        let review_selection = ReviewSelection { stable_path_id: selection.stable_path_id.clone(), category: selection.category, display_path: path.display_path.clone() };
+        if let Some(file) = files.iter().find(|file| file.stable_path_id == selection.stable_path_id) {
+            let current = HandoffSelection { entry_id: selection.entry_id.clone(), stable_path_id: selection.stable_path_id.clone(), observation_revision, path_id: file.path_id.clone(), category: selection.category };
+            if self.observation.handoff_authority(&current).is_some() {
+                return Ok(ReviewHandoffTarget::Live { entry_id: selection.entry_id.clone(), selection: review_selection, path_id: file.path_id.clone(), observation_revision });
+            }
+            return Ok(ReviewHandoffTarget::NoRemaining { entry_id: selection.entry_id.clone(), selection: review_selection });
+        }
+        let native_path = path.native_path;
+        let survives = crate::native_work::spawn_blocking(move || {
+            if NativeIdentity::capture(&context.root, &context.git_dir).ok().as_ref() != Some(&context.identity) { return false; }
+            let mut at = context.root.clone();
+            for component in native_path.components() {
+                if !matches!(component, std::path::Component::Normal(_)) { return false; }
+                at.push(component);
+                if std::fs::symlink_metadata(&at).map_or(true, |metadata| metadata.file_type().is_symlink()) { return false; }
+            }
+            std::fs::metadata(&at).is_ok_and(|metadata| metadata.is_file())
+                && NativeIdentity::capture(&context.root, &context.git_dir).ok().as_ref() == Some(&context.identity)
+        }).await.unwrap_or(false);
+        self.workspace.review.validate(scope, true)?;
+        Ok(if survives {
+            ReviewHandoffTarget::NoRemaining { entry_id: selection.entry_id.clone(), selection: review_selection }
+        } else {
+            ReviewHandoffTarget::Unavailable { entry_id: selection.entry_id.clone(), code: CompanionCode::Unavailable }
+        })
+    }
     /// Seals native admission, cancels requests/producers, and awaits cleanup before diagnostic drain.
     /// Accepted choice writes finish even if their requester cancelled. Repeated callers share the drain.
     pub async fn shutdown(&self) {
@@ -315,7 +519,7 @@ impl RepositoryService {
             return service;
         }
         if let Some(entry_id) = service.workspace.active_context_id().await {
-            service.observation.select_unverified(&entry_id);
+            service.observation.select_unverified(&entry_id, service.workspace.review.context_epoch());
         }
         let workspace = Arc::clone(&service.workspace);
         let observation = Arc::clone(&service.observation);
@@ -464,22 +668,22 @@ impl RepositoryService {
     ///
     /// Unknown IDs leave state unchanged. Immediate native scanning starts in the background.
     pub async fn select(&self, entry_id: &str) -> SelectOutcome {
-        self.trace_operation(OperationKind::SelectContext, self.select_entry(entry_id)).await
+        self.trace_operation(OperationKind::SelectContext, self.select_entry(entry_id, None)).await
     }
 
-    async fn select_entry(&self, entry_id: &str) -> SelectOutcome {
+    async fn select_entry(&self, entry_id: &str, scope: Option<&SurfaceScope>) -> SelectOutcome {
         let outcome = {
             let _selection = self.selection.lock().await;
-            let outcome = self.workspace.select(entry_id).await;
+            let outcome = self.workspace.select(entry_id, scope, false).await;
             if matches!(outcome, SelectOutcome::Selected { .. }) {
+                self.recovery.cancel();
                 if let Some(context) = self.workspace.selected_context(entry_id).await {
-                    self.recovery.cancel();
-                    self.observation.select(context);
+                    self.observation.select(context, self.workspace.review.context_epoch());
                 } else {
-                    self.observation.select_unverified(entry_id);
-                    self.recovery.start(entry_id.to_owned(), self.probe.clone(), Arc::clone(&self.workspace),
-                        Arc::clone(&self.observation), Arc::clone(&self.selection), RecoveryStart::UserSelection);
+                    self.observation.select_unverified(entry_id, self.workspace.review.context_epoch());
                 }
+                self.recovery.start(entry_id.to_owned(), self.probe.clone(), Arc::clone(&self.workspace),
+                    Arc::clone(&self.observation), Arc::clone(&self.selection), RecoveryStart::UserSelection);
             }
             outcome
         };
@@ -511,17 +715,18 @@ impl RepositoryService {
     async fn remove_entry(&self, entry_id: &str) -> MutationOutcome {
         let outcome = {
             let _selection = self.selection.lock().await;
-            let active_before = self.workspace.active_context_id().await;
             let outcome = self.workspace.remove(entry_id).await;
             if matches!(outcome, MutationOutcome::Updated { .. }) {
                 self.observation.remove(entry_id);
-                if active_before.as_deref() == Some(entry_id) {
-                    self.recovery.cancel();
-                    if let Some(replacement_id) = self.workspace.active_context_id().await {
-                        if let Some(context) = self.workspace.selected_context(&replacement_id).await {
-                            self.observation.select(context);
-                        }
+                self.recovery.cancel();
+                if let Some(replacement_id) = self.workspace.active_context_id().await {
+                    if let Some(context) = self.workspace.selected_context(&replacement_id).await {
+                        self.observation.select(context, self.workspace.review.context_epoch());
+                    } else {
+                        self.observation.select_unverified(&replacement_id, self.workspace.review.context_epoch());
                     }
+                    self.recovery.start(replacement_id, self.probe.clone(), Arc::clone(&self.workspace),
+                        Arc::clone(&self.observation), Arc::clone(&self.selection), RecoveryStart::UserSelection);
                 }
             }
             outcome
@@ -753,10 +958,10 @@ impl RepositoryService {
                 let admitted = self.workspace.admit(ticket, facts, identity).await;
                 match admitted {
                     OpenOutcome::Opened { entry_id, .. } | OpenOutcome::Reused { entry_id, .. } => {
-                        let selected = self.workspace.select(&entry_id).await;
+                        let selected = self.workspace.select(&entry_id, None, true).await;
                         if matches!(selected, SelectOutcome::Selected { .. }) {
                             self.recovery.cancel();
-                            if let Some(context) = self.workspace.selected_context(&entry_id).await { self.observation.select(context); }
+                            if let Some(context) = self.workspace.selected_context(&entry_id).await { self.observation.select(context, self.workspace.review.context_epoch()); }
                             MutationOutcome::Updated { snapshot: self.snapshot().await }
                         } else { MutationOutcome::NotFound { snapshot: self.snapshot().await } }
                     }
@@ -838,12 +1043,17 @@ impl RepositoryService {
     }
 
     async fn refresh_entry(&self, entry_id: &str) -> WorkspaceSnapshot {
-        let Some(ticket) = self.workspace.begin_refresh(entry_id).await else {
-            if let Some(context) = OperationContext::current() {
-                let mut trace = OperationTrace::new(context, Component::Application);
-                trace.finish(Event::Completed, None, DiagnosticDetails::default());
-            }
-            return self.snapshot().await;
+        let ticket = {
+            let _selection = self.selection.lock().await;
+            let Some(ticket) = self.workspace.begin_refresh(entry_id).await else {
+                if let Some(context) = OperationContext::current() {
+                    let mut trace = OperationTrace::new(context, Component::Application);
+                    trace.finish(Event::Completed, None, DiagnosticDetails::default());
+                }
+                return self.snapshot().await;
+            };
+            if ticket.verified.is_some() { self.recovery.cancel_entry(entry_id); }
+            ticket
         };
         // Paths come exclusively from native state, never from refresh command arguments.
         recheck(&self.probe, &self.workspace, ticket).await;

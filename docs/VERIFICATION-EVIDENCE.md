@@ -104,14 +104,17 @@ Follow [CODE-STYLE.md](../CODE-STYLE.md) for Rust/frontend headers, API document
 
 | Module | Responsibility |
 | --- | --- |
-| `src/main.tsx` | React bootstrap and global stylesheet entry. |
+| `src/main.tsx` | Host-approved surface bootstrap before main-only locale initialization, React composition and global styles. |
 | `src/i18n/` | Bundled six-locale ICU catalogs, ordered locale resolution, formatter caches and one injected-source external preference store. No app, feature, contract or platform imports. |
 | `src/app/LanguageMenu.tsx` | Persistent language/System choice, pending discovery and session-only feedback; does not own repository state. |
 | `src/app/Workspace.tsx` and `WorkspaceSidebar.tsx` | Screen composition, full-bleed workbench and independently mounted repository-file sidebar. |
+| `src/app/companion/` | Compact review composition, scoped cached-surface reconciliation, stale-generation fences and claim-before-apply main handoff receiver. |
+| `src/app/CompanionPresentation.tsx` and `CompanionSettings.tsx` | Main-only presentation publication and native opt-in controls; storage-free presentation providers for the compact surface. |
 | `src/features/repositories/useWorkspace.ts` | Snapshot ordering, serialized selection/sidebar mutations, restoration polling and transport recovery through the curated repository API. |
 | `src/features/repositories/catalog/RepositoryList.tsx` | Virtualized repository rows, keyboard navigation and per-row actions. |
 | `src/features/repositories/catalog/RepositoryNameEditor.tsx` | Inline app-name editing, keyboard submission/cancellation and inline feedback. |
 | `src/contracts/repositories.ts` | Shared IPC DTOs and the frontend client interface. |
+| `src/contracts/companion.ts` | Closed surface/presentation/handoff DTOs and least-authority client interfaces. |
 | `src/contracts/changes.ts` | Renderer-safe observation snapshots and backend-issued path identities. |
 | `src/contracts/diff.ts` and `src/contracts/history.ts` | Revision-bound comparisons and pinned history-page DTOs. |
 | `src/contracts/inspection.ts` | Read-only branch/worktree choices and parent-specific committed-file DTOs. |
@@ -125,6 +128,8 @@ Follow [CODE-STYLE.md](../CODE-STYLE.md) for Rust/frontend headers, API document
 | `src/features/diff/text/` and `highlighting/` | Source/diff rendering and layout; singleton worker, literal loaders and tokenization. |
 | `src/features/history/graph/`, `ContextSelector.tsx` and `CommitFiles.tsx` | Paged ancestry and graph geometry, view-only branch/worktree picker and inline committed-file expansion. |
 | `src/platform/RepositoryClient.ts` | The only frontend Tauri invocation adapter. |
+| `src-tauri/src/companion.rs` and `locale.rs` | Shared surface epochs, bounded review provenance, pending claim/ack retirement and closed native locale vocabulary. |
+| `src-tauri/src/host/companion.rs` and `host/companion/` | Native opt-in persistence, macOS tray/window/observer ownership, focus transfer and shutdown invalidation. |
 | `src/ui` | Feature-independent UI primitives and their styles. |
 | `src/ui/file-explorer/ChangeTree.tsx` | Shared native-segment hierarchy, virtual rows and reading anchors for working, committed and repository files. |
 | `src/features/appearance/index.ts`, `appearanceThemes.ts`, `codeThemes.ts`, `reviewPreferences.ts` and `AppearanceMenu.tsx` | Public presentation boundary: interface and syntax catalogs, unchanged browser-local review choices, coordinated presets and live sample. `src/style.scss` owns the interface role tokens. |
@@ -253,7 +258,7 @@ A missing first-launch file is normal. Read/unsupported-format failures preserve
 
 Explicit application Quit seals native request admission before cancelling live requests and background producers. Completion is checked against closure after the operation's final poll; a rejected completion does not record IPC success. Shutdown waits for owned Git children to be killed and reaped, blocking jobs and abandoned result destructors to finish, and already-accepted workspace saves to publish their outcome before diagnostics drain. Cancelling a shutdown waiter does not detach the accepted save tail; subsequent waiters retain the drain.
 
-This is a native-host boundary, not a change to the domain service's direct-call API. Main-window command authorization and the default window lifecycle are unchanged. No tray, companion window or close-to-tray behavior is implemented by this prerequisite.
+The optional macOS companion uses this same native-host drain. Main close is intercepted only while companion access is enabled and available; explicit Quit is never close-to-tray. Queued main-thread command waiters are cancellable, queued native mutations are fenced by `quitting`, and accepted synchronous preference replacements finish before native teardown. Main and companion have separate exact-local-webview permissions; the compact surface has no repository-management or preference-write authority.
 
 Seven shutdown regressions cover admission rejection, live Git cancellation/reaping with an accepted save, blocking cleanup across cancelled shutdown waits, independent service lifetimes, final-poll cancellation and IPC terminal facts, abandoned-result destruction, and persistence ownership across cancelled waiters:
 
@@ -265,9 +270,17 @@ A disposable macOS native smoke reached an owned live Git child, accepted an ord
 
 
 
+## Shared companion review authority
+
+One `RepositoryService` and observation controller own both surfaces. Host visibility—not renderer focus guesses—controls their combined demand. Context epochs are opaque, session-only authority; each companion opening has a separate open epoch and requires a scan started after its opening request, including when recovery first needs to verify a restored context. Accepted selections own their availability/HEAD refresh natively, independently of renderer reply ordering. Both-hidden demand suspends scanning/recovery and invalidates in-flight surface results.
+
+Native row/category provenance bounds what a compact handoff may request. One pending request carries a revision-bearing retirement state and expires after five seconds. Main discovers and claims only after coherent workspace preparation, applies the exact returned target synchronously, then acknowledges. A live claim retains its issued path/revision authority while an older cached observation catches up. No remaining changes and unavailable context are explicit outcomes; focus alone is not an acknowledgement.
+
+Main publishes the current six-locale presentation, icon/interface/review choices and session-only persistence warning. Companion providers never establish another storage owner or show a guessed first language/theme. Native menu publication accepts only the canonical translated Open/Quit pair. Surface notice subscriptions carry fixed invalidations; cached reads recover bootstrap/reveal without hidden periodic polling. These are source contracts, not evidence that the full native display/focus/resource matrix has passed.
+
 ## Live changed-file monitoring
 
-Selecting a working tree starts an immediate native scan, then another scan approximately one second after each completion. Scans do not overlap or accumulate timer ticks. Switching contexts cancels the previous scan; selection generations reject stale results, including when the same entry is reselected. Renderer polling reads cached snapshots and does not trigger Git scans.
+While either surface is visible, selecting a working tree starts an immediate native scan, then another scan approximately one second after each completion. Scans do not overlap or accumulate timer ticks. Switching contexts cancels the previous scan; selection generations reject stale results, including when the same entry is reselected. Desktop surfaces subscribe to native invalidations and reconcile cached snapshots without starting a second Git scanner; hidden surfaces stop periodic reads.
 
 The native reader uses `git status --porcelain=v2 -z` against private, bounded index/attribute/exclude metadata and read-only object alternates, rather than letting status reload mutable source configuration. Index copies are streamed with a 64 MiB cap; attribute/exclude files retain their separate 1 MiB cap. Copied-index enumeration permits 16 MiB stdout, while ordinary status output and stderr retain 1 MiB caps. This allows large tracked indexes with few changes without removing bounds. The source index timestamp is preserved for Git's racy-index checks, and relevant comparison settings include Unicode filename normalization. Optional locks, fsmonitor and inherited repository-selection overrides are disabled. A scan shares one 30-second deadline. Root/Git-directory identities are checked around each scan: restoration of a missing location's same identity recovers, while replacement at the same path remains unavailable.
 

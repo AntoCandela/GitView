@@ -1,7 +1,8 @@
 /** Exercises accessible Workspace choices through the production adapter and a real disposable native service. */
 
 import "@testing-library/jest-dom/vitest";
-import { invoke, type InvokeArgs } from "@tauri-apps/api/core";
+import { Channel, invoke, type InvokeArgs } from "@tauri-apps/api/core";
+import type { SurfaceNotice } from "../../src/contracts/companion";
 import { act, cleanup, render, screen, waitFor, within, type BoundFunctions, type queries } from "@testing-library/react";
 import userEvent, { type UserEvent } from "@testing-library/user-event";
 import { afterEach, beforeAll, beforeEach, expect, test, vi } from "vitest";
@@ -11,7 +12,10 @@ import { buildNativeJourney, NativeJourney, type JourneyFixtureInfo, type Journe
 import { installVirtualLayout } from "../support/virtualLayout";
 
 // Only the host transport is replaced: all DTOs and Git results come from RepositoryService.
-vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn(),
+  Channel: class { onmessage: (notice: SurfaceNotice) => void = () => {}; },
+}));
 
 const nativeWait = { timeout: 15_000 };
 const journeyTimeout = 60_000;
@@ -25,7 +29,15 @@ beforeEach(async () => {
   restoreVirtualLayout = installVirtualLayout({ viewportHeight: 480, viewportWidth: 640, clientHeight: 480 });
   journey = await NativeJourney.start();
   fixture = await journey.request<JourneyFixtureInfo>("fixture_info");
-  vi.mocked(invoke).mockImplementation(<T,>(command: string, args?: InvokeArgs) => journey.request<T>(command, args as Record<string, unknown>));
+  vi.mocked(invoke).mockImplementation(<T,>(command: string, args?: InvokeArgs) => {
+    if (command === "subscribe_review_surface") {
+      if (!args || !("channel" in args) || !(args.channel instanceof Channel)) return Promise.reject(new Error("Invalid journey subscription"));
+      const channel = args.channel;
+      journey.onSurfaceNotice((notice) => channel.onmessage(notice));
+      return journey.request<T>(command);
+    }
+    return journey.request<T>(command, args as Record<string, unknown>);
+  });
 }, 30_000);
 
 afterEach(async () => {
@@ -292,4 +304,20 @@ test("a saved repository missing at restart stays unavailable and recovers witho
   } finally {
     if (!restored) await journey.request("fixture_restore");
   }
+}, journeyTimeout);
+
+test("a retired surface delivery failure cannot terminate its replacement journey", async () => {
+  let rejectDelivery!: (error: Error) => void;
+  const delivery = new Promise<void>((_resolve, reject) => { rejectDelivery = reject; });
+  const retired = vi.fn(() => delivery);
+  journey.onSurfaceNotice(retired);
+  await journey.request("subscribe_review_surface");
+  await journey.request("fixture_choose", { repository: "main" });
+  await journey.request("open_chosen_repository", { locale: "en-US" });
+  await waitFor(() => expect(retired).toHaveBeenCalled(), nativeWait);
+  journey.onSurfaceNotice(() => {});
+  rejectDelivery(new Error("Retired page closed"));
+  await Promise.resolve();
+  const workspace = await repositoryClient.snapshot();
+  expect(workspace.entries.map((entry) => entry.repositoryLabel)).toEqual([fixture.mainLabel]);
 }, journeyTimeout);

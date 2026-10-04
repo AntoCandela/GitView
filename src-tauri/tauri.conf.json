@@ -11,7 +11,7 @@
   },
   "app": {
     "windows": [{ "label": "main", "title": "GitView", "width": 1100, "height": 720, "minWidth": 720, "minHeight": 480 }],
-    "security": { "capabilities": ["main"] }
+    "security": { "capabilities": ["main", "companion"] }
   },
   "bundle": {
     "active": true,

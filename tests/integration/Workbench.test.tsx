@@ -16,10 +16,8 @@ beforeEach(() => {
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
-const snapshot: WorkspaceSnapshot = {
-  revision: 1, restoring: false, persistenceError: null, activeContextId: "one",
-  entries: [{ id: "one", kind: "working_tree", repositoryLabel: "atlas", locationLabel: "/fixture/atlas", head: { kind: "branch", name: "main" }, availability: "available" }],
-};
+const snapshot: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, restoring: false, persistenceError: null, activeContextId: "one",
+entries: [{ id: "one", kind: "working_tree", repositoryLabel: "atlas", locationLabel: "/fixture/atlas", head: { kind: "branch", name: "main" }, availability: "available" }], };
 function workbenchClient() {
   const client = reviewClient(async (entryId, _revision, pathId, category) => textReview(category === "staged" ? "indexed content" : "working content", {
     entryId, pathId, category, from: category === "staged" ? "HEAD" : "index", to: category === "staged" ? "index" : "working_files",
@@ -118,7 +116,7 @@ test("choosing an existing unadmitted worktree clears old views until its native
   expect(screen.queryByRole("region", { name: "Commit ancestry" })).not.toBeInTheDocument();
   expect(screen.queryByText("working content")).not.toBeInTheDocument();
   confirmed = {
-    ...snapshot, revision: 2, activeContextId: "topic-entry",
+    ...snapshot, contextEpoch: "topic-context", revision: 2, activeContextId: "topic-entry",
     entries: [...snapshot.entries, { ...snapshot.entries[0], id: "topic-entry", repositoryLabel: "atlas topic", head: { kind: "branch", name: "topic" } }],
   };
   await act(async () => switchResult.resolve({ kind: "updated", snapshot: confirmed }));

@@ -1,5 +1,5 @@
 /** Shares the browser-local interface palette across toolbar and both review surfaces. */
-import { useSyncExternalStore } from "react";
+import { createContext, createElement, useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { isAppearanceTheme, type AppearanceTheme } from "./appearanceThemes";
 
 const storageKey = "gitview.app-theme";
@@ -10,6 +10,17 @@ interface AppearanceChoice {
   setTheme: (theme: AppearanceTheme) => void;
 }
 let current: AppearanceChoice | null = null;
+const ReadOnlyAppearanceContext = createContext<AppearanceChoice | null>(null);
+const noSubscription = () => () => {};
+
+/** Compact consumers receive host choices without consulting or writing browser preferences. */
+export function ReadOnlyAppearanceProvider({ theme, persistenceError, children }: {
+  theme: AppearanceTheme; persistenceError: boolean; children: ReactNode;
+}) {
+  const value = useMemo<AppearanceChoice>(() => ({ theme, persistenceError,
+    setTheme() { throw new Error("Read-only appearance cannot change preferences"); } }), [theme, persistenceError]);
+  return createElement(ReadOnlyAppearanceContext.Provider, { value }, children);
+}
 
 function readTheme(): AppearanceTheme {
   try {
@@ -42,5 +53,7 @@ function subscribe(listener: () => void) {
   };
 }
 export function useAppearanceTheme(): AppearanceChoice {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const readOnly = useContext(ReadOnlyAppearanceContext);
+  return useSyncExternalStore(readOnly ? noSubscription : subscribe,
+    readOnly ? () => readOnly : getSnapshot, readOnly ? () => readOnly : getSnapshot);
 }

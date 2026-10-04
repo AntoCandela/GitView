@@ -3,7 +3,10 @@
  * Tracing carries only operation identity and terminal transport facts; Git and path policy stay in Rust.
  */
 
-import { invoke } from "@tauri-apps/api/core";
+import { Channel, invoke } from "@tauri-apps/api/core";
+import type {
+  CompanionClient, CompanionSettingsClient, ReviewHandoffClient, ReviewSurfaceClient, SurfaceNotice,
+} from "../contracts/companion";
 import type { ObservationSnapshot } from "../contracts/changes";
 import type { RepositoryFileResult, RepositoryFilesResult } from "../contracts/browsing";
 import type { ReviewResult } from "../contracts/diff";
@@ -52,6 +55,46 @@ export const repositoryClient: RepositoryClient & DiagnosticHealthClient = {
   removeRepository: (entryId) =>
     invokeRepository<RepositoryMutationOutcome>("remove_repository", { entryId }),
   diagnosticHealth: () => invoke<DiagnosticHealth>("diagnostic_health"),
+};
+
+export const reviewSurfaceClient: ReviewSurfaceClient = {
+  bootstrap: () => invoke("review_surface_bootstrap"),
+  snapshot: () => invoke("review_surface_snapshot"),
+  async subscribe(listener) {
+    let active = true;
+    const channel = new Channel<SurfaceNotice>();
+    channel.onmessage = (notice) => { if (active) listener(notice); };
+    try {
+      await invoke("subscribe_review_surface", { channel });
+    } catch (error) {
+      active = false;
+      throw error;
+    }
+    // Native owns one registration per caller and clears it on window destruction.
+    return () => { active = false; };
+  },
+};
+
+export const companionClient: CompanionClient = {
+  selectContext: repositoryClient.selectContext,
+  observeSelectedContext: repositoryClient.observeSelectedContext,
+  reviewFile: repositoryClient.reviewFile,
+  begin: (openEpoch) => invoke("begin_companion_review", { openEpoch }),
+  dismiss: () => invoke("dismiss_companion"),
+  requestHandoff: (request) => invoke("request_review_handoff", { request }),
+  quit: () => invoke("quit_companion"),
+};
+
+export const companionSettingsClient: CompanionSettingsClient = {
+  state: () => invoke("companion_state"),
+  setEnabled: (enabled) => invoke("set_companion_enabled", { enabled }),
+  publishPresentation: (presentation) => invoke("publish_companion_presentation", { presentation }),
+};
+
+export const reviewHandoffClient: ReviewHandoffClient = {
+  pending: () => invoke("pending_review_handoff"),
+  claim: (requestId, contextEpoch) => invoke("claim_review_handoff", { requestId, contextEpoch }),
+  ack: (requestId, contextEpoch, outcome) => invoke("ack_review_handoff", { requestId, contextEpoch, outcome }),
 };
 
 async function invokeRepository<T>(command: RepositoryCommand, args: Record<string, unknown> = {}): Promise<T> {

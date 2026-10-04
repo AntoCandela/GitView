@@ -1,5 +1,5 @@
 /** Shares renderer-local presentation choices across toolbar and reviews; native comparison authority is unchanged. */
-import { useSyncExternalStore } from "react";
+import { createContext, createElement, useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { isCodeTheme, type CodeTheme } from "./codeThemes";
 
 export type ReviewMode = "changes" | "full";
@@ -12,6 +12,18 @@ export interface ReviewChoices extends Choices {
 const storageKey = "gitview.code-review";
 const listeners = new Set<() => void>();
 let current: ReviewChoices | null = null;
+const ReadOnlyReviewContext = createContext<ReviewChoices | null>(null);
+const noSubscription = () => () => {};
+
+/** Read-only surfaces consume review preferences without becoming another preference owner. */
+export function ReadOnlyReviewProvider({ review, persistenceError, children }: {
+  review: Choices; persistenceError: boolean; children: ReactNode;
+}) {
+  const { mode, theme, lineMode } = review;
+  const value = useMemo<ReviewChoices>(() => ({ mode, theme, lineMode, persistenceError,
+    change() { throw new Error("Read-only review cannot change preferences"); } }), [mode, theme, lineMode, persistenceError]);
+  return createElement(ReadOnlyReviewContext.Provider, { value }, children);
+}
 
 function readChoices(): Choices {
   try {
@@ -50,5 +62,7 @@ function subscribe(listener: () => void) {
   };
 }
 export function useReviewChoices(): ReviewChoices {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+  const readOnly = useContext(ReadOnlyReviewContext);
+  return useSyncExternalStore(readOnly ? noSubscription : subscribe,
+    readOnly ? () => readOnly : getSnapshot, readOnly ? () => readOnly : getSnapshot);
 }

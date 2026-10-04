@@ -3,10 +3,12 @@
 mod diagnostic_operation;
 pub mod application;
 pub mod browsing;
+pub mod companion;
 pub mod diagnostics;
 pub mod diff;
 pub mod git;
 pub mod history;
+pub mod locale;
 mod host;
 mod native_work;
 pub mod inspection;

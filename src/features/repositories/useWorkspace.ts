@@ -14,6 +14,7 @@ import type { WorkspaceError } from "./workspaceError";
 
 const emptyWorkspace: WorkspaceSnapshot = {
   revision: 0,
+  contextEpoch: "",
   entries: [],
   activeContextId: null,
   restoring: false,
@@ -24,7 +25,7 @@ const emptyWorkspace: WorkspaceSnapshot = {
  * Keeps native selections in user-intent order without delaying pending UI feedback.
  * A pending ID is presentation state, not a confirmed host selection.
  */
-export function useWorkspace(client: RepositoryClient) {
+export function useWorkspace(client: RepositoryClient, enabled = true) {
   const { locale } = useLocale();
   const [snapshot, setSnapshot] = useState<WorkspaceSnapshot>(emptyWorkspace);
   const [loading, setLoading] = useState(true);
@@ -36,6 +37,7 @@ export function useWorkspace(client: RepositoryClient) {
   const selectionGeneration = useRef(0);
   const selectionQueue = useRef<Promise<void>>(Promise.resolve());
   const latestRevision = useRef(0);
+  const contextEpoch = useRef("");
   const lifecycle = useRef(0);
   const selectionPending = useRef(false);
   const snapshotQueue = useRef<Promise<void>>(Promise.resolve());
@@ -57,8 +59,19 @@ export function useWorkspace(client: RepositoryClient) {
     // Replies from independent requests can arrive after newer host state.
     if (incomingSnapshot.revision < latestRevision.current) return;
     latestRevision.current = incomingSnapshot.revision;
+    contextEpoch.current = incomingSnapshot.contextEpoch;
     setSnapshot(incomingSnapshot);
   }, []);
+
+  const acceptExternalSnapshot = useCallback((incoming: WorkspaceSnapshot) => {
+    if (incoming.revision < latestRevision.current) return;
+    if (incoming.contextEpoch !== contextEpoch.current) {
+      setObservationGeneration(++selectionGeneration.current);
+      selectionPending.current = false;
+      setPendingId(null);
+    }
+    applySnapshot(incoming);
+  }, [applySnapshot]);
 
   useEffect(() => {
     // StrictMode and client replacement must invalidate all prior request completions.
@@ -102,7 +115,7 @@ export function useWorkspace(client: RepositoryClient) {
   );
 
   useEffect(() => {
-    if (loading || !needsSnapshotPolling) return;
+    if (loading || !enabled || !needsSnapshotPolling) return;
     let active = true;
     let timer: number | undefined;
     const requestedLifecycle = lifecycle.current;
@@ -143,7 +156,7 @@ export function useWorkspace(client: RepositoryClient) {
       active = false;
       clearTimeout(timer);
     };
-  }, [client, loading, needsSnapshotPolling, applySnapshot, readSnapshot]);
+  }, [client, loading, enabled, needsSnapshotPolling, applySnapshot, readSnapshot]);
 
   async function reconcileOpenAfterSelection(requestedLifecycle: number) {
     // Admission survives newer intents; read only after their queued host transitions settle.
@@ -245,8 +258,6 @@ export function useWorkspace(client: RepositoryClient) {
             setError({ domain: "workspace", code: "not_found" });
             return;
           }
-          if (outcome.snapshot.activeContextId)
-            refreshForSelection(outcome.snapshot.activeContextId, requestedGeneration);
         } catch {
           if (
             lifecycle.current !== requestedLifecycle ||
@@ -346,6 +357,7 @@ export function useWorkspace(client: RepositoryClient) {
 
   return {
     snapshot,
+    acceptExternalSnapshot,
     loading,
     opening,
     mutating,

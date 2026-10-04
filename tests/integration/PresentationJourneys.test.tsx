@@ -37,11 +37,9 @@ function presentationClient(): RepositoryClient {
     entryId, pathId, category, from: category === "staged" ? "HEAD" : "index",
     to: category === "staged" ? "index" : "working_files",
   }));
-  const snapshot: WorkspaceSnapshot = {
-    revision: 1, restoring: false, persistenceError: null, activeContextId: "one",
-    entries: [{ id: "one", kind: "working_tree", repositoryLabel: "atlas", locationLabel: "/fixture/atlas",
-      head: { kind: "branch", name: "main" }, availability: "available" }],
-  };
+  const snapshot: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, restoring: false, persistenceError: null, activeContextId: "one",
+  entries: [{ id: "one", kind: "working_tree", repositoryLabel: "atlas", locationLabel: "/fixture/atlas",
+    head: { kind: "branch", name: "main" }, availability: "available" }], };
   client.snapshot = async () => snapshot;
   client.refreshEntryAvailability = async () => snapshot;
   client.historyPage = async () => ({ kind: "page", page: historyPage(mergeHistory()) });

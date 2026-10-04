@@ -4,3 +4,5 @@ export { FileReview } from "./FileReview";
 export { CommitFileReview } from "./CommitFileReview";
 export type { CommitReviewSelection, CommitComparisonControls } from "./selection";
 export { RepositoryFileReview } from "./RepositoryFileReview";
+export type { LiveReviewAuthority } from "./useFileReview";
+export { hasReviewCategory } from "./useFileReview";

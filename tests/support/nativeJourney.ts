@@ -5,6 +5,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import type { SurfaceNotice } from "../../src/contracts/companion";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const target = resolve(root, ".verification/native-target");
@@ -97,6 +98,7 @@ export class NativeJourney {
   private readonly exit: Promise<void>;
   private readonly child: ChildProcessWithoutNullStreams;
   private readonly directory: string;
+  private surfaceListener: ((notice: SurfaceNotice) => void | Promise<void>) | null = null;
 
   private constructor(child: ChildProcessWithoutNullStreams, directory: string) {
     this.child = child;
@@ -152,6 +154,10 @@ export class NativeJourney {
     }
   }
 
+  onSurfaceNotice(listener: (notice: SurfaceNotice) => void | Promise<void>): void {
+    this.surfaceListener = listener;
+  }
+
   request<T>(command: string, args: Record<string, unknown> = {}): Promise<T> {
     if (this.failure || this.closed) return Promise.reject(this.failure ?? new Error("Native journey is closed"));
     if (this.pending.size >= 64) return Promise.reject(new Error("Native journey pending-request bound exceeded"));
@@ -169,6 +175,7 @@ export class NativeJourney {
 
   /** Requests service shutdown, then reaps the child and removes driver-owned configuration. */
   async close(): Promise<void> {
+    this.surfaceListener = null;
     if (this.closed) return;
     try {
       if (!this.failure && !this.exited) await this.request("fixture_shutdown");
@@ -195,7 +202,16 @@ export class NativeJourney {
       const line = this.buffer.slice(0, newline);
       this.buffer = this.buffer.slice(newline + 1);
       try {
-        const reply: { id: number; result?: unknown; error?: unknown } = JSON.parse(line);
+        const reply = JSON.parse(line);
+        if (reply && typeof reply === "object" && "surfaceNotice" in reply) {
+          const notice = parseSurfaceNotice(reply.surfaceNotice);
+          const listener = this.surfaceListener;
+          Promise.resolve(listener?.(notice)).catch(() => {
+            if (listener !== null && this.surfaceListener === listener)
+              this.abort(new Error("Native journey surface delivery failed"));
+          });
+          continue;
+        }
         const pending = this.pending.get(reply.id);
         if (!pending || !("result" in reply || "error" in reply)) throw new Error("Invalid reply");
         clearTimeout(pending.deadline);
@@ -240,4 +256,31 @@ function killProcessTree(child: ChildProcess): void {
     // The process may already have exited; direct termination is the remaining fallback.
     child.kill("SIGKILL");
   }
+}
+
+function parseSurfaceNotice(value: unknown): SurfaceNotice {
+  if (value && typeof value === "object" && "kind" in value) {
+    switch (value.kind) {
+      case "invalidate":
+        if ("workspaceRevision" in value && typeof value.workspaceRevision === "number"
+          && "contextEpoch" in value && typeof value.contextEpoch === "string"
+          && "openEpoch" in value && typeof value.openEpoch === "string")
+          return { kind: value.kind, workspaceRevision: value.workspaceRevision, contextEpoch: value.contextEpoch, openEpoch: value.openEpoch };
+        break;
+      case "visibility":
+        if ("visible" in value && typeof value.visible === "boolean"
+          && "openEpoch" in value && typeof value.openEpoch === "string")
+          return { kind: value.kind, visible: value.visible, openEpoch: value.openEpoch };
+        break;
+      case "presentation":
+        if ("revision" in value && typeof value.revision === "number")
+          return { kind: value.kind, revision: value.revision };
+        break;
+      case "handoff":
+        if ("revision" in value && typeof value.revision === "number"
+          && "requestId" in value && (value.requestId === null || typeof value.requestId === "string"))
+          return { kind: value.kind, revision: value.revision, requestId: value.requestId };
+    }
+  }
+  throw new Error("Invalid native journey surface notice");
 }
