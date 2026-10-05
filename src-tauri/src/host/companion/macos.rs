@@ -154,7 +154,12 @@ pub(super) fn show(app: &AppHandle, controller: CompanionController, anchor: Anc
     let window = panel(app)?;
     let native = native_window(&window)?;
     native.setLevel(NSFloatingWindowLevel);
-    native.setCollectionBehavior(NSWindowCollectionBehavior::CanJoinAllSpaces | NSWindowCollectionBehavior::FullScreenAuxiliary);
+    let mut behavior = NSWindowCollectionBehavior::CanJoinAllSpaces | NSWindowCollectionBehavior::FullScreenAuxiliary;
+    // Joining desktop Spaces alone does not admit this floating window to another app's fullscreen Space.
+    if objc2::available!(macos = 13.0) {
+        behavior |= NSWindowCollectionBehavior::CanJoinAllApplications;
+    }
+    native.setCollectionBehavior(behavior);
     position(&native, anchor)?;
     window.show().map_err(|_| NativeError::ShowFailed)?;
     if let Err(error) = focus(app) {

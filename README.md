@@ -77,6 +77,8 @@ The companion is off by default. Enable it using the **Menu-bar companion** icon
 
 The panel reuses the main window’s toolbar, searchable repository picker, changed-file tree and live comparison viewer. Its comparison sits above the changed files, with the same draggable and keyboard-resizable divider as the main workbench. The picker selects only already-admitted repositories/worktrees; **Open in GitView** and **Quit** remain available as toolbar actions. Repository admission, removal, worktree management, history, file browsing and preference controls remain in the main window. Language, appearance, icons and reading choices follow the main window, including session-only choices after a failed save.
 
+On macOS 13 and later, the companion opts into joining other applications’ fullscreen Spaces as a floating window. This setting applies only to the companion, not the main window. Earlier macOS versions retain the existing Space behavior; cross-application fullscreen access there remains unverified.
+
 Each opening waits for a newly started native scan. Hidden surfaces stop periodic review work; both hidden surfaces suspend shared scanning and recovery. **Open in GitView** transfers the exact native-validated reading choice, including a truthful **No remaining changes** outcome. Merely focusing the main window is not successful delivery: the panel closes only after main applies and acknowledges that request.
 
 Closing main hides it only while the enabled companion remains available. Disabling first reveals main, then removes the companion. Explicit **Quit** closes the application and drains owned native work. Activation/save failures remain visible in the main settings; unavailable native access never justifies hiding the only usable main window.
