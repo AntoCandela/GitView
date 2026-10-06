@@ -8,5 +8,7 @@ export type CommitReviewSelection = Pick<CommitReviewIdentity,
 export interface CommitComparisonControls {
   selection: CommitReviewSelection | null;
   onSelect: (selection: CommitReviewSelection) => void;
+  /** Captures current preview intent; the returned callback ignores later completions after another choice. */
+  captureAutoSelection: () => (selection: CommitReviewSelection) => void;
   onInvalidate: () => void;
 }

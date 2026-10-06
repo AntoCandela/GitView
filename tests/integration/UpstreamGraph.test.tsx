@@ -34,7 +34,7 @@ test("diverged summaries independently open aggregate files and select pinned co
   const { client } = fixture();
   const onSelect = vi.fn();
   render(<HistoryGraph client={client} entryId="one" selectionGeneration={0}
-    comparison={{ selection: null, onSelect, onInvalidate: vi.fn() }} />);
+    comparison={{ selection: null, onSelect, captureAutoSelection: () => onSelect, onInvalidate: vi.fn() }} />);
   const incomingNode = await screen.findByRole("button", { name: "Incoming Changes · 3 commits" });
   const outgoingNode = screen.getByRole("button", { name: "Outgoing Changes · 2 commits" });
   await user.click(incomingNode);
@@ -75,7 +75,7 @@ test("late incoming results cannot replace a selected outgoing comparison", asyn
   client.upstreamFiles = (entry, token) => token === incoming.token ? late.promise : original(entry, token);
   const onSelect = vi.fn();
   render(<HistoryGraph client={client} entryId="one" selectionGeneration={0}
-    comparison={{ selection: null, onSelect, onInvalidate: vi.fn() }} />);
+    comparison={{ selection: null, onSelect, captureAutoSelection: () => onSelect, onInvalidate: vi.fn() }} />);
   await user.click(await screen.findByRole("button", { name: "Incoming Changes · 3 commits" }));
   await user.click(screen.getByRole("button", { name: "Outgoing Changes · 2 commits" }));
   await screen.findByText("outgoing.txt");

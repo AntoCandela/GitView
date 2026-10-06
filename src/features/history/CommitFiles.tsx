@@ -35,8 +35,13 @@ export function CommitFiles({ client, entryId, selectionGeneration, commit, upst
   desired.current = scope;
   const [state, setState] = useState<{ scope: typeof scope; result: Extract<CommitFilesResult, { kind: "files" }> | HistoryReadFailure | null; transportError: boolean } | null>(null);
   const [knownParents, setKnownParents] = useState<{ context: typeof context; parents: string[] } | null>(null);
+  const captureSelection = useRef(comparison?.captureAutoSelection);
+  captureSelection.current = comparison?.captureAutoSelection;
+  const automaticSelection = useRef<{ scope: typeof scope; select: CommitComparisonControls["onSelect"] | undefined } | null>(null);
   useEffect(() => {
     let current = true;
+    // Only the preview intent present when this listing starts may receive its automatic first file.
+    automaticSelection.current = { scope, select: captureSelection.current?.() };
     const read = token ? client.upstreamFiles(entryId, token) : client.commitFiles(entryId, oid, parent);
     void read.then((result) => {
       if (!current || desired.current !== scope) return;
@@ -60,17 +65,17 @@ export function CommitFiles({ client, entryId, selectionGeneration, commit, upst
     id: file.id, displayPath: file.displayPath, segments: file.segments,
     statuses: [{ kind: "committed", change: file.kind }], marker: kindMarkers[file.kind],
   })) : [], [result]);
-  const onSelect = comparison?.onSelect;
   const direction = upstream?.direction;
   const selectedAutomatically = useRef<typeof scope | null>(null);
   useEffect(() => {
+    const onSelect = automaticSelection.current?.scope === scope ? automaticSelection.current.select : undefined;
     if (!token || !direction || !onSelect || result?.kind !== "files" || !result.files.length || selectedAutomatically.current === scope) return;
     selectedAutomatically.current = scope;
     const file = result.files[0];
     onSelect({ fileId: file.id, commitOid: result.commitOid, parentOid: result.parentOid,
       displayPath: file.displayPath, segments: file.segments, fromAbsent: file.kind === "added", toAbsent: file.kind === "deleted",
       upstream: { token, direction } });
-  }, [token, direction, onSelect, result, scope]);
+  }, [token, direction, result, scope]);
   return <section className="history-files" aria-label={upstream ? t(`history.upstream.${upstream.direction}Files`) : t("history.files.label", { oid })} aria-busy={!current}>
     {parents.length > 1 && <label className="history-parent-choice">{t("history.files.compareWith")}
       <Tooltip content={t("history.files.chooseParent")} trigger={<select aria-label={t("history.files.parent")} value={parent ?? parents[0]} onChange={(event) => {

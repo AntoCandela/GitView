@@ -1,6 +1,6 @@
 /** Composes stable file/ancestry panes around mutually exclusive working, changed or pinned-commit previews. */
 
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import type { ReviewSelection } from "../../contracts/diff";
 import type { RepositoryFileSelection } from "../../contracts/browsing";
 import type { RepositoryClient } from "../../contracts/repositories";
@@ -43,12 +43,21 @@ export function Workbench({ observation, client, entryId, selectionGeneration, c
     onRepositoryFileDismiss?.();
     setChosen({ scope, choice: { kind: "commit", selection: next } });
   }, [scope, onRepositoryFileDismiss]);
+  const previewIntent = useMemo(() => ({ scope, chosen, repositoryFile }), [scope, chosen, repositoryFile]);
+  const currentPreviewIntent = useRef(previewIntent);
+  currentPreviewIntent.current = previewIntent;
+  const captureAutoSelection = useCallback(() => {
+    const intent = currentPreviewIntent.current;
+    return (next: CommitReviewSelection) => {
+      if (currentPreviewIntent.current === intent) selectCommit(next);
+    };
+  }, [selectCommit]);
   const invalidateCommit = useCallback(() => {
     setChosen((current) => current?.choice.kind === "commit" ? null : current);
   }, []);
   const comparison = useMemo(() => ({
-    selection: historicalSelection, onSelect: selectCommit, onInvalidate: invalidateCommit,
-  }), [historicalSelection, selectCommit, invalidateCommit]);
+    selection: historicalSelection, onSelect: selectCommit, captureAutoSelection, onInvalidate: invalidateCommit,
+  }), [historicalSelection, selectCommit, captureAutoSelection, invalidateCommit]);
   const files = observation.kind === "ready" ? observation.files : null;
   const selectedFile = selection && files?.find((file) => file.stablePathId === selection.stablePathId);
   const categories = selectedFile ? (["unstaged", "staged", "untracked"] as const).filter((category) =>

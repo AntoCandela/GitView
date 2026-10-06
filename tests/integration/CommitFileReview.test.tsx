@@ -361,3 +361,62 @@ test("history invalidation leaves browsed working bytes visible until committed-
   expect(await screen.findByText("committed-only source")).toBeVisible();
   expect(screen.queryByText("browsed working bytes")).not.toBeInTheDocument();
 });
+
+test.each(["working", "repository"] as const)("delayed upstream listing preserves a newer %s preview while explicit aggregate clicks still work", async (destination) => {
+  const user = userEvent.setup();
+  const client = previewClient();
+  const pending = deferred<CommitFilesResult>();
+  client.historyPage = async () => ({ kind: "page", page: historyPage(mergeHistory(), { upstream: {
+    state: "ready", freshness: "fresh", branch: "main", upstream: "team/main", ahead: 0, behind: 2,
+    incoming: { token: "incoming-token", baseOid: first, tipOid: merge }, outgoing: null,
+  } }) });
+  client.upstreamFiles = () => pending.promise;
+  const file: RepositoryFileSelection = { id: "unchanged", listingId: "working-listing",
+    displayPath: "unchanged.txt", segments: ["unchanged.txt"] };
+  client.reviewRepositoryFile = async () => ({ kind: "text", entryId: "one", listingId: file.listingId,
+    fileId: file.id, displayPath: file.displayPath, content: "browsed working bytes\n" });
+  function BrowsingWorkbench() {
+    const [browse, setBrowse] = useState<RepositoryFileSelection | null>(null);
+    return <><button onClick={() => setBrowse(file)}>Preview repository file</button>
+      <AppWorkbench client={client} entryId="one" selectionGeneration={0} contextLabel="Sample repository"
+        observation={readyObservation()} repositoryFile={browse} onRepositoryFileDismiss={() => setBrowse(null)}>
+        {(comparison) => <HistoryGraph client={client} entryId="one" selectionGeneration={0} comparison={comparison} />}
+      </AppWorkbench></>;
+  }
+  render(<BrowsingWorkbench />);
+  await user.click(await screen.findByRole("button", { name: "Incoming Changes · 2 commits" }));
+  if (destination === "working") {
+    await user.click(screen.getByRole("button", { name: "Expand src" }));
+    await user.click(screen.getByRole("button", { name: "Review src/example.ts" }));
+  } else {
+    await user.click(screen.getByRole("button", { name: "Preview repository file" }));
+  }
+  const expected = destination === "working" ? "working-only source" : "browsed working bytes";
+  expect(await screen.findByText(expected)).toBeVisible();
+  await act(async () => pending.resolve(await client.commitFiles("one", merge, first)));
+  expect(screen.getByText(expected)).toBeVisible();
+  expect(screen.queryByText("committed-only source")).not.toBeInTheDocument();
+  await user.click(await screen.findByRole("button", { name: "Expand archive" }));
+  await user.click(screen.getByRole("button", { name: `Review ${path}` }));
+  expect(await screen.findByText("committed-only source")).toBeVisible();
+  expect(screen.queryByText(expected)).not.toBeInTheDocument();
+});
+
+test.each(["current", "expired"] as const)("aggregate authority renewal uses only the %s upstream token", async (state) => {
+  const client = previewClient();
+  client.commitFiles = vi.fn(client.commitFiles);
+  client.upstreamFiles = vi.fn<RepositoryClient["upstreamFiles"]>(async () => state === "expired"
+    ? { kind: "unavailable", code: "stale_cursor", message: "Expired" }
+    : { kind: "files", commitOid: merge, parentOid: first, parents: [first], files: [
+      { id: "renewed-upstream", displayPath: path, segments: path.split("/"), kind: "modified" },
+    ] });
+  client.reviewCommitFile = vi.fn<RepositoryClient["reviewCommitFile"]>(async (_entry, _oid, _parent, fileId) => fileId === "renewed-upstream"
+    ? historicalText("aggregate source", identity(merge, first, fileId)) : { kind: "stale_selection" });
+  render(<CommitFileReview client={client} entryId="one" selectionGeneration={0} contextLabel="Pinned repository"
+    selection={{ ...identity(), segments: path.split("/"), upstream: { token: "pinned-range", direction: "incoming" } }} />);
+  if (state === "current") expect(await screen.findByText("aggregate source")).toBeVisible();
+  else expect(await screen.findByRole("heading", { name: "Comparison selection expired" })).toBeVisible();
+  expect(client.upstreamFiles).toHaveBeenCalledExactlyOnceWith("one", "pinned-range");
+  expect(client.commitFiles).not.toHaveBeenCalled();
+  expect(client.reviewCommitFile).toHaveBeenCalledTimes(state === "current" ? 2 : 1);
+});

@@ -298,10 +298,10 @@ test("incoming and outgoing graph summaries open independent aggregate previews 
   const upstream = await journey.request<{ incomingPath: string; incomingText: string; outgoingPath: string; outgoingText: string }>("fixture_upstream");
   const { user } = await mountMain();
   await user.click(await screen.findByRole("button", { name: "Incoming Changes · 1 commit" }, nativeWait));
-  await expectWorkingText(upstream.incomingText);
+  await waitFor(() => expect(screen.getByRole("region", { name: "New source hunks" })).toHaveTextContent(upstream.incomingText.trim()), nativeWait);
   expect(screen.getByRole("heading", { name: upstream.incomingPath })).toBeVisible();
   await user.click(screen.getByRole("button", { name: "Outgoing Changes · 1 commit" }));
-  await expectWorkingText(upstream.outgoingText);
+  await waitFor(() => expect(screen.getByRole("region", { name: "New source hunks" })).toHaveTextContent(upstream.outgoingText.trim()), nativeWait);
   expect(screen.getByRole("heading", { name: upstream.outgoingPath })).toBeVisible();
   expect(screen.queryByRole("heading", { name: upstream.incomingPath })).not.toBeInTheDocument();
   await user.click(screen.getByRole("button", { name: "Refresh history" }));
