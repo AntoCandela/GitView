@@ -7,10 +7,12 @@ mod journey_fixture;
 use std::collections::VecDeque;
 use std::io::{self, BufRead, Read, Write};
 use std::time::Duration;
+use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
 
 use gitview_lib::application::RepositoryService;
 use gitview_lib::browsing::RepositoryFilesRequest;
 use gitview_lib::diff::ReviewCategory;
+use gitview_lib::companion::{HandoffOutcome, PresentationInput, ReviewCaller, SurfaceNotice};
 use journey_fixture::JourneyFixture;
 use serde::Deserialize;
 use serde_json::{json, Value};
@@ -34,6 +36,7 @@ struct Bridge {
     fixture: JourneyFixture,
     service: RepositoryService,
     choices: VecDeque<Choice>,
+    notice_failed: Arc<AtomicBool>,
 }
 
 fn main() {
@@ -57,7 +60,7 @@ fn run() -> Result<(), &'static str> {
     let requests = read_requests();
     runtime.block_on(Box::pin(async move {
         let service = RepositoryService::with_workspace_file(fixture.workspace_file()).await;
-        let mut bridge = Bridge { fixture, service, choices: VecDeque::new() };
+        let mut bridge = Bridge { fixture, service, choices: VecDeque::new(), notice_failed: Arc::new(AtomicBool::new(false)) };
         let result = bridge.serve(requests).await;
         bridge.service.shutdown().await;
         result
@@ -105,6 +108,7 @@ impl Bridge {
             let shutdown = request.command == "fixture_shutdown";
             let result = tokio::time::timeout(COMMAND_TIMEOUT, Box::pin(self.dispatch(&request))).await
                 .unwrap_or(Err("Journey command timed out."));
+            if self.notice_failed.load(Ordering::SeqCst) { return Err("Journey surface transport failed."); }
             respond(request.id, result)?;
             if shutdown { break; }
         }
@@ -122,6 +126,33 @@ impl Bridge {
         }
         match request.command.as_str() {
             "workspace_snapshot" => service_result!(self.service.snapshot()),
+            // This identity is an isolated fixture fact, not proof of Tauri caller authorization.
+            "review_surface_bootstrap" => Ok(json!("main")),
+            "review_surface_snapshot" => service_result!(self.service.review_surface_snapshot(ReviewCaller::Main)),
+            "subscribe_review_surface" => {
+                let failed = Arc::clone(&self.notice_failed);
+                self.service.subscribe_review_surface(ReviewCaller::Main, Arc::new(move |notice| {
+                    if surface_notice(notice).is_err() { failed.store(true, Ordering::SeqCst); }
+                }));
+                self.service.set_surface_visibility(ReviewCaller::Main, true);
+                self.service.reconcile_surface_demand().await;
+                Ok(Value::Null)
+            }
+            "pending_review_handoff" => serde_json::to_value(self.service.pending_review_handoff()).map_err(|_| "Journey serialization failed."),
+            "claim_review_handoff" => serde_json::to_value(self.service.claim_review_handoff(text(args, "requestId")?, text(args, "contextEpoch")?)).map_err(|_| "Journey serialization failed."),
+            "ack_review_handoff" => {
+                let outcome: HandoffOutcome = serde_json::from_value(args.get("outcome").cloned().ok_or("Invalid journey arguments.")?)
+                    .map_err(|_| "Invalid journey arguments.")?;
+                serde_json::to_value(self.service.ack_review_handoff(text(args, "requestId")?, text(args, "contextEpoch")?, outcome)).map_err(|_| "Journey serialization failed.")
+            }
+            "publish_companion_presentation" => {
+                let presentation: PresentationInput = serde_json::from_value(args.get("presentation").cloned().ok_or("Invalid journey arguments.")?)
+                    .map_err(|_| "Invalid journey arguments.")?;
+                // The real domain store is exercised; there is no tray or native-menu host here.
+                let snapshot = self.service.publish_companion_presentation(presentation).map_err(|code| code.as_str())?;
+                serde_json::to_value(snapshot).map_err(|_| "Journey serialization failed.")
+            }
+            "companion_state" | "set_companion_enabled" => Err("Native companion host unavailable in journey transport."),
             // Explicit isolated fixture, not evidence of the host OS language preference.
             "preferred_languages" => Ok(json!({ "languages": ["en-US"] })),
             "open_chosen_repository" => match self.choices.pop_front().ok_or("No fixture picker choice queued.")? {
@@ -170,6 +201,7 @@ impl Bridge {
             "fixture_hide" => { self.fixture.hide()?; Ok(Value::Null) }
             "fixture_restore" => { self.fixture.restore()?; Ok(Value::Null) }
             "fixture_restart" => {
+                self.service.unsubscribe_review_surface(ReviewCaller::Main);
                 self.service.shutdown().await;
                 self.service = RepositoryService::with_workspace_file(self.fixture.workspace_file()).await;
                 self.choices.clear();
@@ -214,4 +246,13 @@ fn respond(id: u64, result: Result<Value, &'static str>) -> Result<(), &'static 
         output.write_all(&bytes).map_err(|_| "Journey output failed.")?;
     }
     output.write_all(b"\n").and_then(|_| output.flush()).map_err(|_| "Journey output failed.")
+}
+
+fn surface_notice(notice: SurfaceNotice) -> Result<(), &'static str> {
+    let bytes = serde_json::to_vec(&json!({ "surfaceNotice": notice })).map_err(|_| "Journey serialization failed.")?;
+    if bytes.len() > MAX_RESPONSE_BYTES { return Err("Journey notice exceeds limit."); }
+    // Share stdout's line lock with responses so asynchronous invalidations cannot interleave bytes.
+    let mut output = io::stdout().lock();
+    output.write_all(&bytes).and_then(|_| output.write_all(b"\n")).and_then(|_| output.flush())
+        .map_err(|_| "Journey output failed.")
 }

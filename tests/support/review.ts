@@ -21,7 +21,7 @@ export function readyObservation(files: ChangedPath[] = [changedFile], observati
   return { kind: "ready", entryId, observationRevision, files };
 }
 export function reviewClient(reviewFile: RepositoryClient["reviewFile"] = async () => ({ kind: "stale_observation" })): RepositoryClient {
-  const snapshot = { revision: 0, entries: [], activeContextId: null, restoring: false, persistenceError: null };
+  const snapshot = { contextEpoch: "fixture-context", revision: 0, entries: [], activeContextId: null, restoring: false, persistenceError: null };
   return {
     snapshot: async () => snapshot,
     preferredLanguages: async () => ({ languages: [] }),

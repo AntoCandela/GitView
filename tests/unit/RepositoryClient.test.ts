@@ -11,9 +11,7 @@ vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn() }));
 
 const firstId = "00000000-0000-4000-8000-000000000001";
 const secondId = "00000000-0000-4000-8000-000000000002";
-const snapshot: WorkspaceSnapshot = {
-  revision: 1, entries: [], activeContextId: null, restoring: false, persistenceError: null,
-};
+const snapshot: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [], activeContextId: null, restoring: false, persistenceError: null, };
 const operations: { command: RepositoryCommand; start: (client: RepositoryClient) => Promise<unknown> }[] = [
   { command: "workspace_snapshot", start: (client) => client.snapshot() },
   { command: "open_chosen_repository", start: (client) => client.openChosenRepository("en-US") },

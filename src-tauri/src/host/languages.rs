@@ -1,22 +1,7 @@
 //! Reads only OS UI-language preferences and maps the closed picker locale to bundled titles.
 
-use serde::{Deserialize, Serialize};
-
-#[derive(Clone, Copy, Debug, Deserialize)]
-pub(super) enum Locale {
-    #[serde(rename = "pt-BR")]
-    PtBr,
-    #[serde(rename = "pt-PT")]
-    PtPt,
-    #[serde(rename = "it")]
-    It,
-    #[serde(rename = "es")]
-    Es,
-    #[serde(rename = "en-US")]
-    EnUs,
-    #[serde(rename = "en-GB")]
-    EnGb,
-}
+use serde::Serialize;
+use crate::locale::Locale;
 
 include!(concat!(env!("OUT_DIR"), "/picker_titles.rs"));
 

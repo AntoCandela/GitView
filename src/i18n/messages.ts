@@ -36,6 +36,9 @@ export function createTranslator(resources: MessageCatalogs): Translator {
     if (!formatter) {
       const canonical = resources["en-US"][key];
       if (typeof canonical !== "string") throw new Error("Unknown canonical message");
+      if (key.startsWith("companion.") && typeof resources[locale]?.[key] !== "string") {
+        throw new Error("Missing companion translation");
+      }
       const message = resources[locale]?.[key] ?? canonical;
       formatter = new IntlMessageFormat(message, locale, undefined, { ignoreTag: true });
       localeFormatters.set(key, formatter);

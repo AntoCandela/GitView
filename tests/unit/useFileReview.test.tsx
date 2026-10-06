@@ -232,3 +232,49 @@ test.each(["entry", "generation", "file", "category", "client"] as const)("last-
   rerender(next);
   expect(result.current).toEqual({ kind: "checking" });
 });
+
+test("hidden review cancels periodic reads and rejects a delayed pre-hide response", async () => {
+  const pending = deferred<ReviewResult>();
+  const read = vi.fn<RepositoryClient["reviewFile"]>().mockReturnValue(pending.promise);
+  const client = reviewClient(read);
+  const { result, rerender } = renderHook(({ enabled }) =>
+    useFileReview(client, "one", 0, readyObservation(), readingSelection, enabled), { initialProps: { enabled: true } });
+  rerender({ enabled: false });
+  await act(async () => pending.resolve(textReview("hidden bytes")));
+  await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+  expect(result.current.kind).toBe("idle");
+  expect(read).toHaveBeenCalledTimes(1);
+});
+
+test("issued review authority follows verified revision tokens and never reports an abandoned response", async () => {
+  const old = deferred<ReviewResult>();
+  const current = deferred<ReviewResult>();
+  const read = vi.fn<RepositoryClient["reviewFile"]>().mockReturnValueOnce(old.promise).mockReturnValueOnce(current.promise);
+  const client = reviewClient(read);
+  const verified = vi.fn();
+  const { rerender } = renderHook(({ revision, pathId }) =>
+    useFileReview(client, "one", 0, readyObservation([{ ...changedFile, pathId }], revision), readingSelection, true, verified),
+  { initialProps: { revision: 1, pathId: "path-1" } });
+  rerender({ revision: 2, pathId: "path-2" });
+  await act(async () => old.resolve(textReview("old")));
+  expect(verified).not.toHaveBeenCalled();
+  await act(async () => current.resolve(textReview("current", { pathId: "path-2" })));
+  expect(verified).toHaveBeenCalledExactlyOnceWith({
+    entryId: "one", stablePathId: "stable-1", pathId: "path-2", observationRevision: 2, category: "unstaged",
+  });
+});
+
+test("claimed live authority outranks older cached absence but retires when a newer observation removes the category", async () => {
+  const read = vi.fn<RepositoryClient["reviewFile"]>().mockResolvedValue(textReview("claimed source", { pathId: "claimed-path" }));
+  const client = reviewClient(read);
+  const authority = { entryId: "one", stablePathId: "stable-1", category: "unstaged" as const, observationRevision: 7, pathId: "claimed-path" };
+  const { result, rerender } = renderHook(({ revision }) =>
+    useFileReview(client, "one", 0, readyObservation([], revision), readingSelection, true, undefined, authority),
+  { initialProps: { revision: 1 } });
+  expect(result.current.kind).toBe("checking");
+  await act(async () => { await Promise.resolve(); });
+  expect(read).toHaveBeenCalledExactlyOnceWith("one", 7, "claimed-path", "unstaged");
+  expect(result.current.kind).toBe("text");
+  rerender({ revision: 8 });
+  expect(result.current.kind).toBe("no_remaining");
+});

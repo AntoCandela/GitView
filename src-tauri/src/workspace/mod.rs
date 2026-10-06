@@ -90,6 +90,7 @@ pub struct RepositoryEntry {
 pub struct WorkspaceSnapshot {
     /// Increases only for visible state changes, not every issued probe generation.
     pub revision: u64,
+    pub context_epoch: String,
     pub entries: Vec<RepositoryEntry>,
     pub active_context_id: Option<String>,
     pub restoring: bool,
@@ -200,10 +201,13 @@ struct StoredEntry {
     verified: Option<VerifiedIdentity>,
     // Latest request allowed to update this entry, even if it changed no visible fields.
     generation: u64,
+    // A later user selection can be Checking while unrelated initial restoration still runs.
+    initial_restore_generation: Option<u64>,
 }
 
 struct WorkspaceState {
     revision: u64,
+    context_generation: u64,
     id_prefix: String,
     next_id: u64,
     // One request sequence orders opens, refreshes and selections across entries.
@@ -222,6 +226,7 @@ impl Default for WorkspaceState {
         let started = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_nanos();
         Self {
             revision: 0,
+            context_generation: 0,
             id_prefix: format!("{started:x}-{:x}-{:x}", std::process::id(), NEXT_SESSION.fetch_add(1, Ordering::Relaxed)),
             next_id: 0,
             next_request: 0,
@@ -235,6 +240,14 @@ impl Default for WorkspaceState {
 }
 
 impl WorkspaceState {
+    fn context_epoch(&self) -> String { format!("context-{}-{}", self.id_prefix, self.context_generation) }
+
+    fn invalidate_context(&mut self, review: &crate::companion::ReviewCoordinator) {
+        self.revision += 1;
+        self.context_generation += 1;
+        review.context_changed(&self.context_epoch(), self.revision);
+    }
+
     fn next_entry_id(&mut self) -> String {
         self.next_id += 1;
         format!("repository-{}-{}", self.id_prefix, self.next_id)
@@ -253,6 +266,7 @@ impl WorkspaceState {
     fn snapshot(&self) -> WorkspaceSnapshot {
         WorkspaceSnapshot {
             revision: self.revision,
+            context_epoch: self.context_epoch(),
             entries: self
                 .entries
                 .iter()
@@ -294,9 +308,17 @@ impl WorkspaceState {
 }
 
 /// Serializes in-memory transitions only; callers perform native I/O between tickets.
-#[derive(Default)]
 pub(crate) struct WorkspaceStore {
     state: Mutex<WorkspaceState>,
+    pub(crate) review: std::sync::Arc<crate::companion::ReviewCoordinator>,
+}
+
+impl Default for WorkspaceStore {
+    fn default() -> Self {
+        let state = WorkspaceState::default();
+        let review = std::sync::Arc::new(crate::companion::ReviewCoordinator::new(state.context_epoch()));
+        Self { state: Mutex::new(state), review }
+    }
 }
 
 /// Open request generation reserved before probing; newer entry requests take precedence.
@@ -357,12 +379,14 @@ impl WorkspaceStore {
                     head: HeadLabel::Unknown, availability: Availability::Checking,
                 },
                 root: saved.root, display_name: saved.display_name, verified: None, generation,
+                initial_restore_generation: Some(generation),
             });
         }
         state.restoring = !tickets.is_empty();
         if state.restoring {
             state.revision += 1;
         }
+        state.invalidate_context(&self.review);
         if let Some(active_id) = state.active_context_id.as_deref() {
             if let Some(position) = tickets.iter().position(|ticket| ticket.entry_id == active_id) {
                 // Move only the probe ticket; admission order remains exactly as saved.
@@ -378,6 +402,7 @@ impl WorkspaceStore {
         if state.restoring {
             state.restoring = false;
             state.revision += 1;
+            self.review.workspace_changed(state.revision);
         }
     }
 
@@ -386,6 +411,7 @@ impl WorkspaceStore {
         if state.persistence_error != error {
             state.persistence_error = error;
             state.revision += 1;
+            self.review.workspace_changed(state.revision);
         }
     }
 
@@ -414,18 +440,31 @@ impl WorkspaceStore {
         }).map(|stored| stored.entry.id.clone())
     }
 
-    /// Recovery cannot recheck a formerly selected location or supersede a verified context.
+    pub(crate) async fn selected_pending_refresh_id(&self) -> Option<String> {
+        let state = self.state.lock().await;
+        state.selected_entry().filter(|stored| {
+            if stored.entry.availability == Availability::Checking {
+                stored.verified.is_some() || !state.restoring
+                    || stored.initial_restore_generation != Some(stored.generation)
+            } else {
+                stored.verified.is_none() && stored.entry.availability == Availability::Unavailable
+            }
+        }).map(|stored| stored.entry.id.clone())
+    }
+
+    /// Rechecks only the current unverified or pending-selection context; settled verified facts never retry.
     pub(crate) async fn begin_selected_recovery(&self, entry_id: &str) -> Option<RefreshTicket> {
         let mut state = self.state.lock().await;
         if state.active_context_id.as_deref() != Some(entry_id) {
             return None;
         }
-        let position = state.entries.iter().position(|stored| stored.entry.id == entry_id && stored.verified.is_none())?;
+        let position = state.entries.iter().position(|stored| stored.entry.id == entry_id
+            && (stored.verified.is_none() || stored.entry.availability == Availability::Checking))?;
         let generation = state.next_generation();
         let stored = &mut state.entries[position];
         stored.generation = generation;
         Some(RefreshTicket {
-            root: stored.root.clone(), verified: None, entry_id: entry_id.to_owned(), generation,
+            root: stored.root.clone(), verified: stored.verified.clone(), entry_id: entry_id.to_owned(), generation,
         })
     }
 
@@ -465,6 +504,7 @@ impl WorkspaceStore {
             if ticket.0 > state.entries[position].generation {
                 state.entries[position].generation = ticket.0;
                 state.update_entry(position, facts, identity);
+                self.review.workspace_changed(state.revision);
             }
             return OpenOutcome::Reused { entry_id, snapshot: state.snapshot() };
         }
@@ -483,8 +523,10 @@ impl WorkspaceStore {
             display_name: None,
             verified: Some(VerifiedIdentity { git_dir: facts.git_dir, identity }),
             generation: ticket.0,
+            initial_restore_generation: None,
         });
         state.revision += 1;
+        self.review.workspace_changed(state.revision);
         OpenOutcome::Opened { entry_id, snapshot: state.snapshot() }
     }
 
@@ -505,6 +547,7 @@ impl WorkspaceStore {
             stored.display_name = Some(display_name.to_owned());
             stored.entry.repository_label = display_name.to_owned();
             state.revision += 1;
+            self.review.workspace_changed(state.revision);
         }
         MutationOutcome::Updated { snapshot: state.snapshot() }
     }
@@ -515,10 +558,11 @@ impl WorkspaceStore {
         let Some(position) = state.entries.iter().position(|stored| stored.entry.id == entry_id) else {
             return MutationOutcome::NotFound { snapshot: state.snapshot() };
         };
+        let removed_active = state.active_context_id.as_deref() == Some(entry_id);
         let removed = state.entries.remove(position);
         let generation = state.next_generation();
         state.removed_roots.insert(removed.root, generation);
-        if state.active_context_id.as_deref() == Some(entry_id) {
+        if removed_active {
             let replacement = state.entries.iter().position(|stored| stored.entry.availability == Availability::Available);
             state.active_context_id = replacement.map(|position| {
                 let stored = &mut state.entries[position];
@@ -528,14 +572,22 @@ impl WorkspaceStore {
             });
         }
         state.revision += 1;
+        if removed_active {
+            state.invalidate_context(&self.review);
+        } else {
+            self.review.workspace_changed(state.revision);
+        }
         MutationOutcome::Updated { snapshot: state.snapshot() }
     }
 
     /// Activates a known ID and invalidates pending updates even when reselected.
     ///
-    /// Marks availability checking without I/O; unknown IDs leave state untouched.
-    pub(crate) async fn select(&self, entry_id: &str) -> SelectOutcome {
+    /// Marks availability checking unless admission just supplied fresh verified facts under the selection gate.
+    pub(crate) async fn select(&self, entry_id: &str, scope: Option<&crate::companion::SurfaceScope>, freshly_verified: bool) -> SelectOutcome {
         let mut state = self.state.lock().await;
+        if scope.is_some_and(|scope| self.review.validate(scope, false).is_err()) {
+            return SelectOutcome::NotFound { snapshot: state.snapshot() };
+        }
         let Some(position) = state
             .entries
             .iter()
@@ -547,14 +599,16 @@ impl WorkspaceStore {
         };
         let generation = state.next_generation();
         state.entries[position].generation = generation;
-        if state.entries[position].entry.availability != Availability::Checking {
-            state.entries[position].entry.availability = Availability::Checking;
+        let availability = if freshly_verified { Availability::Available } else { Availability::Checking };
+        if state.entries[position].entry.availability != availability {
+            state.entries[position].entry.availability = availability;
             state.revision += 1;
         }
         if state.active_context_id.as_deref() != Some(entry_id) {
             state.active_context_id = Some(entry_id.to_owned());
             state.revision += 1;
         }
+        state.invalidate_context(&self.review);
         SelectOutcome::Selected {
             snapshot: state.snapshot(),
         }
@@ -602,6 +656,7 @@ impl WorkspaceStore {
         if stored.entry.availability != Availability::Checking {
             stored.entry.availability = Availability::Checking;
             state.revision += 1;
+            self.review.workspace_changed(state.revision);
         }
         Some(ticket)
     }
@@ -634,10 +689,12 @@ impl WorkspaceStore {
                         }) =>
                 {
                     state.update_entry(position, facts, identity);
+                    self.review.workspace_changed(state.revision);
                     return RefreshPublication::Verified;
                 }
                 result => {
                     state.mark_unavailable(position);
+                    self.review.workspace_changed(state.revision);
                     return RefreshPublication::Unavailable(result.err().unwrap_or(GitError::RepositoryChanged));
                 }
             }

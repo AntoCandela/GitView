@@ -104,14 +104,17 @@ Follow [CODE-STYLE.md](../CODE-STYLE.md) for Rust/frontend headers, API document
 
 | Module | Responsibility |
 | --- | --- |
-| `src/main.tsx` | React bootstrap and global stylesheet entry. |
+| `src/main.tsx` | Host-approved surface bootstrap before main-only locale initialization, React composition and global styles. |
 | `src/i18n/` | Bundled six-locale ICU catalogs, ordered locale resolution, formatter caches and one injected-source external preference store. No app, feature, contract or platform imports. |
 | `src/app/LanguageMenu.tsx` | Persistent language/System choice, pending discovery and session-only feedback; does not own repository state. |
 | `src/app/Workspace.tsx` and `WorkspaceSidebar.tsx` | Screen composition, full-bleed workbench and independently mounted repository-file sidebar. |
+| `src/app/companion/` | Compact review composition, scoped cached-surface reconciliation, stale-generation fences and claim-before-apply main handoff receiver. |
+| `src/app/CompanionPresentation.tsx` and `CompanionSettings.tsx` | Main-only presentation publication and native opt-in controls; storage-free presentation providers for the compact surface. |
 | `src/features/repositories/useWorkspace.ts` | Snapshot ordering, serialized selection/sidebar mutations, restoration polling and transport recovery through the curated repository API. |
 | `src/features/repositories/catalog/RepositoryList.tsx` | Virtualized repository rows, keyboard navigation and per-row actions. |
 | `src/features/repositories/catalog/RepositoryNameEditor.tsx` | Inline app-name editing, keyboard submission/cancellation and inline feedback. |
 | `src/contracts/repositories.ts` | Shared IPC DTOs and the frontend client interface. |
+| `src/contracts/companion.ts` | Closed surface/presentation/handoff DTOs and least-authority client interfaces. |
 | `src/contracts/changes.ts` | Renderer-safe observation snapshots and backend-issued path identities. |
 | `src/contracts/diff.ts` and `src/contracts/history.ts` | Revision-bound comparisons and pinned history-page DTOs. |
 | `src/contracts/inspection.ts` | Read-only branch/worktree choices and parent-specific committed-file DTOs. |
@@ -125,6 +128,8 @@ Follow [CODE-STYLE.md](../CODE-STYLE.md) for Rust/frontend headers, API document
 | `src/features/diff/text/` and `highlighting/` | Source/diff rendering and layout; singleton worker, literal loaders and tokenization. |
 | `src/features/history/graph/`, `ContextSelector.tsx` and `CommitFiles.tsx` | Paged ancestry and graph geometry, view-only branch/worktree picker and inline committed-file expansion. |
 | `src/platform/RepositoryClient.ts` | The only frontend Tauri invocation adapter. |
+| `src-tauri/src/companion.rs` and `locale.rs` | Shared surface epochs, bounded review provenance, pending claim/ack retirement and closed native locale vocabulary. |
+| `src-tauri/src/host/companion.rs` and `host/companion/` | Native opt-in persistence, macOS tray/window/observer ownership, focus transfer and shutdown invalidation. |
 | `src/ui` | Feature-independent UI primitives and their styles. |
 | `src/ui/file-explorer/ChangeTree.tsx` | Shared native-segment hierarchy, virtual rows and reading anchors for working, committed and repository files. |
 | `src/features/appearance/index.ts`, `appearanceThemes.ts`, `codeThemes.ts`, `reviewPreferences.ts` and `AppearanceMenu.tsx` | Public presentation boundary: interface and syntax catalogs, unchanged browser-local review choices, coordinated presets and live sample. `src/style.scss` owns the interface role tokens. |
@@ -136,6 +141,7 @@ Follow [CODE-STYLE.md](../CODE-STYLE.md) for Rust/frontend headers, API document
 | `src-tauri/src/lib.rs` and `host/` | Library declarations and supported `run` entry; host-only Tauri setup, picker, restricted commands and renderer diagnostics. |
 | `src-tauri/src/host/languages.rs` and `src-tauri/build.rs` | Native OS language preferences and supported-locale-only picker titles generated from the same catalogs. |
 | `src-tauri/src/application.rs` | Opening, restoration/recovery, ordered persistence and selected-context observation orchestration. |
+| `src-tauri/src/native_work.rs` | Per-service native admission, cancellation and cleanup ownership across requests, Git children and blocking review work. |
 | `src-tauri/src/workspace/mod.rs` | In-memory authoritative choices, app names, atomic admission/selection/removal and snapshots. |
 | `src-tauri/src/workspace/persistence.rs` | Bounded versioned JSON validation and complete private-file replacement. |
 | `src-tauri/src/git/mod.rs` | `GitProbe` interprets read-only Git results into `RepositoryFacts`, including native identity and HEAD context. |
@@ -248,10 +254,57 @@ Startup restores order and nullable selection before background read-only Git ch
 
 A missing first-launch file is normal. Read/unsupported-format failures preserve the saved bytes and disable replacement for that session: repair the file and restart to recover. Save failures preserve usable navigation and show a separate warning; the next successful choice retries saving. Dismissing an unrelated operation error does not clear storage warnings.
 
+## Owned native shutdown
+
+Explicit application Quit seals native request admission before cancelling live requests and background producers. Completion is checked against closure after the operation's final poll; a rejected completion does not record IPC success. Shutdown waits for owned Git children to be killed and reaped, blocking jobs and abandoned result destructors to finish, and already-accepted workspace saves to publish their outcome before diagnostics drain. Cancelling a shutdown waiter does not detach the accepted save tail; subsequent waiters retain the drain.
+
+The optional macOS companion uses this same native-host drain. Main close is intercepted only while companion access is enabled and available; explicit Quit is never close-to-tray. Queued main-thread command waiters are cancellable, queued native mutations are fenced by `quitting`, and accepted synchronous preference replacements finish before native teardown. Main and companion have separate exact-local-webview permissions; the compact surface has no repository-management or preference-write authority.
+
+Seven shutdown regressions cover admission rejection, live Git cancellation/reaping with an accepted save, blocking cleanup across cancelled shutdown waits, independent service lifetimes, final-poll cancellation and IPC terminal facts, abandoned-result destruction, and persistence ownership across cancelled waiters:
+
+```sh
+cargo test --manifest-path src-tauri/Cargo.toml --locked --target-dir .verification/native-target --lib host::integration_tests::shutdown_
+```
+
+A disposable macOS native smoke reached an owned live Git child, accepted an ordinary application Quit request, exited successfully and left that child absent. That diagnostic-only launch used Node 24.15.0; it does **not** certify the supported toolchain. On the verification host, the pinned Node 24.21.0 launcher failed before native startup in Undici with `setTypeOfService EINVAL`. Native diagnostic capture health and packaged/menu-bar behavior were not verified.
+
+
+
+## Shared companion review authority
+
+One `RepositoryService` and observation controller own both surfaces. Host visibility—not renderer focus guesses—controls their combined demand. Context epochs are opaque, session-only authority; each companion opening has a separate open epoch and requires a scan started after its opening request, including when recovery first needs to verify a restored context. Accepted selections own their availability/HEAD refresh natively, independently of renderer reply ordering. Both-hidden demand suspends scanning/recovery and invalidates in-flight surface results.
+
+Removing an inactive admitted entry preserves the active review epoch and observer. Removal tombstones still reject a pending worktree admission targeting that removed entry.
+
+Native row/category provenance bounds what a compact handoff may request. One pending request carries a revision-bearing retirement state and expires after five seconds. Main discovers and claims only after coherent workspace preparation, applies the exact returned target synchronously, then acknowledges. A live claim retains its issued path/revision authority while an older cached observation catches up. No remaining changes and unavailable context are explicit outcomes; focus alone is not an acknowledgement.
+
+Main publishes the current six-locale presentation, icon/interface/review choices and session-only persistence warning. Companion providers never establish another storage owner or show a guessed first language/theme. Native menu publication accepts only the canonical translated Open/Quit pair. Surface notice subscriptions carry fixed invalidations; cached reads recover bootstrap/reveal without hidden periodic polling. These are source contracts, not evidence that the full native display/focus/resource matrix has passed.
+
+Main and companion reuse `WorkbenchToolbar`, `RepositorySelector`, `RepositoryBrowser`, `ChangedFileList`, `FileReview` and `ResizableWorkbench`. Omitting catalog admission/management callbacks removes those controls; companion selection uses only admitted entries. Without history, the shared workbench places comparison above files and exposes only the row divider; main retains all six three-pane arrangements. Browser observation with isolated state covered repository search/selection, nested Escape and focus return, keyboard/pointer row resizing, a three-pane arrangement change/reset, valid side-by-side changes, category switching and constrained 360px-wide rendering. These observations establish renderer behavior, not native menu-bar/Spaces certification.
+
+A macOS arm64 development launch using Node 24.21.0 ran the native executable and exposed an on-screen main window, with companion opt-in enabled in isolated native settings. Accessibility inspection was denied and window screenshot capture failed. The menu-bar icon, compact panel, handoff, focus/Spaces/multiple-display behavior and resource budgets were not visually or operationally verified in that launch. This is development-launch evidence only, not packaged-native or release certification.
+
+The user-reported desktop-only opening persisted after adding `CanJoinAllApplications` alongside `CanJoinAllSpaces` and `FullScreenAuxiliary`. Native tracing then observed tray delivery, accepted show/focus calls, and focus-loss dismissal about 0.9 seconds later. That sequence did not establish whether the panel became visible in the foreign Space or whether dismissal coincided with returning to another application.
+
+The corrected adapter constructs a nonactivating `NSPanel` rather than changing an existing window’s runtime class. A hidden Tauri host preserves the companion’s webview label, capability checks and transport; only its retained `WKWebView` moves into the panel. Construction occurs during enable, outside later tray openings, because the installed Wry constructor activates the application even for a hidden window. Panel focus no longer calls Tauri’s activating `set_focus`; inactive-app key ownership remains valid. Per-opening local and mouse-only global monitors cover owned and other-application clicks, with generation-fenced deferred dismissal and full token cleanup. Unexpected host destruction revokes availability, reveals main and permits explicit retry; normal disable/quit teardown remains distinct.
+
+The macOS development build compiled and ran. Native inspection observed `GitViewCompanionPanel` with the retained Wry webview under its content view, while the original Tauri host remained separate. Independent ownership and lifecycle reviews found no remaining blocking findings after the unexpected-destruction correction. A disposable fullscreen reference application initially entered fullscreen, but debugger transport ended during the attempted tray invocation without an observed panel outcome. The replacement native exercise could not complete after macOS became locked: the reference application was refused activation/fullscreen. No successful fullscreen visibility, inactive keyboard input, Escape, outside-click or handoff smoke is claimed from that attempt. Temporary drivers were removed; these limits remain separate from hosted automated verification and packaged-native certification.
+
+The maintainer subsequently confirmed that opening over another application's fullscreen Space works with the nonactivating-panel correction. That report does not certify the remaining native interaction matrix.
+
+The icon-only tray now uses AppKit's square status-item length and image-only placement instead of the tray library's variable image-and-title layout. A disposable native AppKit probe measured a 34-point button before and a 22-point button after, preserving the 18-point image; square sizing follows the system menu-bar height rather than hard-coding that observation. The updated development preview rebuilt and launched. This verifies the native sizing primitive and launch, not a captured before/after comparison of the application's menu bar.
+
+The companion's outer corners now use the same system-drawn titled frame as the desktop window, with full-size content, transparent/hidden title-bar chrome and hidden standard window buttons. The nonactivating initializer flag and existing Space/focus policy remain intact; moving the anchored panel is disabled. A disposable AppKit rendering showed the rounded frame and identified `NSThemeFrame` for both desktop and companion, versus the previous borderless `NSNextStepFrame`. It also confirmed full-size content and header-control hit testing without a title-bar inset. The native development build passed. macOS was locked during this follow-up, so the probe did not obtain key-window status and does not establish renewed keyboard/fullscreen acceptance.
+
+Final review corrected five failure paths: native mouse monitors no longer intercept Escape before nested renderer controls; closing main after companion failure or a failed main hide requests owned application shutdown; visibility-only scan suspension preserves verified file-selection authority; failed surface registration retries on focus/reveal without registration polling; and failed main-surface snapshot reads replace cached Clean/file rows with transport-unavailable feedback until an authoritative read succeeds. Native operations and callbacks run outside the companion lifecycle lock.
+
+Verified selection authority is independent of producer lifetime. It becomes usable synchronously with visible demand, before asynchronous scan reconciliation, while hidden, unverified, removed and reselected contexts remain rejected. A hidden new selection retains no fabricated scan observation. Required native integration cases cover retained file IDs before and after reveal reconciliation, hidden same-ID reselection, cancelled scan tickets, failed-access close/shutdown and synchronous native callbacks. Required frontend integration cases cover registration recovery, obsolete subscription/read lifetimes and both Clean and populated snapshot failures. The existing nested-Escape renderer case remains; it does not exercise AppKit event dispatch.
+
+An isolated Chromium observation of the production components showed main replacing Clean and its zero count with connection-unavailable feedback, retaining that failure through a presentation notice, then recovering to a one-file tree. Companion registration remained at one failed attempt until focus-triggered recovery without remount; the repository picker consumed the first Escape without dismissal, and the next Escape requested dismissal. These are controlled renderer-transport observations, not native Git, WKWebView, hidden-host teardown or packaged acceptance. Automated checks run only in GitHub CI for this correction: `verification.yml` selects `scripts/verify.mjs --suite all`; its frontend integration directory and Rust `integration_tests::` filter collect the added cases. No line/branch coverage percentage is measured.
 
 ## Live changed-file monitoring
 
-Selecting a working tree starts an immediate native scan, then another scan approximately one second after each completion. Scans do not overlap or accumulate timer ticks. Switching contexts cancels the previous scan; selection generations reject stale results, including when the same entry is reselected. Renderer polling reads cached snapshots and does not trigger Git scans.
+While either surface is visible, selecting a working tree starts an immediate native scan, then another scan approximately one second after each completion. Scans do not overlap or accumulate timer ticks. Switching contexts cancels the previous scan; scan generations reject stale producer results, including when the same entry is reselected. Separate verified-selection generations preserve browsing authority across visibility-only producer restarts, but invalidate it on context changes or reselection. Desktop surfaces subscribe to native invalidations and reconcile cached snapshots without starting a second Git scanner; hidden surfaces stop periodic reads.
 
 The native reader uses `git status --porcelain=v2 -z` against private, bounded index/attribute/exclude metadata and read-only object alternates, rather than letting status reload mutable source configuration. Index copies are streamed with a 64 MiB cap; attribute/exclude files retain their separate 1 MiB cap. Copied-index enumeration permits 16 MiB stdout, while ordinary status output and stderr retain 1 MiB caps. This allows large tracked indexes with few changes without removing bounds. The source index timestamp is preserved for Git's racy-index checks, and relevant comparison settings include Unicode filename normalization. Optional locks, fsmonitor and inherited repository-selection overrides are disabled. A scan shares one 30-second deadline. Root/Git-directory identities are checked around each scan: restoration of a missing location's same identity recovers, while replacement at the same path remains unavailable.
 
@@ -296,7 +349,7 @@ The native host owns `diagnostics/diagnostics.sqlite` under the same per-user ap
 
 Records contain timestamps, random session/operation IDs, parent operation IDs, a closed operation/component/event/code vocabulary, monotonic durations, exit status and byte counts. They never contain repository names or paths, file/branch contents, command arguments, process output, credentials, environment values, exception text or stack traces. An expected nonzero Git exit is a process fact; the Git/application layer determines the domain outcome.
 
-The producer does no database I/O and uses a 1,024-entry queue. Write-time retention is bounded to 20,000 events and seven days. Queue exhaustion, incompatible schema, unsafe paths or storage failures report degraded capture without changing repository outcomes. `diagnostic_health`, restricted to the main webview, exposes state, accepted/written/dropped counts and a fixed error code. Shutdown stops application-owned background work before a bounded two-second writer drain.
+The producer does no database I/O and uses a 1,024-entry queue. Write-time retention is bounded to 20,000 events and seven days. Queue exhaustion, incompatible schema, unsafe paths or storage failures report degraded capture without changing repository outcomes. `diagnostic_health`, restricted to the main webview, exposes state, accepted/written/dropped counts and a fixed error code. Shutdown seals native admission and drains owned requests, producers, Git reaping, blocking cleanup and accepted workspace writes before the bounded two-second diagnostic writer drain.
 
 The renderer can submit only fixed, bounded diagnostics; it has no SQL or arbitrary-message endpoint. Request UUIDs propagate through native IPC, application, Git and subprocess scopes. Restoration, recovery, observation and persistence retain parent links; cancellation and supersession are distinct from failure.
 

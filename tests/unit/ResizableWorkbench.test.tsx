@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ResizableWorkbench } from "../../src/app/workbench/ResizableWorkbench";
+import { defaultWorkbenchLayout, workbenchLayouts, type WorkbenchLayoutId } from "../../src/app/workbench/workbenchLayout";
 import { resetPanelLayout } from "../../src/ui/resize/panelLayout";
 
 const pointerEvent = window.PointerEvent;
@@ -44,7 +45,7 @@ test("a widened file pane is constrained when its available viewport shrinks", a
   expect(screen.getByText("Commit graph")).toBeVisible();
 });
 
-test("row resizing preserves both rows when the window height shrinks", async () => {
+test.each([true, false])("row resizing preserves both rows when the window height shrinks with history=%s", async (hasHistory) => {
   let height = 700;
   let resize: () => void = () => {};
   vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockImplementation(() => ({
@@ -56,7 +57,7 @@ test("row resizing preserves both rows when the window height shrinks", async ()
     disconnect() {}
   });
   const user = userEvent.setup();
-  render(<ResizableWorkbench files={<span>Working files</span>} history={<span>Commit graph</span>} comparison={<span>File comparison</span>} />);
+  render(<ResizableWorkbench files={<span>Working files</span>} history={hasHistory && <span>Commit graph</span>} comparison={<span>File comparison</span>} />);
   const divider = screen.getByRole("separator", { name: "Resize panel rows" });
   divider.focus();
   await user.keyboard("{End}");
@@ -69,19 +70,18 @@ test("row resizing preserves both rows when the window height shrinks", async ()
   await user.keyboard("{Home}");
   expect(Number(divider.getAttribute("aria-valuenow"))).toBeLessThan(constrained);
   expect(screen.getByText("Working files")).toBeVisible();
-  expect(screen.getByText("Commit graph")).toBeVisible();
   expect(screen.getByText("File comparison")).toBeVisible();
 });
 
-function renderPointerWorkbench() {
+function renderPointerWorkbench(layout: WorkbenchLayoutId = defaultWorkbenchLayout) {
   const rectangle = vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
     width: 1000, height: 600, x: 0, y: 0, top: 0, left: 0, right: 1000, bottom: 600, toJSON: () => ({}),
   });
-  render(<ResizableWorkbench files={<span>Working files</span>} history={<span>Commit graph</span>} comparison={<span>File comparison</span>} />);
+  render(<ResizableWorkbench layout={layout} files={<span>Working files</span>} history={<span>Commit graph</span>} comparison={<span>File comparison</span>} />);
   return {
     rectangle,
     junction: screen.getByRole("button", { name: "Resize all panels" }),
-    column: screen.getByRole("separator", { name: "Resize file list" }),
+    column: screen.getAllByRole("separator").find((separator) => separator.getAttribute("aria-orientation") === "vertical")!,
     row: screen.getByRole("separator", { name: "Resize panel rows" }),
   };
 }
@@ -96,8 +96,8 @@ function installPointerCapture(element: HTMLElement) {
   });
 }
 
-test("dragging the junction changes both splitters and stops when the pointer is released", () => {
-  const { junction, column, row } = renderPointerWorkbench();
+test.each(workbenchLayouts)("dragging the junction changes both splitters and stops on release in $id", ({ id }) => {
+  const { junction, column, row } = renderPointerWorkbench(id);
   installPointerCapture(junction);
   fireEvent.pointerDown(junction, { pointerId: 7, button: 0, isPrimary: true, clientX: 242, clientY: 272 });
   fireEvent.pointerMove(junction, { pointerId: 7, clientX: 342, clientY: 332 });
@@ -155,8 +155,8 @@ test.each([
   expect(row).toHaveAttribute("aria-valuenow", expectedHeight);
 });
 
-test("the junction supports independent keyboard axes and bounded two-axis extremes", async () => {
-  const { junction, column, row } = renderPointerWorkbench();
+test.each(workbenchLayouts)("the junction supports keyboard axes and bounded extremes in $id", async ({ id }) => {
+  const { junction, column, row } = renderPointerWorkbench(id);
   junction.focus();
   const user = userEvent.setup();
   await user.keyboard("{ArrowRight}{Shift>}{ArrowDown}{/Shift}");
@@ -289,4 +289,81 @@ test.each(["pointerCancel", "lostPointerCapture"] as const)("%s clears the activ
   const workbench = screen.getByRole("region", { name: "Repository workbench" });
   expect(workbench.style.getPropertyValue("--workbench-left-width")).toBe("497.5px");
   expect(workbench.style.getPropertyValue("--workbench-top-height")).toBe("297.5px");
+});
+
+test.each([undefined, null, false])("absent history (%s) exposes only bounded keyboard row resizing", async (history) => {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+    width: 500, height: 600, x: 0, y: 0, top: 0, left: 0, right: 500, bottom: 600, toJSON: () => ({}),
+  });
+  const user = userEvent.setup();
+  render(<ResizableWorkbench layout="history-files-comparison" files={<span>Working files</span>}
+    history={history} comparison={<span>File comparison</span>} />);
+  const row = screen.getByRole("separator");
+  expect(row).toHaveAccessibleName("Resize panel rows");
+  expect(row).toHaveAttribute("aria-orientation", "horizontal");
+  expect(screen.queryByRole("button", { name: "Resize all panels" })).not.toBeInTheDocument();
+  expect(document.getElementById(row.getAttribute("aria-controls")!)).toContainElement(screen.getByText("File comparison"));
+  row.focus();
+  await user.keyboard("{ArrowDown}{Shift>}{ArrowUp}{/Shift}");
+  expect(row).toHaveAttribute("aria-valuenow", "254");
+  await user.keyboard("{Home}");
+  expect(row).toHaveAttribute("aria-valuenow", "128");
+  await user.keyboard("{End}");
+  expect(row).toHaveAttribute("aria-valuenow", "467");
+  expect(screen.getByText("Working files")).toBeVisible();
+  expect(screen.getByText("File comparison")).toBeVisible();
+});
+
+test("without history a row drag snaps, clamps and stops on release", () => {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+    width: 500, height: 600, x: 100, y: 80, top: 80, left: 100, right: 600, bottom: 680, toJSON: () => ({}),
+  });
+  render(<ResizableWorkbench files={<span>Working files</span>} comparison={<span>File comparison</span>} />);
+  const row = screen.getByRole("separator");
+  installPointerCapture(row);
+  fireEvent.pointerDown(row, { pointerId: 7, button: 0, isPrimary: true, clientX: 400, clientY: 352 });
+  fireEvent.pointerMove(row, { pointerId: 7, clientX: 550, clientY: 379.5 });
+  expect(row).toHaveClass("is-snapped");
+  expect(screen.getByRole("region", { name: "Repository workbench" }).style.getPropertyValue("--workbench-top-height")).toBe("297.5px");
+  fireEvent.pointerMove(row, { pointerId: 7, clientX: 550, clientY: 10000 });
+  expect(row).toHaveAttribute("aria-valuenow", "467");
+  expect(row).not.toHaveClass("is-snapped");
+  fireEvent.pointerMove(row, { pointerId: 7, clientX: 550, clientY: -10000 });
+  expect(row).toHaveAttribute("aria-valuenow", "128");
+  fireEvent.pointerUp(row, { pointerId: 7 });
+  fireEvent.pointerMove(row, { pointerId: 7, clientX: 550, clientY: 500 });
+  expect(row).toHaveAttribute("aria-valuenow", "128");
+});
+
+test("changing history presence and resetting rows preserves mounted file and comparison state", () => {
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+    width: 500, height: 600, x: 0, y: 0, top: 0, left: 0, right: 500, bottom: 600, toJSON: () => ({}),
+  });
+  function ReviewPosition() {
+    const [line, setLine] = useState(1);
+    return <button onClick={() => setLine(42)}>Reading line {line}</button>;
+  }
+  function SelectedFile() {
+    const [selected, setSelected] = useState(false);
+    return <button onClick={() => setSelected(true)}>{selected ? "Selected file" : "Select file"}</button>;
+  }
+  const panes = { files: <SelectedFile />, comparison: <ReviewPosition /> };
+  const view = render(<ResizableWorkbench {...panes} history={<span>Commit graph</span>} />);
+  fireEvent.click(screen.getByRole("button", { name: "Reading line 1" }));
+  fireEvent.click(screen.getByRole("button", { name: "Select file" }));
+  const reading = screen.getByRole("button", { name: "Reading line 42" });
+  const selected = screen.getByRole("button", { name: "Selected file" });
+  const row = screen.getByRole("separator", { name: "Resize panel rows" });
+  fireEvent.keyDown(row, { key: "End" });
+  view.rerender(<ResizableWorkbench {...panes} />);
+  expect(screen.getByRole("separator")).toBe(row);
+  expect(row).toHaveAttribute("aria-valuenow", "467");
+  act(() => resetPanelLayout());
+  expect(row).toHaveAttribute("aria-valuenow", "270");
+  expect(screen.getByRole("button", { name: "Reading line 42" })).toBe(reading);
+  expect(screen.getByRole("button", { name: "Selected file" })).toBe(selected);
+  view.rerender(<ResizableWorkbench {...panes} layout="history-comparison-files" history={<span>Commit graph</span>} />);
+  expect(screen.getAllByRole("separator")).toHaveLength(2);
+  expect(screen.getByRole("button", { name: "Reading line 42" })).toBe(reading);
+  expect(screen.getByRole("button", { name: "Selected file" })).toBe(selected);
 });

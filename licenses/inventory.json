@@ -23,8 +23,8 @@
     "scripts/generate-brand.mjs": "add0f7fe15f8da3c5c83c7c477121757ec3c4df0bff78d5301a861637cf1bfc5",
     "scripts/glslGrammar.ts": "87f30b5fe59c7c2438b8f49b391cc302856d136e4155152419c067f29977b1ad",
     "scripts/vendor-patches.mjs": "8d852741549a75a37279b25a18400343260be2b6ae8602e16995878def2184bc",
-    "src-tauri/Cargo.lock": "fca8760f622e5f3fa2fc031e69fa38cb9b8f5b4bf99d3d4a77caace4a2cf80a6",
-    "src-tauri/Cargo.toml": "977957b1d4b43d3e33e173468e6e524c7f8ca173320d27c10a889d0b37f828cd",
+    "src-tauri/Cargo.lock": "18cca77d79fae6d8497e3e026a4e3559eba4c76fc184cf007981d68a4466ef40",
+    "src-tauri/Cargo.toml": "165db438dbd94cae81e78eac818e022c1a26b8a41d0b265c4614f65f4107bbb9",
     "src-tauri/icons/128x128.png": "4d8c641a76d8063f4da7335cc5731df82eda72c5004d94d5dacd03e0eafd1236",
     "src-tauri/icons/128x128@2x.png": "13cfc1a072d7f46d46599b61ca6936de1694b4cca30b64a64d07264757fe6b5d",
     "src-tauri/icons/32x32.png": "8dde255cf77be6e706057d87fcbb636115133e6e016a82c62224667d659735ca",
@@ -21854,13 +21854,15 @@
         "dynamic-acl",
         "tauri-runtime-wry",
         "test",
+        "tray-icon",
         "webkit2gtk",
         "webview2-com",
         "wry",
         "x11"
       ],
       "targetConditions": [
-        "cfg(target_os = \"ios\")"
+        "cfg(target_os = \"ios\")",
+        "cfg(target_os = \"macos\")"
       ],
       "declaredLicense": "Apache-2.0 OR MIT",
       "selectedLicense": "MIT",

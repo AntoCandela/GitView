@@ -11,6 +11,7 @@ import type { ReactElement } from "react";
 import { Workspace } from "../../src/app/Workspace";
 import { deferred } from "../support/deferred";
 import { changedFile, readyObservation, textReview } from "../support/review";
+import type { ReviewSurfaceClient, ReviewSurfaceSnapshot, SurfaceNotice } from "../../src/contracts/companion";
 import type {
   OpenOutcome,
   RepositoryClient,
@@ -74,7 +75,7 @@ function fakeClient(initial: WorkspaceSnapshot): RepositoryClient {
       snapshot,
     }),
     selectContext: async (entryId) => {
-      snapshot = { ...snapshot, revision: snapshot.revision + 1, activeContextId: entryId };
+      snapshot = { ...snapshot, contextEpoch: `context-${snapshot.revision + 1}`, revision: snapshot.revision + 1, activeContextId: entryId };
       return { kind: "selected", snapshot };
     },
     renameRepository: async (entryId, displayName) => {
@@ -96,6 +97,7 @@ function fakeClient(initial: WorkspaceSnapshot): RepositoryClient {
       snapshot = {
         ...snapshot,
         revision: snapshot.revision + 1,
+        contextEpoch: snapshot.activeContextId === entryId ? `context-${snapshot.revision + 1}` : snapshot.contextEpoch,
         entries,
         activeContextId: snapshot.activeContextId === entryId
           ? entries.find((entry) => entry.availability === "available")?.id ?? null
@@ -139,13 +141,10 @@ function fakeClient(initial: WorkspaceSnapshot): RepositoryClient {
 
 
 test("sidebar labels branches and describes full paths without a visible path row", async () => {
-  const initial: WorkspaceSnapshot = {
-    revision: 1,
-    restoring: false,
-    persistenceError: null,
-    entries: [first, second],
-    activeContextId: "one",
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, restoring: false,
+  persistenceError: null,
+  entries: [first, second],
+  activeContextId: "one", };
   renderWorkspace(<Workspace client={fakeClient(initial)} />);
 
   const atlas = await screen.findByRole("button", { name: "atlas main" });
@@ -157,13 +156,10 @@ test("sidebar labels branches and describes full paths without a visible path ro
 });
 
 test("search filters repositories without changing the active selection and clearing restores them", async () => {
-  const initial: WorkspaceSnapshot = {
-    revision: 1,
-    restoring: false,
-    persistenceError: null,
-    entries: [first, second],
-    activeContextId: "one",
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, restoring: false,
+  persistenceError: null,
+  entries: [first, second],
+  activeContextId: "one", };
   const user = userEvent.setup();
   renderWorkspace(<Workspace client={fakeClient(initial)} />);
 
@@ -188,13 +184,10 @@ test("search filters repositories without changing the active selection and clea
 });
 
 test("arrow navigation focuses the next repository without changing selection until activation", async () => {
-  const initial: WorkspaceSnapshot = {
-    revision: 1,
-    restoring: false,
-    persistenceError: null,
-    entries: [first, second],
-    activeContextId: "one",
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, restoring: false,
+  persistenceError: null,
+  entries: [first, second],
+  activeContextId: "one", };
   const user = userEvent.setup();
   renderWorkspace(<Workspace client={fakeClient(initial)} />);
 
@@ -218,7 +211,7 @@ test("arrow navigation focuses the next repository without changing selection un
 });
 
 test("failed open preserves existing context and permits another attempt", async () => {
-  const original = { revision: 1, entries: [first], activeContextId: null, restoring: false, persistenceError: null };
+  const original = { contextEpoch: "fixture-context", revision: 1, entries: [first], activeContextId: null, restoring: false, persistenceError: null };
   const client = fakeClient(original);
   client.openChosenRepository = vi
     .fn()
@@ -231,13 +224,10 @@ test("failed open preserves existing context and permits another attempt", async
     .mockResolvedValueOnce({
       kind: "opened",
       entryId: "two",
-      snapshot: {
-        revision: 2,
-        restoring: false,
-        persistenceError: null,
-        entries: [first, second],
-        activeContextId: null,
-      },
+      snapshot: { contextEpoch: "fixture-context", revision: 2, restoring: false,
+      persistenceError: null,
+      entries: [first, second],
+      activeContextId: null, },
     });
   const user = userEvent.setup();
   renderWorkspace(<Workspace client={client} />);
@@ -257,13 +247,10 @@ test("failed open preserves existing context and permits another attempt", async
 });
 
 test("transport failure keeps opened entries and the retry action", async () => {
-  const initial: WorkspaceSnapshot = {
-    revision: 1,
-    restoring: false,
-    persistenceError: null,
-    entries: [first],
-    activeContextId: null,
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, restoring: false,
+  persistenceError: null,
+  entries: [first],
+  activeContextId: null, };
   const client = fakeClient(initial);
   client.openChosenRepository = vi
     .fn()
@@ -322,10 +309,8 @@ test.each([
   entries, activeContextId, currentLabel, completeIntent,
 }) => {
   const newcomer = { ...first, id: "three", repositoryLabel: "newcomer", locationLabel: "/work/newcomer" };
-  const initial: WorkspaceSnapshot = {
-    revision: 1, entries: [first, second], activeContextId: "one",
-    restoring: false, persistenceError: null,
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first, second], activeContextId: "one",
+  restoring: false, persistenceError: null, };
   let nativeSnapshot = initial;
   const admission = deferred<OpenOutcome>();
   const client = fakeClient(initial);
@@ -350,10 +335,8 @@ test.each(["opened", "lost"] as const)(
   "an %s open reply reconciles after a pending removal without restoring the removed selection",
   async (reply) => {
     const newcomer = { ...first, id: "three", repositoryLabel: "newcomer", locationLabel: "/work/newcomer" };
-    const initial: WorkspaceSnapshot = {
-      revision: 1, entries: [first, second], activeContextId: "one",
-      restoring: false, persistenceError: null,
-    };
+    const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first, second], activeContextId: "one",
+    restoring: false, persistenceError: null, };
     const removed: WorkspaceSnapshot = { ...initial, revision: 2, entries: [second], activeContextId: "two" };
     let nativeSnapshot = initial;
     const admission = deferred<OpenOutcome>();
@@ -388,13 +371,10 @@ test.each(["opened", "lost"] as const)(
 );
 
 test("selection requests execute in intent order and stale A cannot replace B", async () => {
-  const initial: WorkspaceSnapshot = {
-    revision: 1,
-    restoring: false,
-    persistenceError: null,
-    entries: [first, second],
-    activeContextId: null,
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, restoring: false,
+  persistenceError: null,
+  entries: [first, second],
+  activeContextId: null, };
   const firstSelection = deferred<SelectOutcome>();
   const select = vi.fn().mockImplementation((id: string) =>
     id === "one"
@@ -437,13 +417,10 @@ test("selection requests execute in intent order and stale A cannot replace B", 
 });
 
 test("late recovery from a failed selection cannot restore superseded context", async () => {
-  const initial: WorkspaceSnapshot = {
-    revision: 1,
-    restoring: false,
-    persistenceError: null,
-    entries: [first, second],
-    activeContextId: null,
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, restoring: false,
+  persistenceError: null,
+  entries: [first, second],
+  activeContextId: null, };
   const recovery = deferred<WorkspaceSnapshot>();
   const client = fakeClient(initial);
   client.snapshot = vi
@@ -480,13 +457,10 @@ test("late recovery from a failed selection cannot restore superseded context", 
 
 test("unavailable selected location is not shown as clean and can be rechecked", async () => {
   const unavailable = { ...first, availability: "unavailable" as const };
-  const initial: WorkspaceSnapshot = {
-    revision: 2,
-    restoring: false,
-    persistenceError: null,
-    entries: [unavailable],
-    activeContextId: "one",
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 2, restoring: false,
+  persistenceError: null,
+  entries: [unavailable],
+  activeContextId: "one", };
   const client = fakeClient(initial);
   const refresh = vi.fn(async () => ({
     ...initial,
@@ -504,7 +478,7 @@ test("unavailable selected location is not shown as clean and can be rechecked",
 });
 
 test("same repository reselection removes the old tree while the host selection is pending", async () => {
-  const initial: WorkspaceSnapshot = { revision: 1, entries: [first], activeContextId: "one", restoring: false, persistenceError: null };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first], activeContextId: "one", restoring: false, persistenceError: null };
   const selection = deferred<SelectOutcome>();
   const client = fakeClient(initial);
   let restored = false;
@@ -533,10 +507,8 @@ test("same repository reselection removes the old tree while the host selection 
 
 test("periodic observation recovers a missing context even when workspace availability is stale", async () => {
   vi.useFakeTimers();
-  const initial: WorkspaceSnapshot = {
-    revision: 1, entries: [{ ...first, availability: "unavailable" }], activeContextId: "one",
-    restoring: false, persistenceError: null,
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [{ ...first, availability: "unavailable" }], activeContextId: "one",
+  restoring: false, persistenceError: null, };
   const client = fakeClient(initial);
   let available = false;
   client.observeSelectedContext = async (entryId) => available
@@ -553,13 +525,10 @@ test("periodic observation recovers a missing context even when workspace availa
 
 test("late restoration polling cannot replace a newer repository selection", async () => {
   vi.useFakeTimers();
-  const initial: WorkspaceSnapshot = {
-    revision: 1,
-    entries: [first, second],
-    activeContextId: "one",
-    restoring: true,
-    persistenceError: null,
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first, second],
+  activeContextId: "one",
+  restoring: true,
+  persistenceError: null, };
   const lateRestoration = deferred<WorkspaceSnapshot>();
   const client = fakeClient(initial);
   let selected = false;
@@ -595,25 +564,19 @@ test("late restoration polling cannot replace a newer repository selection", asy
 
 test("replacing the desktop client discards an outstanding restoration reply and resets revision ordering", async () => {
   vi.useFakeTimers();
-  const initial: WorkspaceSnapshot = {
-    revision: 50,
-    entries: [first],
-    activeContextId: "one",
-    restoring: true,
-    persistenceError: null,
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 50, entries: [first],
+  activeContextId: "one",
+  restoring: true,
+  persistenceError: null, };
   const lateRestoration = deferred<WorkspaceSnapshot>();
   const oldClient = fakeClient(initial);
   oldClient.snapshot = vi.fn()
     .mockResolvedValueOnce(initial)
     .mockReturnValueOnce(lateRestoration.promise);
-  const replacement = fakeClient({
-    revision: 1,
-    entries: [second],
-    activeContextId: "two",
-    restoring: false,
-    persistenceError: null,
-  });
+  const replacement = fakeClient({ contextEpoch: "fixture-context", revision: 1, entries: [second],
+  activeContextId: "two",
+  restoring: false,
+  persistenceError: null, });
   const { rerender } = renderWorkspace(<Workspace client={oldClient} />);
   await act(async () => { await Promise.resolve(); });
   await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
@@ -640,10 +603,8 @@ async function openRepositoryActions(user: UserEvent, repositoryLabel: string) {
 }
 
 test("keyboard menu dismissal and rename cancellation leave selection and display names unchanged", async () => {
-  const client = fakeClient({
-    revision: 1, entries: [first, second], activeContextId: "one",
-    restoring: false, persistenceError: null,
-  });
+  const client = fakeClient({ contextEpoch: "fixture-context", revision: 1, entries: [first, second], activeContextId: "one",
+  restoring: false, persistenceError: null, });
   const user = userEvent.setup();
   renderWorkspace(<Workspace client={client} />);
   await screen.findByRole("button", { name: "Current repository: atlas" });
@@ -662,6 +623,7 @@ test("keyboard menu dismissal and rename cancellation leave selection and displa
   await user.keyboard("{Escape}");
   await waitFor(() => expect(trigger).toHaveFocus());
   expect(screen.getByRole("button", { name: "Current repository: atlas" })).toBeVisible();
+  expect(screen.getByRole("button", { name: "Current repository: atlas" })).toHaveAttribute("aria-expanded", "true");
 
   await user.keyboard("{Enter}");
   await screen.findByRole("menuitem", { name: "Rename" });
@@ -680,13 +642,12 @@ test("keyboard menu dismissal and rename cancellation leave selection and displa
   await waitFor(() => expect(trigger).toHaveFocus());
   expect(screen.getByRole("button", { name: "atlas main" })).toHaveAttribute("aria-current", "true");
   expect(screen.getByRole("button", { name: "Current repository: atlas" })).toBeVisible();
+  expect(screen.getByRole("button", { name: "Current repository: atlas" })).toHaveAttribute("aria-expanded", "true");
 });
 
 test("renaming an inactive row waits for native state and survives reopening the workspace", async () => {
-  const initial: WorkspaceSnapshot = {
-    revision: 1, entries: [first, second], activeContextId: "one",
-    restoring: false, persistenceError: null,
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first, second], activeContextId: "one",
+  restoring: false, persistenceError: null, };
   const rename = deferred<RepositoryMutationOutcome>();
   let nativeSnapshot = initial;
   const client = fakeClient(initial);
@@ -722,10 +683,8 @@ test("renaming an inactive row waits for native state and survives reopening the
 
 test("active removal follows the native available replacement and eventually clears the context", async () => {
   const unavailable = { ...first, id: "offline", repositoryLabel: "offline", availability: "unavailable" as const };
-  const client = fakeClient({
-    revision: 1, entries: [first, unavailable, second], activeContextId: "one",
-    restoring: false, persistenceError: null,
-  });
+  const client = fakeClient({ contextEpoch: "fixture-context", revision: 1, entries: [first, unavailable, second], activeContextId: "one",
+  restoring: false, persistenceError: null, });
   const user = userEvent.setup();
   renderWorkspace(<Workspace client={client} />);
   await openRepositoryActions(user, "atlas");
@@ -745,11 +704,9 @@ test("active removal follows the native available replacement and eventually cle
 });
 
 test("rejected rename stays editable and preserves the independent persistence warning", async () => {
-  const initial: WorkspaceSnapshot = {
-    revision: 1, entries: [first], activeContextId: "one",
-    restoring: false,
-    persistenceError: { code: "save_failed", message: "Workspace could not be saved." },
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first], activeContextId: "one",
+  restoring: false,
+  persistenceError: { code: "save_failed", message: "Workspace could not be saved." }, };
   const client = fakeClient(initial);
   client.renameRepository = async () => ({
     kind: "rejected", code: "invalid_display_name", snapshot: initial,
@@ -768,10 +725,8 @@ test("rejected rename stays editable and preserves the independent persistence w
 });
 
 test("a lost removal reply reconciles committed native state without clearing its save warning", async () => {
-  const initial: WorkspaceSnapshot = {
-    revision: 1, entries: [first, second], activeContextId: "one",
-    restoring: false, persistenceError: null,
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first, second], activeContextId: "one",
+  restoring: false, persistenceError: null, };
   const recovered: WorkspaceSnapshot = {
     ...initial, revision: 2, entries: [second], activeContextId: "two",
     persistenceError: { code: "save_failed", message: "Workspace could not be saved." },
@@ -792,10 +747,8 @@ test("a lost removal reply reconciles committed native state without clearing it
 
 test("a newer selection waits for removal and cannot be reverted by the old removal reply", async () => {
   const third = { ...first, id: "three", repositoryLabel: "third" };
-  const initial: WorkspaceSnapshot = {
-    revision: 1, entries: [first, second, third], activeContextId: "one",
-    restoring: false, persistenceError: null,
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first, second, third], activeContextId: "one",
+  restoring: false, persistenceError: null, };
   const removal = deferred<RepositoryMutationOutcome>();
   const client = fakeClient(initial);
   client.removeRepository = async () => removal.promise;
@@ -821,10 +774,8 @@ test("a newer selection waits for removal and cannot be reverted by the old remo
 });
 
 test("missing removal reconciles the authoritative list without discarding the surviving selection", async () => {
-  const initial: WorkspaceSnapshot = {
-    revision: 1, entries: [first, second], activeContextId: "one",
-    restoring: false, persistenceError: null,
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first, second], activeContextId: "one",
+  restoring: false, persistenceError: null, };
   const client = fakeClient(initial);
   client.removeRepository = async () => ({
     kind: "not_found",
@@ -841,10 +792,8 @@ test("missing removal reconciles the authoritative list without discarding the s
 });
 
 test("a rename finishing after inline editor cancellation cannot undo a newer selection", async () => {
-  const initial: WorkspaceSnapshot = {
-    revision: 1, entries: [first, second], activeContextId: "one",
-    restoring: false, persistenceError: null,
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first, second], activeContextId: "one",
+  restoring: false, persistenceError: null, };
   const rename = deferred<RepositoryMutationOutcome>();
   const client = fakeClient(initial);
   client.renameRepository = async () => rename.promise;
@@ -874,10 +823,8 @@ test("a rename finishing after inline editor cancellation cannot undo a newer se
 });
 
 test("filtering a pending inline rename does not lose the committed name or active context", async () => {
-  const initial: WorkspaceSnapshot = {
-    revision: 1, entries: [first, second], activeContextId: "one",
-    restoring: false, persistenceError: null,
-  };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first, second], activeContextId: "one",
+  restoring: false, persistenceError: null, };
   const rename = deferred<RepositoryMutationOutcome>();
   const client = fakeClient(initial);
   client.renameRepository = async () => rename.promise;
@@ -910,7 +857,7 @@ test("filtering a pending inline rename does not lose the committed name or acti
 
 test("selected file content refreshes automatically even while its cached status revision is unchanged", async () => {
   vi.useFakeTimers();
-  const initial: WorkspaceSnapshot = { revision: 1, entries: [first], activeContextId: "one", restoring: false, persistenceError: null };
+  const initial: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first], activeContextId: "one", restoring: false, persistenceError: null };
   const client = fakeClient(initial);
   client.observeSelectedContext = async () => readyObservation([changedFile]);
   let text = "initial working content";
@@ -924,4 +871,44 @@ test("selected file content refreshes automatically even while its cached status
   await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
   expect(screen.getByText("edited working content")).toBeVisible();
   expect(screen.queryByText("initial working content")).not.toBeInTheDocument();
+});
+
+test.each([
+  { state: "clean", files: [], initialText: "Clean" },
+  { state: "changed", files: [{ ...changedFile, displayPath: "previous.ts", segments: ["previous.ts"] }], initialText: "previous.ts" },
+])("shared surface failure replaces $state status with unavailable until a newer snapshot recovers", async ({ files, initialText }) => {
+  vi.useFakeTimers();
+  const workspace: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first],
+    activeContextId: "one", restoring: false, persistenceError: null };
+  const initial: ReviewSurfaceSnapshot = { workspace, visible: true, openEpoch: "main-open", presentation: null,
+    observation: readyObservation(files, 1), handoff: { revision: 0, pendingRequestId: null } };
+  const recovery = deferred<ReviewSurfaceSnapshot>();
+  let listener: ((notice: SurfaceNotice) => void) | undefined;
+  const surfaceClient: ReviewSurfaceClient = {
+    bootstrap: async () => "main",
+    subscribe: async (receive) => { listener = receive; return () => { listener = undefined; }; },
+    snapshot: vi.fn<ReviewSurfaceClient["snapshot"]>().mockResolvedValueOnce(initial)
+      .mockRejectedValueOnce(new Error("transport unavailable")).mockReturnValue(recovery.promise),
+  };
+  renderView(<Workspace client={fakeClient(workspace)} surfaceClient={surfaceClient} />);
+  await act(async () => { await Promise.resolve(); });
+  expect(screen.getByText(initialText)).toBeInTheDocument();
+
+  await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+  expect(screen.getByRole("heading", { name: "Changes unavailable" })).toBeInTheDocument();
+  expect(screen.getByText("Desktop connection interrupted. Reconnecting automatically.")).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "Clean" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Review previous.ts" })).not.toBeInTheDocument();
+  expect(screen.queryByText("0 files")).not.toBeInTheDocument();
+
+  act(() => listener?.({ kind: "presentation", revision: 2 }));
+  expect(screen.getByRole("heading", { name: "Changes unavailable" })).toBeInTheDocument();
+  await act(async () => recovery.resolve({ ...initial,
+    observation: readyObservation([{ ...changedFile, pathId: "recovered-path", stablePathId: "recovered-file",
+      displayPath: "recovered.ts", segments: ["recovered.ts"] }], 2) }));
+  expect(screen.getByRole("button", { name: "Review recovered.ts" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "Changes unavailable" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "Clean" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Review previous.ts" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Current repository: atlas" })).toBeInTheDocument();
 });

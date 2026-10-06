@@ -66,6 +66,15 @@ pub(super) struct RendererDiagnostic {
 }
 
 impl RendererDiagnostic {
+    pub(super) fn require_companion_command(&self) -> Result<(), &'static str> {
+        if matches!(self.command, RendererCommand::WorkspaceSnapshot | RendererCommand::SelectContext |
+            RendererCommand::ObserveSelectedContext | RendererCommand::ReviewFile) {
+            Ok(())
+        } else {
+            Err(INVALID_DIAGNOSTIC_METADATA)
+        }
+    }
+
     pub(super) fn record(self, store: &DiagnosticStore) -> Result<(), &'static str> {
         let id = operation_id(&self.operation_id)?;
         if self.duration_ms > MAX_RENDERER_DURATION_MS { return Err(INVALID_DIAGNOSTIC_METADATA); }

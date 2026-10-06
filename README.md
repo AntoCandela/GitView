@@ -13,6 +13,7 @@ GitView is a local desktop workspace for inspecting Git repositories: live chang
 - Offers six workbench arrangements, pointer/keyboard resizing and **Classic**, **Material** and **Catppuccin Latte** file-icon themes.
 - Reads **Changes** or **Full file** with aligned side-by-side source, **Scroll / Wrap** long-line controls, inline change emphasis and locally bundled Shiki syntax styles.
 - Offers Brazilian Portuguese, European Portuguese, Italian, Spanish, US English and British English for app-owned controls and explanations, with a persistent **Language** selector and native **System** preference matching.
+- Offers an opt-in macOS menu-bar companion for the same admitted repositories and live comparisons, with acknowledged **Open in GitView** handoff.
 
 History loading fetches only the configured remote-tracking branch; a failed fetch retains locally known history with stale/unavailable feedback. Other inspection remains read-only. GitView does not checkout, stage, commit, pull, merge, rebase, push, delete working files or change Git configuration. GitView **does mutate its own app state**: opening/selecting worktrees, renaming labels and removing sidebar entries update private workspace storage; diagnostics and presentation preferences also write local data. It does not install or bundle Git, and it preserves Git's safe-directory checks.
 
@@ -31,7 +32,7 @@ npm ci
 npm run tauri dev
 ```
 
-`npm run dev` serves the browser UI only: it does **not** supply native Git operations, the folder picker or native diagnostics. `npm ci` installs the versioned Git hooks outside CI, while preserving existing custom-hook ownership; `npm run hooks:install` retries installation explicitly.
+`npm run dev` serves web assets only: it does **not** supply native Git operations, the folder picker, diagnostics or the authorized surface bootstrap needed to mount the application. Use the native app, or the explicitly isolated browser-journey transport documented in DEVELOPMENT.md. `npm ci` installs the versioned Git hooks outside CI, while preserving existing custom-hook ownership; `npm run hooks:install` retries installation explicitly.
 
 ```sh
 npm run build          # TypeScript check and web assets, not a desktop installer
@@ -69,6 +70,20 @@ The interface palette, icon pack and review choices persist independently in web
 Selecting the already-checked language retries a session-only save. Selecting the already-checked System option resolves native preferences again. Branch/worktree choices, grouped history references and Appearance disclosure tooltips use the same live locale while preserving original repository names.
 
 Catalog completeness is enforced during `npm run build` and shared verification. This is not linguistic or packaged-platform certification: each regional catalog still requires human review, and each native target requires six-locale observations. Localization of raster/SVG and rendered-document previews awaits those missing predecessor surfaces; see [issue #15](https://github.com/AntoCandela/GitView/issues/15).
+
+### macOS menu-bar companion
+
+The companion is off by default. Enable it using the **Menu-bar companion** icon beside the language selector in the main toolbar. Its compact popover has one on/off switch, a short close-window explanation and actionable failure feedback. It does not register login startup. Click its menu-bar icon to toggle the compact review panel. The native context menu offers **Open GitView** and **Quit**.
+
+The panel reuses the main window’s toolbar, searchable repository picker, changed-file tree and live comparison viewer. Its comparison sits above the changed files, with the same draggable and keyboard-resizable divider as the main workbench. The picker selects only already-admitted repositories/worktrees; **Open in GitView** and **Quit** remain available as toolbar actions. Repository admission, removal, worktree management, history, file browsing and preference controls remain in the main window. Language, appearance, icons and reading choices follow the main window, including session-only choices after a failed save.
+
+The companion uses a nonactivating native panel rather than bringing the main application forward. Its hidden renderer is prepared when the companion is enabled; subsequent openings retain keyboard access without activating the main window. On macOS 13 and later, the panel also opts into joining other applications’ fullscreen Spaces. The main window’s activation and Space behavior remain unchanged. Cross-application fullscreen access and the supported display configurations still require native observation.
+
+Each opening waits for a newly started native scan. Hidden surfaces stop periodic review work; both hidden surfaces suspend shared scanning and recovery. **Open in GitView** transfers the exact native-validated reading choice, including a truthful **No remaining changes** outcome. Merely focusing the main window is not successful delivery: the panel closes only after main applies and acknowledges that request.
+
+Closing main hides it only while the enabled companion remains available. Disabling first reveals main, then removes the companion. Explicit **Quit** closes the application and drains owned native work. Activation/save failures remain visible in the main settings; unavailable native access never justifies hiding the only usable main window.
+
+The opt-in lives in native `companion.json` beside workspace data. Unreadable or unsupported preference documents are preserved; failed saves leave an explicit session-only choice. Windows and Linux do not expose this macOS companion. Native focus, Spaces/fullscreen, display configurations and resource-budget acceptance require separate observations; implementation and automated tests are not release certification.
 
 ## Platforms and limitations
 

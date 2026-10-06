@@ -15,6 +15,7 @@ use tokio::time::Instant;
 
 use crate::diagnostic_operation::OperationTrace;
 use crate::diagnostics::{Code, Component, DiagnosticDetails, Event, Level, OperationContext};
+use crate::native_work::{self, WorkPermit};
 const OUTPUT_LIMIT: usize = 1024 * 1024;
 const PROBE_TIMEOUT: Duration = Duration::from_secs(30);
 
@@ -222,10 +223,11 @@ impl GitProcess {
             .stdin(if input.is_some() { Stdio::piped() } else { Stdio::null() })
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
+        let work = native_work::current_resource();
         let child = command
             .spawn()
             .map_err(|error| ProcessError::new(ProcessFailure::Start(error)))?;
-        let mut child = ReapingChild { child: Some(child), context: OperationContext::current() };
+        let mut child = ReapingChild { child: Some(child), context: OperationContext::current(), work };
         let (Some(mut stdout), Some(mut stderr)) = (
             child.child_mut().stdout.take(),
             child.child_mut().stderr.take(),
@@ -283,6 +285,7 @@ impl GitProcess {
 struct ReapingChild {
     child: Option<Child>,
     context: Option<OperationContext>,
+    work: Option<WorkPermit>,
 }
 
 impl ReapingChild {
@@ -318,8 +321,10 @@ impl Drop for ReapingChild {
             // Drop requests termination now; only a completed wait can report cleanup complete.
             let kill_failed = child.start_kill().is_err();
             let context = self.context.take();
+            let work = self.work.take();
             if let Ok(runtime) = tokio::runtime::Handle::try_current() {
                 runtime.spawn(async move {
+                    let _work = work;
                     let failed = child.wait().await.is_err() || kill_failed;
                     if let Some(context) = context {
                         context.record(if failed { Level::Error } else { Level::Info }, Component::Process,

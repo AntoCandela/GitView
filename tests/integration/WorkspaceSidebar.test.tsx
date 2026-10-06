@@ -18,17 +18,15 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 function sidebarClient() {
   const client = reviewClient(async () => textReview("pending working content"));
-  let snapshot: WorkspaceSnapshot = {
-    revision: 1, restoring: false, persistenceError: null, activeContextId: "one",
-    entries: [
-      { id: "one", kind: "working_tree", repositoryLabel: "atlas", locationLabel: "/fixture/atlas", head: { kind: "branch", name: "main" }, availability: "available" },
-      { id: "two", kind: "working_tree", repositoryLabel: "ledger", locationLabel: "/fixture/ledger", head: { kind: "branch", name: "topic" }, availability: "available" },
-    ],
-  };
+  let snapshot: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, restoring: false, persistenceError: null, activeContextId: "one",
+  entries: [
+    { id: "one", kind: "working_tree", repositoryLabel: "atlas", locationLabel: "/fixture/atlas", head: { kind: "branch", name: "main" }, availability: "available" },
+    { id: "two", kind: "working_tree", repositoryLabel: "ledger", locationLabel: "/fixture/ledger", head: { kind: "branch", name: "topic" }, availability: "available" },
+  ], };
   client.snapshot = async () => snapshot;
   client.refreshEntryAvailability = async () => snapshot;
   client.selectContext = async (entryId) => {
-    snapshot = { ...snapshot, revision: snapshot.revision + 1, activeContextId: entryId };
+    snapshot = { ...snapshot, contextEpoch: `context-${snapshot.revision + 1}`, revision: snapshot.revision + 1, activeContextId: entryId };
     return { kind: "selected", snapshot };
   };
   client.renameRepository = async (entryId, displayName) => {

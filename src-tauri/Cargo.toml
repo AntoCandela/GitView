@@ -27,7 +27,11 @@ rusqlite = { version = "0.40", features = ["bundled"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSArray", "NSLocale", "NSString"] }
+tauri = { version = "~2.12.1", features = ["tray-icon"] }
+objc2 = "0.6.4"
+block2 = "0.6.2"
+objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "NSApplication", "NSEvent", "NSScreen", "NSWindow", "NSPanel", "NSGraphics", "NSView", "NSResponder", "NSStatusItem", "NSStatusBarButton", "NSButton", "NSControl", "block2"] }
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSArray", "NSLocale", "NSString", "NSGeometry", "NSNotification", "NSObject", "NSOperation", "block2"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-sys = { version = "0.61.2", features = ["Win32_Globalization"] }

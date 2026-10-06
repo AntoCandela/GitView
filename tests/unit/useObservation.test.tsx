@@ -12,7 +12,7 @@ afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 const ready = (entryId: string, observationRevision: number): ObservationSnapshot => ({ entryId, observationRevision, kind: "ready", files: [] });
 function clientWith(observeSelectedContext: RepositoryClient["observeSelectedContext"]): RepositoryClient {
-  const snapshot = { revision: 0, entries: [], activeContextId: null, restoring: false, persistenceError: null };
+  const snapshot = { contextEpoch: "initial", revision: 0, entries: [], activeContextId: null, restoring: false, persistenceError: null };
   return {
     snapshot: async () => snapshot,
     preferredLanguages: async () => ({ languages: [] }),
@@ -168,4 +168,17 @@ test("replacement clients do not wait for disconnected reads and late failures c
   expect(result.current).toEqual(ready("one", 2));
   await act(async () => abandoned.reject(new Error("Disconnected private transport")));
   expect(result.current).toEqual(ready("one", 2));
+});
+
+test("hidden observation does not poll or accept an earlier visible response", async () => {
+  const pending = deferred<ObservationSnapshot>();
+  const observe = vi.fn<RepositoryClient["observeSelectedContext"]>().mockReturnValue(pending.promise);
+  const client = clientWith(observe);
+  const { result, rerender } = renderHook(({ enabled }) => useObservation(client, "one", 0, enabled),
+    { initialProps: { enabled: true } });
+  rerender({ enabled: false });
+  await act(async () => pending.resolve(ready("one", 9)));
+  await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+  expect(result.current).toBeNull();
+  expect(observe).toHaveBeenCalledTimes(1);
 });

@@ -21,6 +21,24 @@ fn opened(outcome: OpenOutcome) -> (String, gitview_lib::workspace::WorkspaceSna
 }
 
 #[tokio::test]
+async fn snapshot_serializes_opaque_context_epoch_separately_from_workspace_revision() {
+    let (_temp, root) = working_tree();
+    let service = RepositoryService::new();
+    let initial = service.snapshot().await;
+    let (entry_id, admitted) = opened(service.open_chosen(&root).await);
+    assert_eq!(admitted.context_epoch, initial.context_epoch);
+    assert!(admitted.revision > initial.revision);
+    let SelectOutcome::Selected { snapshot: selected } = service.select(&entry_id).await else { panic!("selection failed") };
+    let dto = serde_json::to_value(&selected).unwrap();
+    assert_eq!(dto["contextEpoch"], selected.context_epoch);
+    assert!(!selected.context_epoch.contains(root.to_str().unwrap()));
+    assert_ne!(selected.context_epoch, admitted.context_epoch);
+    let SelectOutcome::Selected { snapshot: reselected } = service.select(&entry_id).await else { panic!("reselection failed") };
+    assert_ne!(reselected.context_epoch, selected.context_epoch);
+    assert!(reselected.revision > selected.revision);
+}
+
+#[tokio::test]
 async fn subdirectory_and_symlink_reuse_canonical_worktree_identity() {
     let (_temp, root) = working_tree();
     let nested = root.join("src");
