@@ -135,8 +135,10 @@ export function Workspace({
   const sharedObservation = surfaceVisible && !surface.reconciling && surface.snapshot && active
     && surface.snapshot.workspace.contextEpoch === snapshot.contextEpoch && surface.snapshot.observation?.entryId === active.id
     ? surface.snapshot.observation : null;
-  const observation = (surfaceClient ? sharedObservation : observed)
-    ?? (active ? { kind: "checking" as const, entryId: active.id, observationRevision: 0 } : null);
+  const observation = surfaceClient && surface.unavailable
+    ? { kind: "transport_unavailable" as const }
+    : (surfaceClient ? sharedObservation : observed)
+      ?? (active ? { kind: "checking" as const, entryId: active.id, observationRevision: 0 } : null);
   const repositoryFile = browsedFile?.entryId === active?.id && browsedFile?.generation === selectionGeneration ? browsedFile.file : null;
   const workingBranch = active?.head.kind === "branch" || active?.head.kind === "unborn" ? active.head.name : null;
   const query = searchQuery.trim().toLocaleLowerCase();

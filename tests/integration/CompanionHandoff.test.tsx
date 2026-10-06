@@ -232,3 +232,34 @@ test("main subscription waits for the authoritative workspace read after a conte
   expect(claim).toHaveBeenCalledExactlyOnceWith("A", "context");
   expect(apply).toHaveBeenCalledExactlyOnceWith({ requestId: "A", contextEpoch: "context", target, observationRevision: -1 });
 });
+
+test("a retired surface read cannot release a replacement lifetime's single-flight read", async ({ onTestFinished }) => {
+  const retired = deferred<ReviewSurfaceSnapshot>();
+  const replacement = deferred<ReviewSurfaceSnapshot>();
+  const workspace = { revision: 2, contextEpoch: "current", activeContextId: null, restoring: false, persistenceError: null, entries: [] };
+  const current: ReviewSurfaceSnapshot = { workspace, visible: false, openEpoch: "hidden", observation: null, presentation: null,
+    handoff: { revision: 0, pendingRequestId: null } };
+  const snapshots = vi.fn<ReviewSurfaceClient["snapshot"]>().mockReturnValueOnce(retired.promise)
+    .mockReturnValueOnce(replacement.promise).mockResolvedValue(current);
+  const connection = new ReviewSurfaceConnection({ bootstrap: async () => "main",
+    subscribe: async () => () => undefined, snapshot: snapshots });
+  const stopRetired = connection.start();
+  await settle();
+  stopRetired();
+  const stopCurrent = connection.start();
+  onTestFinished(stopCurrent);
+  await settle();
+
+  retired.resolve({ ...current, workspace: { ...workspace, revision: 1, contextEpoch: "retired" } });
+  await settle();
+  connection.refresh();
+  connection.refresh();
+  expect(snapshots).toHaveBeenCalledTimes(2);
+  expect(connection.getSnapshot().snapshot).toBeNull();
+
+  replacement.resolve(current);
+  await settle();
+  expect(connection.getSnapshot().snapshot).toEqual(current);
+  expect(connection.getSnapshot().unavailable).toBe(false);
+  expect(snapshots).toHaveBeenCalledTimes(3);
+});

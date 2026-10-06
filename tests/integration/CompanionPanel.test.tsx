@@ -266,6 +266,60 @@ test("an initial cached read failure recovers with bounded bootstrap reads", asy
   expect(screen.queryByText("Checking current changes…")).not.toBeInTheDocument();
 });
 
+test("a rejected subscription recovers on focus without remounting or overlapping registration", async () => {
+  const host = fixture();
+  const registered = deferred<void>();
+  const subscribe = host.transport.subscribe;
+  const subscriptions = vi.fn<ReviewSurfaceClient["subscribe"]>()
+    .mockRejectedValueOnce(new Error("transport unavailable"))
+    .mockImplementation(async (listener) => { await registered.promise; return subscribe(listener); });
+  const snapshots = vi.fn<ReviewSurfaceClient["snapshot"]>(async () => host.surface);
+  host.transport.subscribe = subscriptions;
+  host.transport.snapshot = snapshots;
+  render(<CompanionPanel client={host.client} surfaceClient={host.transport} />);
+  await settle();
+  await act(async () => { await vi.advanceTimersByTimeAsync(10000); });
+  expect(subscriptions).toHaveBeenCalledTimes(1);
+  expect(snapshots).not.toHaveBeenCalled();
+
+  fireEvent.focus(window);
+  fireEvent.focus(window);
+  await settle();
+  expect(subscriptions).toHaveBeenCalledTimes(2);
+  expect(snapshots).not.toHaveBeenCalled();
+  await act(async () => registered.resolve());
+  await settle();
+  expect(screen.getByRole("button", { name: "Current repository: Repository" })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Expand all" }));
+  expect(screen.getByRole("button", { name: "Review src/example.ts" })).toBeInTheDocument();
+  expect(subscriptions).toHaveBeenCalledTimes(2);
+});
+
+test("replacing a surface disposes its delayed recovery subscription without reading its stale state", async () => {
+  const previous = fixture();
+  const recovered = deferred<() => void>();
+  const retired = vi.fn();
+  previous.transport.subscribe = vi.fn<ReviewSurfaceClient["subscribe"]>()
+    .mockRejectedValueOnce(new Error("transport unavailable")).mockReturnValue(recovered.promise);
+  const oldSnapshots = vi.fn<ReviewSurfaceClient["snapshot"]>(async () => previous.surface);
+  previous.transport.snapshot = oldSnapshots;
+  const view = render(<CompanionPanel client={previous.client} surfaceClient={previous.transport} />);
+  await settle();
+  fireEvent.focus(window);
+  await settle();
+  const current = fixture();
+  current.update({ ...current.surface, workspace: { ...current.surface.workspace, contextEpoch: "replacement",
+    entries: [{ ...current.surface.workspace.entries[0], repositoryLabel: "Replacement repository" }] } },
+  { kind: "presentation", revision: 1 });
+  view.rerender(<CompanionPanel client={current.client} surfaceClient={current.transport} />);
+  await settle();
+  expect(screen.getByRole("button", { name: "Current repository: Replacement repository" })).toBeInTheDocument();
+  await act(async () => recovered.resolve(retired));
+  expect(retired).toHaveBeenCalledTimes(1);
+  expect(oldSnapshots).not.toHaveBeenCalled();
+  expect(screen.getByRole("button", { name: "Current repository: Replacement repository" })).toBeInTheDocument();
+});
+
 test("missed reveal notices recover on window focus without any hidden periodic reads", async () => {
   const host = fixture();
   let authoritative = { ...host.surface, visible: false, openEpoch: "hidden" };

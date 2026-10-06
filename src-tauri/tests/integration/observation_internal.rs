@@ -4,6 +4,7 @@ use std::fs;
 use std::time::Duration;
 
 use crate::application::RepositoryService;
+use crate::browsing::{RepositoryFileResult, RepositoryFilesRequest, RepositoryFilesResult};
 use crate::git::status::GitStatusReader;
 use crate::test_support::{executable, git, quote, wait_for_probe, wait_for_reaped_child, working_tree};
 use crate::workspace::OpenOutcome;
@@ -225,11 +226,23 @@ async fn companion_open_during_old_scan_waits_for_a_new_start_even_when_status_i
 }
 
 #[tokio::test]
-async fn both_hidden_cancels_the_scan_and_two_visible_surfaces_share_one_controller() {
+async fn both_hidden_stops_scans_but_main_reveal_retains_unchanged_file_authority() {
     use crate::companion::{CompanionCode, ReviewCaller};
     let (temp, root) = working_tree();
+    fs::write(root.join(".git/info/exclude"), b".gitview-*\n").unwrap();
+    fs::write(root.join("unchanged.txt"), b"retained working text\n").unwrap();
+    crate::test_support::commit(&root);
     let (service, id) = selected_service(&root, &gated_status(temp.path())).await;
     wait_for_probe(&root).await;
+    let RepositoryFilesResult::Files { listing_id, files, .. } = service.list_repository_files(&id, RepositoryFilesRequest::default()).await
+        else { panic!("repository listing unavailable") };
+    let file = files.iter().find(|file| file.display_path == "unchanged.txt").unwrap();
+    let expected = RepositoryFileResult::Text {
+        entry_id: id.clone(), listing_id: listing_id.clone(), file_id: file.id.clone(),
+        display_path: "unchanged.txt".into(), content: "retained working text\n".into(),
+    };
+    assert_eq!(service.review_repository_file(&id, &listing_id, &file.id).await, expected);
+    let context_epoch = service.snapshot().await.context_epoch;
     service.set_companion_available(true);
     service.set_surface_visibility(ReviewCaller::Companion, true);
     service.reconcile_surface_demand().await;
@@ -243,8 +256,13 @@ async fn both_hidden_cancels_the_scan_and_two_visible_surfaces_share_one_control
     wait_for_reaped_child(&root).await;
     tokio::time::sleep(Duration::from_millis(1200)).await;
     assert_eq!(fs::read_to_string(temp.path().join("scans")).unwrap(), "scan\n");
+    assert_eq!(service.review_repository_file(&id, &listing_id, &file.id).await, RepositoryFileResult::StaleSelection);
     fs::write(root.join(".gitview-release"), b"").unwrap();
     service.set_surface_visibility(ReviewCaller::Main, true);
+    // Renderer preview reads can overtake the host's asynchronous scan reconciliation.
+    assert_eq!(service.review_repository_file(&id, &listing_id, &file.id).await, expected);
+    assert_eq!(service.snapshot().await.context_epoch, context_epoch);
+    assert_eq!(fs::read_to_string(temp.path().join("scans")).unwrap(), "scan\n");
     service.reconcile_surface_demand().await;
     tokio::time::timeout(Duration::from_secs(5), async {
         while !matches!(service.observe_selected_context(&id).await, ObservationSnapshot::Ready { .. }) {
@@ -252,6 +270,9 @@ async fn both_hidden_cancels_the_scan_and_two_visible_surfaces_share_one_control
         }
     }).await.unwrap();
     assert_eq!(fs::read_to_string(temp.path().join("scans")).unwrap(), "scan\nscan\n");
+    assert_eq!(service.snapshot().await.context_epoch, context_epoch);
+    assert_eq!(service.review_repository_file(&id, &listing_id, &file.id).await, expected);
+    service.shutdown().await;
 }
 
 #[tokio::test]
@@ -323,4 +344,64 @@ async fn hidden_main_with_companion_disabled_stops_native_scans_until_main_is_vi
 #[tokio::test]
 async fn companion_becoming_unavailable_does_not_restore_hidden_main_scan_demand() {
     assert_hidden_main_has_no_fallback_scan_demand(true).await;
+}
+
+#[tokio::test]
+async fn hidden_same_id_reselection_rejects_the_retained_listing_after_reveal() {
+    use crate::companion::ReviewCaller;
+    let (_temp, root) = working_tree();
+    fs::write(root.join("unchanged.txt"), b"unchanged\n").unwrap();
+    crate::test_support::commit(&root);
+    let service = RepositoryService::new();
+    let OpenOutcome::Opened { entry_id, .. } = service.open_chosen(&root).await else { panic!("admission failed") };
+    service.select(&entry_id).await;
+    let RepositoryFilesResult::Files { listing_id, files, .. } = service.list_repository_files(&entry_id, RepositoryFilesRequest::default()).await
+        else { panic!("repository listing unavailable") };
+    let file = files.iter().find(|file| file.display_path == "unchanged.txt").unwrap();
+    assert!(matches!(service.review_repository_file(&entry_id, &listing_id, &file.id).await, RepositoryFileResult::Text { .. }));
+    let context_epoch = service.snapshot().await.context_epoch;
+
+    service.set_surface_visibility(ReviewCaller::Main, false);
+    service.select(&entry_id).await;
+    assert_ne!(service.snapshot().await.context_epoch, context_epoch);
+    assert!(service.review_surface_snapshot(ReviewCaller::Main).await.observation.is_none());
+    service.set_surface_visibility(ReviewCaller::Main, true);
+    assert_eq!(service.review_repository_file(&entry_id, &listing_id, &file.id).await, RepositoryFileResult::StaleSelection);
+    service.reconcile_surface_demand().await;
+
+    assert_eq!(service.review_repository_file(&entry_id, &listing_id, &file.id).await, RepositoryFileResult::StaleSelection);
+    assert!(matches!(service.list_repository_files(&entry_id, RepositoryFilesRequest {
+        listing_id: Some(listing_id), ..Default::default()
+    }).await, RepositoryFilesResult::StaleSelection));
+    let RepositoryFilesResult::Files { listing_id, files, .. } = service.list_repository_files(&entry_id, RepositoryFilesRequest::default()).await
+        else { panic!("replacement selection could not list files") };
+    let file = files.iter().find(|file| file.display_path == "unchanged.txt").unwrap();
+    assert!(matches!(service.review_repository_file(&entry_id, &listing_id, &file.id).await,
+        RepositoryFileResult::Text { content, .. } if content == "unchanged\n"));
+    service.shutdown().await;
+}
+
+#[tokio::test]
+async fn resumed_scan_cannot_complete_a_ticket_from_the_cancelled_producer() {
+    let (temp, root) = working_tree();
+    let facts = GitProbe::default().probe(&root).await.unwrap();
+    let identity = NativeIdentity::capture(&facts.root, &facts.git_dir).unwrap();
+    let context = || SelectedContext {
+        entry_id: "fixture".into(), root: facts.root.clone(), git_dir: facts.git_dir.clone(),
+        kind: facts.kind, identity: identity.clone(),
+    };
+    let controller = ObservationController::with_reader(GitStatusReader::with_executable(&gated_status(temp.path())));
+    controller.select(context(), "context-1".into());
+    wait_for_probe(&root).await;
+    let old_ticket = controller.request_fresh_scan("fixture").unwrap();
+    controller.set_demand(false);
+    wait_for_reaped_child(&root).await;
+    controller.set_demand(true);
+    controller.select(context(), "context-1".into());
+    let new_ticket = controller.request_fresh_scan("fixture").unwrap();
+    assert!(!tokio::time::timeout(Duration::from_secs(1), controller.await_fresh_scan(old_ticket)).await.unwrap());
+    fs::write(root.join(".gitview-release"), b"").unwrap();
+    assert!(tokio::time::timeout(Duration::from_secs(5), controller.await_fresh_scan(new_ticket)).await.unwrap());
+    assert!(matches!(controller.snapshot("fixture"), ObservationSnapshot::Ready { .. }));
+    if let Some(task) = controller.stop() { let _ = task.await; }
 }

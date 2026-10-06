@@ -10,6 +10,7 @@ export class ReviewSurfaceConnection {
   private listeners = new Set<() => void>();
   private active = false;
   private lifetime = 0;
+  private registering = false;
   private reading = false;
   private dirty = false;
   private timer: number | undefined;
@@ -31,22 +32,40 @@ export class ReviewSurfaceConnection {
     const visibility = () => { if (document.visibilityState === "visible") reveal(); };
     window.addEventListener("focus", reveal);
     document.addEventListener("visibilitychange", visibility);
-    void this.client.subscribe((notice) => { if (this.active && lifetime === this.lifetime) this.invalidate(notice); }).then((dispose) => {
-      if (!this.active || lifetime !== this.lifetime) { dispose(); return; }
-      this.unsubscribe = dispose;
-      this.refresh();
-    }).catch(() => {
-      if (this.active && lifetime === this.lifetime) this.publish({ ...this.state, unavailable: true });
-    });
+    this.refresh();
     return () => {
-      this.active = false;
-      ++this.lifetime;
-      clearTimeout(this.timer);
-      this.unsubscribe?.();
-      this.unsubscribe = undefined;
+      if (lifetime === this.lifetime) {
+        this.active = false;
+        ++this.lifetime;
+        clearTimeout(this.timer);
+        this.unsubscribe?.();
+        this.unsubscribe = undefined;
+        this.registering = false;
+        this.reading = false;
+        this.dirty = false;
+      }
       window.removeEventListener("focus", reveal);
       document.removeEventListener("visibilitychange", visibility);
     };
+  }
+
+  private async register() {
+    if (this.registering) return;
+    this.registering = true;
+    const lifetime = this.lifetime;
+    try {
+      const dispose = await this.client.subscribe((notice) => {
+        if (this.active && lifetime === this.lifetime) this.invalidate(notice);
+      });
+      if (!this.active || lifetime !== this.lifetime) { dispose(); return; }
+      this.unsubscribe = dispose;
+      this.refresh();
+    } catch {
+      // Retry registration on focus/reveal, never by polling a potentially hidden surface.
+      if (this.active && lifetime === this.lifetime) this.publish({ ...this.state, unavailable: true });
+    } finally {
+      if (lifetime === this.lifetime) this.registering = false;
+    }
   }
 
   private invalidate(notice: SurfaceNotice) {
@@ -66,7 +85,7 @@ export class ReviewSurfaceConnection {
     }
     const changedScope = notice.kind === "invalidate" && (!current ||
       notice.contextEpoch !== current.workspace.contextEpoch || notice.openEpoch !== current.openEpoch);
-    this.publish({ snapshot, generation, noticeRevision: this.state.noticeRevision + 1, unavailable: false, reconciling: changedScope || this.state.reconciling });
+    this.publish({ snapshot, generation, noticeRevision: this.state.noticeRevision + 1, unavailable: this.state.unavailable, reconciling: changedScope || this.state.reconciling });
     clearTimeout(this.timer);
     // A single hide reconciliation is allowed; only visible state schedules periodic recovery.
     this.refresh();
@@ -76,7 +95,8 @@ export class ReviewSurfaceConnection {
     if (!this.active) return;
     this.dirty = true;
     clearTimeout(this.timer);
-    if (this.unsubscribe && !this.reading) void this.read();
+    if (!this.unsubscribe) void this.register();
+    else if (!this.reading) void this.read();
   };
 
   acceptOpening(snapshot: ReviewSurfaceSnapshot, generation: number) {
@@ -128,8 +148,8 @@ export class ReviewSurfaceConnection {
         }
       }
     } finally {
-      this.reading = false;
-      if (this.active) {
+      if (this.active && lifetime === this.lifetime) {
+        this.reading = false;
         if (this.dirty) this.refresh();
         else if (this.state.snapshot?.visible) this.timer = window.setTimeout(this.refresh, 1000);
         else if (!this.state.snapshot && this.bootstrapRetries > 0) {

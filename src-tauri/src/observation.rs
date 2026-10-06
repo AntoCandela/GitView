@@ -182,9 +182,11 @@ impl EntryObservation {
 
 #[derive(Default)]
 struct ObservationState {
-    generation: u64,
+    scan_generation: u64,
+    selection_generation: u64,
     selected_id: Option<String>,
     context_epoch: String,
+    selection_verified: bool,
     observing: bool,
     entries: HashMap<String, EntryObservation>,
     started_scan: u64,
@@ -216,7 +218,7 @@ impl ObservationController {
     pub(crate) fn stop(&self) -> Option<tokio::task::JoinHandle<()>> {
         let task = self.task.lock().take();
         let mut state = self.state.lock();
-        state.generation += 1;
+        state.scan_generation += 1;
         state.observing = false;
         if let Some(task) = &task { task.abort(); }
         self.state_changed.notify_waiters();
@@ -229,8 +231,10 @@ impl ObservationController {
         let mut state = self.state.lock();
         state.entries.remove(entry_id);
         if state.selected_id.as_deref() == Some(entry_id) {
-            state.generation += 1;
+            state.scan_generation += 1;
+            state.selection_generation += 1;
             state.selected_id = None;
+            state.selection_verified = false;
             state.observing = false;
             if let Some(task) = task.take() {
                 task.abort();
@@ -244,9 +248,11 @@ impl ObservationController {
             previous.abort();
         }
         let mut state = self.state.lock();
-        state.generation += 1;
+        state.scan_generation += 1;
+        state.selection_generation += 1;
         state.selected_id = Some(entry_id.to_owned());
         state.context_epoch = context_epoch;
+        state.selection_verified = false;
         state.observing = false;
         let entry = state.entries.entry(entry_id.to_owned()).or_default();
         entry.revision += 1;
@@ -273,7 +279,7 @@ impl ObservationController {
         if !state.observing || state.selected_id.as_deref() != Some(entry_id) { return None; }
         let required_start = state.started_scan + 1;
         state.requested_start = required_start;
-        let ticket = (state.generation, required_start);
+        let ticket = (state.scan_generation, required_start);
         self.scan_requested.notify_one();
         Some(ticket)
     }
@@ -292,7 +298,7 @@ impl ObservationController {
                     let required_start = state.started_scan + 1;
                     state.requested_start = required_start;
                     self.scan_requested.notify_one();
-                    return Some((state.generation, required_start));
+                    return Some((state.scan_generation, required_start));
                 }
                 if state.recovery_failures > previous_failures { return None; }
             }
@@ -307,7 +313,7 @@ impl ObservationController {
             notified.as_mut().enable();
             {
                 let state = self.state.lock();
-                if state.generation != ticket.0 || !state.observing { return false; }
+                if state.scan_generation != ticket.0 || !state.observing { return false; }
                 if state.completed_start >= ticket.1 { return true; }
             }
             notified.await;
@@ -326,27 +332,34 @@ impl ObservationController {
 
     pub(crate) fn select(&self, context: SelectedContext, context_epoch: String) {
         let mut task_slot = self.task.lock();
-        if self.demand_suspended.load(Ordering::SeqCst) { return; }
+        let demanded = !self.demand_suspended.load(Ordering::SeqCst);
         let previous = task_slot.take();
         if let Some(task) = &previous {
             task.abort();
         }
         let generation = {
             let mut state = self.state.lock();
-            state.generation += 1;
+            state.scan_generation += 1;
+            // A visibility restart replaces the producer, not the retained browsing/history scope.
+            // Context epochs also change on same-ID reselection, including while both surfaces hide.
+            if state.selected_id.as_deref() != Some(&context.entry_id) || state.context_epoch != context_epoch {
+                state.selection_generation += 1;
+            }
             state.selected_id = Some(context.entry_id.clone());
             state.context_epoch = context_epoch;
-            state.observing = true;
-            let generation = state.generation;
+            state.selection_verified = true;
+            state.observing = demanded;
+            let generation = state.scan_generation;
             let entry = state.entries.entry(context.entry_id.clone()).or_default();
             entry.revision += 1;
             entry.tokens.clear();
-            entry.snapshot = Some(ObservationSnapshot::Checking {
+            entry.snapshot = demanded.then(|| ObservationSnapshot::Checking {
                 entry_id: context.entry_id.clone(), observation_revision: entry.revision,
             });
             generation
         };
         self.state_changed.notify_waiters();
+        if !demanded { return; }
         let state = Arc::clone(&self.state);
         let reader = self.reader.clone();
         let scan_requested = Arc::clone(&self.scan_requested);
@@ -368,7 +381,7 @@ impl ObservationController {
                 }
                 let started_scan = {
                     let mut state = state.lock();
-                    if state.generation != generation { return; }
+                    if state.scan_generation != generation { return; }
                     state.started_scan += 1;
                     state.started_scan
                 };
@@ -378,7 +391,7 @@ impl ObservationController {
                     let result = scan(&context, &probe, &reader).await;
                     let (event, code, superseded) = {
                         let mut state = state.lock();
-                        if state.generation != generation || state.selected_id.as_deref() != Some(&context.entry_id) {
+                        if state.scan_generation != generation || state.selected_id.as_deref() != Some(&context.entry_id) {
                             (Event::Superseded, None, true)
                         } else {
                             let entry = state.entries.get_mut(&context.entry_id).unwrap();
@@ -408,10 +421,12 @@ impl ObservationController {
         *task_slot = Some(task);
     }
 
-    /// Selection authority independent of the periodically changing file observation revision.
+    /// Authority survives visibility-only producer restarts, but not context epochs or reselection.
+    /// Visible verified selections remain usable before asynchronous scan reconciliation resumes.
     pub(crate) fn selection_generation(&self, entry_id: &str) -> Option<u64> {
         let state = self.state.lock();
-        (state.observing && state.selected_id.as_deref() == Some(entry_id)).then_some(state.generation)
+        (state.selection_verified && !self.demand_suspended.load(Ordering::SeqCst)
+            && state.selected_id.as_deref() == Some(entry_id)).then_some(state.selection_generation)
     }
 
     /// Captures one revision-bound native token under the selected scan generation.
@@ -424,12 +439,12 @@ impl ObservationController {
         if entry.revision != revision { return Err(ReviewResult::StaleObservation); }
         let path = entry.tokens.get(path_id).filter(|path| category.authorizes(path))
             .ok_or(ReviewResult::StaleObservation)?;
-        Ok((state.generation, path.clone()))
+        Ok((state.scan_generation, path.clone()))
     }
 
     pub(crate) fn validate_review(&self, generation: u64, entry_id: &str, revision: u64, path_id: &str, category: ReviewCategory) -> Result<(), ReviewResult> {
         let state = self.state.lock();
-        if state.generation != generation || state.selected_id.as_deref() != Some(entry_id) || !state.observing {
+        if state.scan_generation != generation || state.selected_id.as_deref() != Some(entry_id) || !state.observing {
             return Err(ReviewResult::StaleSelection);
         }
         let entry = state.entries.get(entry_id).ok_or(ReviewResult::StaleObservation)?;

@@ -90,41 +90,6 @@ impl Lifecycle {
         }
     }
 
-    fn set_enabled(&mut self, enabled: bool, native: &mut impl NativeAccess) -> EnableResult {
-        if !self.state.supported || self.quitting { return self.result(EnableKind::Unavailable); }
-        let mut kind = EnableKind::Applied;
-        if enabled {
-            self.state.enabled = true;
-            if !self.state.available {
-                match native.create_tray() {
-                    Ok(()) => { self.state.available = true; self.state.native_error = None; }
-                    Err(error) => {
-                        self.state.native_error = Some(error);
-                        if native.reveal_main().is_err() {
-                            self.state.native_error = Some(NativeError::MainUnavailable);
-                        }
-                        kind = EnableKind::Unavailable;
-                    }
-                }
-            }
-        } else {
-            if let Err(error) = native.reveal_main() {
-                self.state.native_error = Some(error);
-                self.state.revision += 1;
-                return self.result(EnableKind::Unavailable);
-            }
-            native.remove_companion();
-            self.hidden();
-            self.state.enabled = false;
-            self.state.available = false;
-            self.state.native_error = None;
-        }
-        self.preferences.save(enabled);
-        self.state.persistence_error = self.preferences.error;
-        self.state.revision += 1;
-        self.result(kind)
-    }
-
     fn result(&self, kind: EnableKind) -> EnableResult { EnableResult { kind, state: self.state.clone() } }
 
     fn native_failed(&mut self, error: NativeError) {
@@ -175,6 +140,66 @@ impl Lifecycle {
     }
 }
 
+fn set_enabled(lifecycle: &Mutex<Lifecycle>, enabled: bool, native: &mut impl NativeAccess) -> EnableResult {
+    {
+        let mut lifecycle = lifecycle.lock();
+        if !lifecycle.state.supported || lifecycle.quitting { return lifecycle.result(EnableKind::Unavailable); }
+        if enabled { lifecycle.state.enabled = true; }
+    }
+    let mut kind = EnableKind::Applied;
+    if enabled {
+        let available = lifecycle.lock().state.available;
+        if !available {
+            let result = native.create_tray();
+            let error = result.err().map(|error| {
+                if native.reveal_main().is_err() { NativeError::MainUnavailable } else { error }
+            });
+            let mut lifecycle = lifecycle.lock();
+            if lifecycle.quitting { return lifecycle.result(EnableKind::Unavailable); }
+            lifecycle.state.available = error.is_none();
+            lifecycle.state.native_error = error;
+            if error.is_some() { kind = EnableKind::Unavailable; }
+        }
+    } else {
+        if let Err(error) = native.reveal_main() {
+            let mut lifecycle = lifecycle.lock();
+            lifecycle.state.native_error = Some(error);
+            lifecycle.state.revision += 1;
+            return lifecycle.result(EnableKind::Unavailable);
+        }
+        {
+            let mut lifecycle = lifecycle.lock();
+            if lifecycle.quitting { return lifecycle.result(EnableKind::Unavailable); }
+            // Synchronous destruction must see an intentional removal, not lost native access.
+            lifecycle.hidden();
+            lifecycle.state.enabled = false;
+            lifecycle.state.available = false;
+            lifecycle.state.native_error = None;
+        }
+        native.remove_companion();
+    }
+    let mut lifecycle = lifecycle.lock();
+    if lifecycle.quitting { return lifecycle.result(EnableKind::Unavailable); }
+    lifecycle.preferences.save(enabled);
+    lifecycle.state.persistence_error = lifecycle.preferences.error;
+    lifecycle.state.revision += 1;
+    lifecycle.result(kind)
+}
+
+/// Returning true keeps main alive until either its hide or the owned shutdown completes.
+fn close_main(lifecycle: &Mutex<Lifecycle>, hide_main: impl FnOnce() -> bool, quit: impl FnOnce()) -> bool {
+    let available = {
+        let lifecycle = lifecycle.lock();
+        if lifecycle.quitting || !lifecycle.state.enabled { return false; }
+        lifecycle.state.available
+    };
+    if available && hide_main() { return true; }
+    // An unavailable companion may still own a hidden Tauri host. Last-window shutdown
+    // cannot be trusted here, and a failed hide must not destroy its only recoverable main.
+    quit();
+    true
+}
+
 #[derive(Clone)]
 pub(crate) struct CompanionController {
     app: AppHandle,
@@ -221,13 +246,14 @@ impl CompanionController {
     }
 
     fn set_enabled_now(&self, enabled: bool) -> EnableResult {
-        let mut lifecycle = self.lifecycle.lock();
-        lifecycle.restore_pending = false;
-        let labels = lifecycle.labels.clone();
+        let labels = {
+            let mut lifecycle = self.lifecycle.lock();
+            lifecycle.restore_pending = false;
+            lifecycle.labels.clone()
+        };
         let mut native = HostAccess { controller: self, labels: labels.as_ref() };
-        let result = lifecycle.set_enabled(enabled, &mut native);
+        let result = set_enabled(&self.lifecycle, enabled, &mut native);
         (self.callbacks.access_changed)(result.state.enabled, result.state.available);
-        drop(lifecycle);
         self.refresh_main_visibility();
         result
     }
@@ -235,13 +261,16 @@ impl CompanionController {
     pub async fn publish_menu_labels(&self, labels: MenuLabels) -> Result<(), NativeError> {
         if !labels.valid() { return Err(NativeError::TrayFailed); }
         self.on_main(move |controller| {
-            let mut lifecycle = controller.lifecycle.lock();
-            if lifecycle.quitting || !lifecycle.state.supported { return Ok(()); }
+            {
+                let lifecycle = controller.lifecycle.lock();
+                if lifecycle.quitting || !lifecycle.state.supported { return Ok(()); }
+            }
             #[cfg(target_os = "macos")]
-            if lifecycle.labels.as_ref() != Some(&labels) && macos::has_tray(&controller.app) {
+            let changed = controller.lifecycle.lock().labels.as_ref() != Some(&labels);
+            #[cfg(target_os = "macos")]
+            if changed && macos::has_tray(&controller.app) {
                 if let Err(error) = macos::update_menu(&controller.app, &labels) {
-                    lifecycle.labels = Some(labels);
-                    drop(lifecycle);
+                    controller.lifecycle.lock().labels = Some(labels);
                     controller.native_failure(error);
                     if controller.state().native_error != Some(NativeError::MainUnavailable) {
                         macos::remove(&controller.app);
@@ -249,9 +278,11 @@ impl CompanionController {
                     return Err(error);
                 }
             }
-            lifecycle.labels = Some(labels);
-            let restore = lifecycle.restore_pending;
-            drop(lifecycle);
+            let restore = {
+                let mut lifecycle = controller.lifecycle.lock();
+                lifecycle.labels = Some(labels);
+                lifecycle.restore_pending
+            };
             if restore {
                 let result = controller.set_enabled_now(true);
                 if result.kind == EnableKind::Unavailable {
@@ -267,16 +298,23 @@ impl CompanionController {
     }
 
     fn dismiss_now(&self) -> Result<(), NativeError> {
-        let mut lifecycle = self.lifecycle.lock();
-        if lifecycle.quitting || !lifecycle.state.visible { return Ok(()); }
+        {
+            let mut lifecycle = self.lifecycle.lock();
+            if lifecycle.quitting || !lifecycle.state.visible { return Ok(()); }
+            lifecycle.hidden();
+        }
         // Revoke native read authority before any queued renderer/native hide completion.
         (self.callbacks.hide)();
-        lifecycle.hidden();
         #[cfg(target_os = "macos")]
         if let Err(error) = macos::hide(&self.app) {
-            lifecycle.state.visible = true;
-            lifecycle.state.native_error = Some(error);
-            (self.callbacks.access_changed)(lifecycle.state.enabled, lifecycle.state.available);
+            let state = {
+                let mut lifecycle = self.lifecycle.lock();
+                if lifecycle.quitting { return Err(error); }
+                lifecycle.state.visible = true;
+                lifecycle.state.native_error = Some(error);
+                lifecycle.state.clone()
+            };
+            (self.callbacks.access_changed)(state.enabled, state.available);
             return Err(error);
         }
         Ok(())
@@ -311,17 +349,16 @@ impl CompanionController {
         }).await?
     }
 
-    /// True means the native close event was replaced by a successful main hide.
+    /// True replaces native destruction with a main hide or an owned application shutdown.
     pub fn handle_main_close(&self) -> bool {
-        let lifecycle = self.lifecycle.lock();
-        if lifecycle.quitting || !lifecycle.state.enabled || !lifecycle.state.available { return false; }
-        drop(lifecycle);
-        if let Some(main) = self.app.get_webview_window("main") {
-            (self.callbacks.main_visibility)(false);
-            if main.hide().is_ok() { return true; }
-            self.refresh_main_visibility();
-        }
-        false
+        close_main(&self.lifecycle, || {
+            if let Some(main) = self.app.get_webview_window("main") {
+                (self.callbacks.main_visibility)(false);
+                if main.hide().is_ok() { return true; }
+                self.refresh_main_visibility();
+            }
+            false
+        }, || self.request_quit())
     }
 
     pub fn handle_main_focus(&self, _focused: bool) {
@@ -352,31 +389,16 @@ impl CompanionController {
         (self.callbacks.hide)();
         #[cfg(target_os = "macos")]
         macos::destroy_surface();
-        if let Some(mut lifecycle) = self.lifecycle.try_lock() {
-            let lost_access = lifecycle.native_destroyed();
-            if lost_access { (self.callbacks.access_changed)(true, false); }
-            drop(lifecycle);
-            #[cfg(target_os = "macos")]
-            if lost_access && self.reveal_main_now().is_err() { self.main_reveal_failed(); }
-        } else {
-            // Native destruction may synchronously reenter its owning enable/disable transition.
-            // Its authority is already revoked above; never hide a newly created replacement.
-            let controller = self.clone();
-            tauri::async_runtime::spawn(async move {
-                let _ = controller.on_main(|controller| {
-                    if controller.app.get_webview_window("companion").is_none() {
-                        controller.handle_companion_destroyed();
-                    }
-                }).await;
-            });
-        }
+        let lost_access = self.lifecycle.lock().native_destroyed();
+        if lost_access { (self.callbacks.access_changed)(true, false); }
+        #[cfg(target_os = "macos")]
+        if lost_access && self.reveal_main_now().is_err() { self.main_reveal_failed(); }
     }
 
     pub fn handle_companion_close(&self) -> bool {
         {
-            // A programmatic teardown already owns invalidation and must not be close-to-tray intercepted.
-            let Some(lifecycle) = self.lifecycle.try_lock() else { return false; };
-            if lifecycle.quitting { return false; }
+            let lifecycle = self.lifecycle.lock();
+            if lifecycle.quitting || !lifecycle.state.enabled { return false; }
         }
         self.dismiss_now().is_ok()
     }
@@ -387,12 +409,12 @@ impl CompanionController {
             let mut lifecycle = self.lifecycle.lock();
             if lifecycle.quitting { return; }
             lifecycle.quitting = true;
-            (self.callbacks.hide)();
-            (self.callbacks.main_visibility)(false);
-            (self.callbacks.access_changed)(false, false);
             lifecycle.hidden();
             lifecycle.state.available = false;
         }
+        (self.callbacks.hide)();
+        (self.callbacks.main_visibility)(false);
+        (self.callbacks.access_changed)(false, false);
         #[cfg(target_os = "macos")]
         {
             let app = self.app.clone();
@@ -400,36 +422,42 @@ impl CompanionController {
         }
     }
 
-    #[cfg(target_os = "macos")]
     fn request_quit(&self) { self.quit_cleanup(); (self.callbacks.quit)(); }
 
     #[cfg(target_os = "macos")]
     fn toggle_now(&self, anchor: macos::Anchor) {
-        let mut lifecycle = self.lifecycle.lock();
-        if lifecycle.quitting || !lifecycle.state.enabled || !lifecycle.state.available { return; }
-        if lifecycle.state.visible {
-            drop(lifecycle);
+        let visible = {
+            let lifecycle = self.lifecycle.lock();
+            if lifecycle.quitting || !lifecycle.state.enabled || !lifecycle.state.available { return; }
+            // No untranslated renderer is exposed before the authoritative main publisher is ready.
+            if lifecycle.labels.is_none() { return; }
+            lifecycle.state.visible
+        };
+        if visible {
             if let Err(error) = self.dismiss_now() { self.native_failure(error); }
             return;
         }
-        // No untranslated renderer is exposed before the authoritative main publisher is ready.
-        if lifecycle.labels.is_none() { return; }
         match macos::show(self.clone(), anchor) {
             Ok(()) => {
+                {
+                    let lifecycle = self.lifecycle.lock();
+                    if lifecycle.quitting || !lifecycle.state.available { return; }
+                }
                 if let Some(epoch) = (self.callbacks.open)() {
-                    lifecycle.opened(epoch);
+                    self.lifecycle.lock().opened(epoch);
                 } else {
                     (self.callbacks.hide)();
-                    lifecycle.hidden();
-                    lifecycle.state.available = false;
-                    (self.callbacks.access_changed)(lifecycle.state.enabled, false);
+                    let enabled = {
+                        let mut lifecycle = self.lifecycle.lock();
+                        lifecycle.hidden();
+                        lifecycle.state.available = false;
+                        lifecycle.state.enabled
+                    };
+                    (self.callbacks.access_changed)(enabled, false);
                     macos::remove(&self.app);
                 }
             }
-            Err(error) => {
-                drop(lifecycle);
-                self.native_failure(error);
-            }
+            Err(error) => self.native_failure(error),
         }
     }
 
@@ -439,18 +467,25 @@ impl CompanionController {
         // Failure still revokes authority; a refused orderOut is reported while main stays reachable.
         let _ = self.dismiss_now();
         let revealed = reveal_main(&self.app, &self.callbacks).is_ok();
-        let mut lifecycle = self.lifecycle.lock();
-        lifecycle.native_failed(if revealed { error } else { NativeError::MainUnavailable });
-        (self.callbacks.access_changed)(lifecycle.state.enabled, lifecycle.state.available);
+        let enabled = {
+            let mut lifecycle = self.lifecycle.lock();
+            if lifecycle.quitting { return; }
+            lifecycle.native_failed(if revealed { error } else { NativeError::MainUnavailable });
+            lifecycle.state.enabled
+        };
+        (self.callbacks.access_changed)(enabled, false);
     }
 
     #[cfg(target_os = "macos")]
     fn main_reveal_failed(&self) {
-        let mut lifecycle = self.lifecycle.lock();
-        if lifecycle.quitting { return; }
-        lifecycle.state.native_error = Some(NativeError::MainUnavailable);
-        lifecycle.state.revision += 1;
-        (self.callbacks.access_changed)(lifecycle.state.enabled, lifecycle.state.available);
+        let state = {
+            let mut lifecycle = self.lifecycle.lock();
+            if lifecycle.quitting { return; }
+            lifecycle.state.native_error = Some(NativeError::MainUnavailable);
+            lifecycle.state.revision += 1;
+            lifecycle.state.clone()
+        };
+        (self.callbacks.access_changed)(state.enabled, state.available);
     }
 
     #[cfg(target_os = "macos")]

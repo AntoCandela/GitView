@@ -6,7 +6,7 @@ use block2::RcBlock;
 use objc2::{rc::Retained, runtime::{AnyObject, ProtocolObject}, MainThreadMarker};
 use objc2_app_kit::{
     NSApplication, NSApplicationDidChangeScreenParametersNotification,
-    NSApplicationDidResignActiveNotification, NSEvent, NSEventMask, NSEventType,
+    NSApplicationDidResignActiveNotification, NSEvent, NSEventMask,
     NSWindow, NSWindowDidResignKeyNotification,
 };
 use objc2_foundation::{NSNotification, NSNotificationCenter, NSObjectProtocol};
@@ -86,18 +86,14 @@ pub(super) fn install(controller: CompanionController, panel: &NSWindow, anchor:
         let owned = event_window.as_ref().is_some_and(|window| is_owned_window(window, panel_id));
         let tray_event = event_window.as_ref()
             .is_some_and(|window| std::ptr::from_ref(&**window) as usize == tray_window);
-        if event_ref.r#type() == NSEventType::KeyDown {
-            if owned && event_ref.keyCode() == 53 {
-                enqueue_dismissal(events.clone(), panel_id, generation, Dismissal::Explicit);
-                return std::ptr::null_mut();
-            }
-        } else if !owned && !tray_event {
+        if !owned && !tray_event {
             enqueue_dismissal(events.clone(), panel_id, generation, Dismissal::Explicit);
         }
         event.as_ptr()
     });
     monitors.local = Some(unsafe {
-        NSEvent::addLocalMonitorForEventsMatchingMask_handler(MOUSE_DOWN | NSEventMask::KeyDown, &local_block)
+        // Keyboard events belong to WKWebView so nested controls can consume Escape first.
+        NSEvent::addLocalMonitorForEventsMatchingMask_handler(MOUSE_DOWN, &local_block)
     }.ok_or(NativeError::PanelFailed)?);
 
     let outside_clicks = controller.clone();
@@ -161,15 +157,15 @@ fn enqueue_dismissal(controller: CompanionController, panel: usize, generation: 
         let mut slot = slot.borrow_mut();
         let Some(monitors) = slot.as_mut().filter(|monitors| monitors.generation == generation) else { return false; };
         let enqueue = monitors.pending_dismissal.is_none();
-        // Outside clicks/Escape cannot be downgraded by a later resign-key notification.
+        // Outside clicks cannot be downgraded by a later resign-key notification.
         if enqueue || matches!(dismissal, Dismissal::Explicit) {
             monitors.pending_dismissal = Some(dismissal);
         }
         enqueue
     });
     if !enqueue { return; }
-    // One queued dismissal per opening bounds repeated events. The async hop also prevents
-    // AppKit notifications from reentering the lifecycle lock held during native transitions.
+    // One queued dismissal per opening bounds repeated events and waits for AppKit to
+    // finish synchronous focus changes before reconciling the replacement key window.
     tauri::async_runtime::spawn(async move {
         let _ = controller.on_main(move |controller| {
             let dismissal = MONITORS.with(|slot| slot.borrow_mut().as_mut()

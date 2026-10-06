@@ -11,6 +11,7 @@ import type { ReactElement } from "react";
 import { Workspace } from "../../src/app/Workspace";
 import { deferred } from "../support/deferred";
 import { changedFile, readyObservation, textReview } from "../support/review";
+import type { ReviewSurfaceClient, ReviewSurfaceSnapshot, SurfaceNotice } from "../../src/contracts/companion";
 import type {
   OpenOutcome,
   RepositoryClient,
@@ -870,4 +871,44 @@ test("selected file content refreshes automatically even while its cached status
   await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
   expect(screen.getByText("edited working content")).toBeVisible();
   expect(screen.queryByText("initial working content")).not.toBeInTheDocument();
+});
+
+test.each([
+  { state: "clean", files: [], initialText: "Clean" },
+  { state: "changed", files: [{ ...changedFile, displayPath: "previous.ts", segments: ["previous.ts"] }], initialText: "previous.ts" },
+])("shared surface failure replaces $state status with unavailable until a newer snapshot recovers", async ({ files, initialText }) => {
+  vi.useFakeTimers();
+  const workspace: WorkspaceSnapshot = { contextEpoch: "fixture-context", revision: 1, entries: [first],
+    activeContextId: "one", restoring: false, persistenceError: null };
+  const initial: ReviewSurfaceSnapshot = { workspace, visible: true, openEpoch: "main-open", presentation: null,
+    observation: readyObservation(files, 1), handoff: { revision: 0, pendingRequestId: null } };
+  const recovery = deferred<ReviewSurfaceSnapshot>();
+  let listener: ((notice: SurfaceNotice) => void) | undefined;
+  const surfaceClient: ReviewSurfaceClient = {
+    bootstrap: async () => "main",
+    subscribe: async (receive) => { listener = receive; return () => { listener = undefined; }; },
+    snapshot: vi.fn<ReviewSurfaceClient["snapshot"]>().mockResolvedValueOnce(initial)
+      .mockRejectedValueOnce(new Error("transport unavailable")).mockReturnValue(recovery.promise),
+  };
+  renderView(<Workspace client={fakeClient(workspace)} surfaceClient={surfaceClient} />);
+  await act(async () => { await Promise.resolve(); });
+  expect(screen.getByText(initialText)).toBeInTheDocument();
+
+  await act(async () => { await vi.advanceTimersByTimeAsync(1000); });
+  expect(screen.getByRole("heading", { name: "Changes unavailable" })).toBeInTheDocument();
+  expect(screen.getByText("Desktop connection interrupted. Reconnecting automatically.")).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "Clean" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Review previous.ts" })).not.toBeInTheDocument();
+  expect(screen.queryByText("0 files")).not.toBeInTheDocument();
+
+  act(() => listener?.({ kind: "presentation", revision: 2 }));
+  expect(screen.getByRole("heading", { name: "Changes unavailable" })).toBeInTheDocument();
+  await act(async () => recovery.resolve({ ...initial,
+    observation: readyObservation([{ ...changedFile, pathId: "recovered-path", stablePathId: "recovered-file",
+      displayPath: "recovered.ts", segments: ["recovered.ts"] }], 2) }));
+  expect(screen.getByRole("button", { name: "Review recovered.ts" })).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "Changes unavailable" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "Clean" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Review previous.ts" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Current repository: atlas" })).toBeInTheDocument();
 });

@@ -44,7 +44,7 @@ fn install_access_observers(controller: CompanionController) -> Result<(), Nativ
     let main = native_window(&main).map_err(|_| NativeError::MainUnavailable)?;
     let block = RcBlock::new(move |_: NonNull<NSNotification>| {
         let controller = controller.clone();
-        // Native show/focus may post synchronously while a lifecycle transition owns its lock.
+        // Native show/focus may post synchronously; reconcile its final visibility afterward.
         tauri::async_runtime::spawn(async move {
             let _ = controller.on_main(|controller| controller.refresh_main_visibility()).await;
         });
