@@ -8,8 +8,9 @@ use std::{cell::RefCell, ptr::NonNull};
 use block2::RcBlock;
 use objc2::{rc::Retained, runtime::ProtocolObject, MainThreadMarker};
 use objc2_app_kit::{
-    NSApplication, NSApplicationDidHideNotification, NSApplicationDidUnhideNotification,
+    NSApplication, NSApplicationDidHideNotification, NSApplicationDidUnhideNotification, NSCellImagePosition,
     NSEvent, NSScreen, NSWindow, NSWindowDidMiniaturizeNotification, NSWindowDidDeminiaturizeNotification,
+    NSSquareStatusItemLength,
 };
 use objc2_foundation::{NSNotification, NSNotificationCenter, NSObjectProtocol, NSPoint, NSRect, NSSize};
 use tauri::{
@@ -104,7 +105,7 @@ fn build_tray(app: &AppHandle, controller: CompanionController, labels: &MenuLab
         return update_menu(app, labels);
     }
     let menu = menu(app, labels)?;
-    TrayIconBuilder::with_id(TRAY_ID)
+    let tray = TrayIconBuilder::with_id(TRAY_ID)
         .icon(template_icon()).icon_as_template(true).menu(&menu).show_menu_on_left_click(false)
         .on_tray_icon_event(move |_, event| {
             if matches!(event, TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. }) {
@@ -115,7 +116,15 @@ fn build_tray(app: &AppHandle, controller: CompanionController, labels: &MenuLab
             }
         })
         .build(app).map_err(|_| NativeError::TrayFailed)?;
-    Ok(())
+    tray.with_inner_tray_icon(|tray| {
+        let marker = MainThreadMarker::new()?;
+        let item = tray.ns_status_item()?;
+        let button = item.button(marker)?;
+        // The tray library reserves an image-and-title slot; this item has no title.
+        button.setImagePosition(NSCellImagePosition::ImageOnly);
+        item.setLength(NSSquareStatusItemLength);
+        Some(())
+    }).map_err(|_| NativeError::TrayFailed)?.ok_or(NativeError::TrayFailed)
 }
 
 pub(super) fn update_menu(app: &AppHandle, labels: &MenuLabels) -> Result<(), NativeError> {
