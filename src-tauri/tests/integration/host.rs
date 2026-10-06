@@ -546,6 +546,9 @@ fn inspection_ipc_selects_discovered_worktrees_and_records_only_fixed_diagnostic
     let (temp, root) = test_support::working_tree();
     let linked = temp.path().join("private-linked");
     test_support::git(&root, &["worktree", "add", "-b", "private-topic", linked.to_str().unwrap()]);
+    test_support::git(&root, &["branch", "upstream"]);
+    test_support::git(&root, &["config", "branch.main.remote", "."]);
+    test_support::git(&root, &["config", "branch.main.merge", "refs/heads/upstream"]);
     std::fs::write(root.join("private-commit-file"), "private content").unwrap();
     test_support::commit(&root);
     let oid = String::from_utf8(test_support::git_output(&root, &["rev-parse", "HEAD"]).stdout).unwrap().trim_end().to_owned();
@@ -558,12 +561,12 @@ fn inspection_ipc_selects_discovered_worktrees_and_records_only_fixed_diagnostic
         entry_id
     });
     let app = mock_builder().manage(service).manage(store)
-        .invoke_handler(tauri::generate_handler![commands::list_contexts, commands::select_worktree, commands::commit_files, commands::review_commit_file, commands::record_renderer_diagnostic])
+        .invoke_handler(tauri::generate_handler![commands::list_contexts, commands::select_worktree, commands::commit_files, commands::upstream_files, commands::history_page, commands::review_commit_file, commands::record_renderer_diagnostic])
         .build(app_context()).unwrap();
     let main = tauri::WebviewWindowBuilder::new(&app, "main", Default::default()).build().unwrap();
     let secondary = tauri::WebviewWindowBuilder::new(&app, "secondary", Default::default()).build().unwrap();
-    for command in ["list_contexts", "select_worktree", "commit_files", "review_commit_file"] {
-        let body = serde_json::json!({ "entryId": entry, "worktreeId": "unknown", "commitOid": oid, "parentOid": null, "fileId": "forged" });
+    for command in ["list_contexts", "select_worktree", "commit_files", "upstream_files", "review_commit_file"] {
+        let body = serde_json::json!({ "entryId": entry, "worktreeId": "unknown", "commitOid": oid, "parentOid": null, "fileId": "forged", "token": "forged" });
         assert!(get_ipc_response(&secondary, request(&secondary, command, body)).is_err());
     }
     let list_operation = Uuid::new_v4();
@@ -576,6 +579,12 @@ fn inspection_ipc_selects_discovered_worktrees_and_records_only_fixed_diagnostic
     assert_eq!(files["files"][0]["displayPath"], "private-commit-file");
     assert_eq!(files["files"][0]["kind"], "added");
     std::fs::write(root.join("private-commit-file"), "different working bytes").unwrap();
+    let graph = response(&main, "history_page", serde_json::json!({ "entryId": entry, "cursor": null, "branch": null }));
+    let token = graph["page"]["upstream"]["outgoing"]["token"].as_str().unwrap();
+    let upstream_operation = Uuid::new_v4();
+    let aggregate = response(&main, "upstream_files", serde_json::json!({ "entryId": entry, "token": token, "operationId": upstream_operation.to_string() }));
+    assert_eq!(aggregate["kind"], "files");
+    assert_eq!(aggregate["files"][0]["displayPath"], "private-commit-file");
     let review_operation = Uuid::new_v4();
     let review_body = serde_json::json!({
         "entryId": entry, "commitOid": oid, "parentOid": files["parentOid"],
@@ -600,6 +609,7 @@ fn inspection_ipc_selects_discovered_worktrees_and_records_only_fixed_diagnostic
     let operations = [
         (list_operation, "list_contexts", OperationKind::ListContexts),
         (files_operation, "commit_files", OperationKind::CommitFiles),
+        (upstream_operation, "upstream_files", OperationKind::UpstreamFiles),
         (review_operation, "review_commit_file", OperationKind::ReviewCommitFile),
         (select_operation, "select_worktree", OperationKind::SelectWorktree),
     ];

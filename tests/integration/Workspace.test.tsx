@@ -125,12 +125,14 @@ function fakeClient(initial: WorkspaceSnapshot): RepositoryClient {
     reviewRepositoryFile: async () => ({ kind: "stale_selection" }),
     historyPage: async (entryId) => ({
       kind: "page", page: {
+        upstream: { state: "unborn", freshness: "unavailable", branch: null, upstream: null, ahead: 0, behind: 0, incoming: null, outgoing: null },
         entryId, cursor: null, commits: [], refs: [], hasMore: false, completeness: "complete",
         head: { scope: "worktree", state: "unborn", branch: null, oid: null },
       },
     }),
     listContexts: async () => ({ kind: "options", branches: [{ name: "main" }], worktrees: [] }),
     selectWorktree: async () => ({ kind: "not_found", snapshot }),
+    upstreamFiles: async () => ({ kind: "unavailable", code: "stale_selection", message: "Selection changed." }),
     commitFiles: async () => ({ kind: "error", code: "stale_selection", message: "Selection changed." }),
   };
 }

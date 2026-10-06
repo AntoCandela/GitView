@@ -17,6 +17,7 @@
     "allow-list-contexts",
     "allow-select-worktree",
     "allow-commit-files",
+    "allow-upstream-files",
     "allow-review-commit-file",
     "allow-list-repository-files",
     "allow-review-repository-file",

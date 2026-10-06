@@ -41,7 +41,9 @@ export function CommitFileReview({ client, entryId, selectionGeneration, context
       if (result.kind === "stale_selection") {
         // A bounded native cache may evict a still-visible leaf. Labels only match a fresh native listing;
         // they never authorize a read. Renew once in this exact scope, never retry a stale renewed token.
-        const authorization = await client.commitFiles(entryId, selection.commitOid, selection.parentOid);
+        const authorization = selection.upstream
+          ? await client.upstreamFiles(entryId, selection.upstream.token)
+          : await client.commitFiles(entryId, selection.commitOid, selection.parentOid);
         if (!current || desired.current !== scope) return;
         if (authorization.kind === "files" && authorization.commitOid === selection.commitOid
           && authorization.parentOid === selection.parentOid
@@ -81,8 +83,8 @@ export function CommitFileReview({ client, entryId, selectionGeneration, context
   const fromAbsent = identity?.fromAbsent ?? selection.fromAbsent;
   const toAbsent = identity?.toAbsent ?? selection.toAbsent;
   const oldEndpointLabel = selection.parentOid === null ? t("diff.endpoint.root")
-    : t("diff.endpoint.parent", { oid: selection.parentOid.slice(0, 10), absent: String(fromAbsent) });
-  const newEndpointLabel = t("diff.endpoint.commit", { oid: selection.commitOid.slice(0, 10), absent: String(toAbsent) });
+    : t(selection.upstream ? "diff.endpoint.mergeBase" : "diff.endpoint.parent", { oid: selection.parentOid.slice(0, 10), absent: String(fromAbsent) });
+  const newEndpointLabel = t(selection.upstream ? `diff.endpoint.${selection.upstream.direction}` : "diff.endpoint.commit", { oid: selection.commitOid.slice(0, 10), absent: String(toAbsent) });
   const title = !current ? t("diff.state.checking")
     : current.transportError ? t("diff.state.transport")
     : result?.kind === "unsupported" ? t("diff.state.unsupported")

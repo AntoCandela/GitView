@@ -99,12 +99,14 @@ export interface RepositoryClient {
   observeSelectedContext(entryId: string): Promise<ObservationSnapshot>;
   /** Reads one category using its current observation token; this never mutates Git or files. */
   reviewFile(entryId: string, observationRevision: number, pathId: string, category: ReviewCategory): Promise<ReviewResult>;
-  /** Reads pinned ancestry for a known local branch; this never checks out or mutates Git. */
+  /** Fetches the configured upstream on first-page reads, then pins ancestry; never integrates changes. */
   historyPage(entryId: string, cursor: string | null, branch?: string | null): Promise<HistoryPageResult>;
   /** Lists known local branches and existing native worktrees, including unadmitted worktrees. */
   listContexts(entryId: string): Promise<ContextOptionsResult>;
   /** Admits/selects an existing worktree context in app state only; preserves user-intent order. */
   selectWorktree(entryId: string, worktreeId: string): Promise<RepositoryMutationOutcome>;
+  /** Lists aggregate changes using a native-issued pinned upstream range token. */
+  upstreamFiles(entryId: string, token: string): Promise<CommitFilesResult>;
   /** Null selects the first raw parent, or the empty tree for a verified root. */
   commitFiles(entryId: string, commitOid: string, parentOid: string | null): Promise<CommitFilesResult>;
   /** Reads a native-authorized file from the exact raw-parent to commit comparison. */

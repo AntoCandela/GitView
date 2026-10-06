@@ -94,7 +94,7 @@ vocabulary!(OperationKind {
     ReviewCommitFile => "review_commit_file",
     ListRepositoryFiles => "list_repository_files", ReviewRepositoryFile => "review_repository_file",
     HistoryPage => "history_page",
-    ListContexts => "list_contexts", SelectWorktree => "select_worktree", CommitFiles => "commit_files",
+    ListContexts => "list_contexts", SelectWorktree => "select_worktree", CommitFiles => "commit_files", UpstreamFiles => "upstream_files",
     PersistWorkspace => "persist_workspace", Startup => "startup", Unknown => "unknown"
 });
 

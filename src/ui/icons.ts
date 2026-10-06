@@ -1,6 +1,8 @@
 /** Names the app's icon vocabulary; callers mark decorative instances aria-hidden. */
 
 export {
+  ArrowDown as IncomingIcon,
+  ArrowUp as OutgoingIcon,
   Check as CheckIcon,
   CircleAlert as AlertIcon,
   Cloud as RemoteBranchIcon,

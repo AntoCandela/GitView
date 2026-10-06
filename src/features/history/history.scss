@@ -1,6 +1,57 @@
 // Owns compact ancestry lanes, view-only context choices and inline committed-file expansion.
 
 @mixin styles {
+  .history-upstream {
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .history-upstream-status {
+    margin: 0;
+    padding: 4px 12px;
+    color: var(--muted);
+    font-size: 11px;
+    overflow-wrap: anywhere;
+  }
+  .history-upstream-node {
+    --upstream-color: var(--accent);
+    &[data-selected="true"] { background: var(--diff-add-bg); }
+    .history-files { padding-left: 32px; }
+  }
+  .history-upstream-incoming { --upstream-color: var(--history-color-2); }
+  .history-upstream-trigger {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 32px;
+    padding: 4px 12px 4px 8px;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+    &:hover { background: var(--pill-bg); }
+    &:focus-visible { outline-offset: -2px; }
+    &:disabled { cursor: default; }
+    > span:last-child { overflow-wrap: anywhere; }
+  }
+  .history-upstream-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 16px;
+    height: 16px;
+    color: var(--upstream-color);
+    border: 1.5px solid currentColor;
+    border-radius: 4px;
+  }
+  .history-upstream-incoming .history-upstream-marker {
+    border-style: dashed;
+    border-radius: 50%;
+  }
+
   .history {
     display: flex;
     flex-direction: column;
