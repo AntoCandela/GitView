@@ -107,6 +107,7 @@ pub fn run() {
             commands::list_contexts,
             commands::select_worktree,
             commands::commit_files,
+            commands::upstream_files,
             commands::review_commit_file,
             commands::list_repository_files,
             commands::review_repository_file,

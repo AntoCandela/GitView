@@ -60,8 +60,8 @@ fn full_sha256_oids_are_accepted_but_options_and_abbreviations_are_not_authority
 
 fn candidate(entry: &str) -> HistoryCandidate {
     let head = HistoryHead { scope: HeadScope::Worktree, state: HeadState::Attached, branch: Some("main".into()), oid: Some(hash('a')) };
-    HistoryCandidate { snapshot: Arc::new(PinnedSnapshot { refs: Vec::new(), head: head.clone(), seeds: vec![hash('a')], shallow: false }),
-        page: HistoryPage { entry_id: entry.into(), cursor: None, commits: Vec::new(), refs: Vec::new(), head, has_more: true, completeness: Completeness::Paged } }
+    HistoryCandidate { snapshot: Arc::new(PinnedSnapshot { upstream: UpstreamSummary::empty(UpstreamState::NoUpstream, None), refs: Vec::new(), head: head.clone(), seeds: vec![hash('a')], shallow: false }),
+        page: HistoryPage { entry_id: entry.into(), cursor: None, commits: Vec::new(), refs: Vec::new(), upstream: UpstreamSummary::empty(UpstreamState::NoUpstream, None), head, has_more: true, completeness: Completeness::Paged } }
 }
 
 #[tokio::test]
@@ -166,4 +166,22 @@ fn concurrent_cursor_completions_consume_authority_once_without_revoking_the_win
     assert_eq!(page.cursor, None);
     assert!(!page.has_more);
     assert!(matches!(controller.begin("entry", 1, Some(&next_cursor), Some("topic")), Err(HistoryErrorCode::StaleCursor)));
+}
+
+#[tokio::test]
+async fn visible_upstream_ranges_survive_cursor_idle_expiry_but_not_refresh() {
+    tokio::time::pause();
+    let controller = HistoryController::default();
+    let range = UpstreamRange { token: Uuid::new_v4().to_string(), base_oid: hash('a'), tip_oid: hash('b') };
+    let mut result = candidate("entry");
+    result.page.upstream.outgoing = Some(range.clone());
+    Arc::get_mut(&mut result.snapshot).unwrap().upstream = result.page.upstream.clone();
+    let ticket = controller.begin("entry", 1, None, None).unwrap();
+    controller.publish(ticket, result);
+    tokio::time::advance(Duration::from_secs(301)).await;
+    assert_eq!(controller.resolve_range("entry", 1, &range.token), Some(range.clone()));
+    assert_eq!(controller.resolve_range("other", 1, &range.token), None);
+    assert_eq!(controller.resolve_range("entry", 2, &range.token), None);
+    controller.begin("entry", 1, None, None).unwrap();
+    assert_eq!(controller.resolve_range("entry", 1, &range.token), None);
 }

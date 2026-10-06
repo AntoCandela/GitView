@@ -8,7 +8,21 @@ export interface HistoryCommit {
   root: boolean;
 }
 
+/** A native-issued comparison authority pinned to one verified common base and tip. */
+export interface UpstreamRange { token: string; baseOid: string; tipOid: string }
+export interface UpstreamState {
+  state: "ready" | "no_upstream" | "detached" | "unborn" | "unavailable";
+  freshness: "fresh" | "stale" | "unavailable";
+  branch: string | null;
+  upstream: string | null;
+  ahead: number;
+  behind: number;
+  incoming: UpstreamRange | null;
+  outgoing: UpstreamRange | null;
+}
+
 export interface HistoryPage {
+  upstream: UpstreamState;
   entryId: string;
   cursor: string | null;
   commits: HistoryCommit[];

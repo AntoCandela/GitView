@@ -105,6 +105,35 @@ impl JourneyFixture {
         info
     }
 
+    /// Adds synthetic divergent sides while retaining the existing staged and working bytes.
+    pub fn upstream(&mut self) -> Result<Value, &'static str> {
+        let remote = self.owner.path().join("journey-remote");
+        if remote.exists() { return Err("Upstream fixture already exists."); }
+        let base = git(&self.main, &["rev-parse", "HEAD"])?;
+        let base = std::str::from_utf8(&base).map_err(|_| "Fixture object failed.")?.trim();
+        git(&self.main, &["clone", "--bare", path_text(&self.main)?, path_text(&remote)?])?;
+        git(&self.main, &["remote", "add", "team", path_text(&remote)?])?;
+        git(&self.main, &["config", "branch.main.remote", "team"])?;
+        git(&self.main, &["config", "branch.main.merge", "refs/heads/main"])?;
+        for (root, subject, path, content) in [
+            (&self.main, "Journey outgoing", "src/outgoing.txt", "outgoing contribution\n"),
+            (&remote, "Journey incoming", "src/incoming.txt", "incoming contribution\n"),
+        ] {
+            let mut stream = format!("commit refs/heads/main\ncommitter Journey <journey@example.invalid> 1700000200 +0000\ndata {}\n{subject}\nfrom {base}\n", subject.len());
+            inline_file(&mut stream, path, content);
+            stream.push_str("\ndone\n");
+            import_stream(root, &stream)?;
+        }
+        // Pin the expected tracking ref for fixture safety checks; production still fetches it.
+        git(&self.main, &["fetch", "team"])?;
+        self.baseline = self.git_state()?;
+        Ok(json!({
+            "upstream": "team/main", "ahead": 1, "behind": 1,
+            "incomingPath": "src/incoming.txt", "incomingText": "incoming contribution\n",
+            "outgoingPath": "src/outgoing.txt", "outgoingText": "outgoing contribution\n",
+        }))
+    }
+
     pub fn edit(&mut self, text: &str) -> Result<(), &'static str> {
         if text.len() > MAX_EDIT_BYTES { return Err("Fixture text exceeds limit."); }
         fs::write(self.main.join(WORKING_PATH), text).map_err(|_| "Fixture write failed.")?;
@@ -227,6 +256,10 @@ fn import_history(root: &Path, organization: bool) -> Result<(), &'static str> {
     commit_record(&mut stream, "main", 109, "Journey merge", Some(108), Some(107));
     inline_file(&mut stream, "src/topic.txt", "topic contribution\n");
     stream.push_str("\ndone\n");
+    import_stream(root, &stream)
+}
+
+fn import_stream(root: &Path, stream: &str) -> Result<(), &'static str> {
     let mut child = git_command(root).args(["fast-import", "--quiet", "--done"])
         .stdin(Stdio::piped()).stdout(Stdio::null()).stderr(Stdio::null())
         .spawn().map_err(|_| "Fixture import launch failed.")?;

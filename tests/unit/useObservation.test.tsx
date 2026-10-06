@@ -27,6 +27,7 @@ function clientWith(observeSelectedContext: RepositoryClient["observeSelectedCon
     historyPage: async () => ({ kind: "error", code: "stale_selection", message: "Selection changed." }),
     listContexts: async () => ({ kind: "options", branches: [], worktrees: [] }),
     selectWorktree: async () => ({ kind: "not_found", snapshot }),
+    upstreamFiles: async () => ({ kind: "unavailable", code: "stale_selection", message: "Selection changed." }),
     commitFiles: async () => ({ kind: "error", code: "stale_selection", message: "Selection changed." }),
     renameRepository: async () => ({ kind: "not_found", snapshot }),
     removeRepository: async () => ({ kind: "not_found", snapshot }),

@@ -40,6 +40,7 @@ export const repositoryClient: RepositoryClient & DiagnosticHealthClient = {
   historyPage: (entryId, cursor, branch) => invokeRepository<HistoryPageResult>("history_page", { entryId, cursor, branch: branch ?? null }),
   listContexts: (entryId) => invokeRepository<ContextOptionsResult>("list_contexts", { entryId }),
   selectWorktree: (entryId, worktreeId) => invokeRepository<RepositoryMutationOutcome>("select_worktree", { entryId, worktreeId }),
+  upstreamFiles: (entryId, token) => invokeRepository<CommitFilesResult>("upstream_files", { entryId, token }),
   commitFiles: (entryId, commitOid, parentOid) => invokeRepository<CommitFilesResult>("commit_files", { entryId, commitOid, parentOid }),
   reviewCommitFile: (entryId, commitOid, parentOid, fileId) =>
     invokeRepository<CommitReviewResult>("review_commit_file", { entryId, commitOid, parentOid, fileId }),

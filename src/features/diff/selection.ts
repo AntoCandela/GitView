@@ -2,7 +2,7 @@
 import type { CommitReviewIdentity } from "../../contracts/inspection";
 
 export type CommitReviewSelection = Pick<CommitReviewIdentity,
-  "fileId" | "commitOid" | "parentOid" | "displayPath" | "fromAbsent" | "toAbsent"> & { segments: string[] };
+  "fileId" | "commitOid" | "parentOid" | "displayPath" | "fromAbsent" | "toAbsent"> & { segments: string[]; upstream?: { token: string; direction: "incoming" | "outgoing" } };
 
 /** Controls the pinned committed-file comparison shown beside history. */
 export interface CommitComparisonControls {

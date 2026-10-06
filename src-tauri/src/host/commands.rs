@@ -181,6 +181,16 @@ pub(super) async fn select_worktree<R: tauri::Runtime>(
 }
 
 #[tauri::command]
+pub(super) async fn upstream_files<R: tauri::Runtime>(
+    window: WebviewWindow<R>, service: tauri::State<'_, RepositoryService>,
+    entry_id: String, token: String, operation_id: Option<String>,
+) -> Result<CommitFilesResult, &'static str> {
+    require_main_window(&window)?;
+    let context = ipc_context(&service, OperationKind::UpstreamFiles, operation_id.as_deref())?;
+    Ok(traced_ipc(context, service.upstream_files(&entry_id, &token)).await)
+}
+
+#[tauri::command]
 pub(super) async fn commit_files<R: tauri::Runtime>(
     window: WebviewWindow<R>, service: tauri::State<'_, RepositoryService>,
     entry_id: String, commit_oid: String, parent_oid: Option<String>, operation_id: Option<String>,

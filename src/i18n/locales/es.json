@@ -371,5 +371,21 @@
   "diff.source.proportions": "{old, number}% anterior, {new, number}% nuevo",
   "diff.source.lastVerified": "Última comparación del archivo verificada",
   "diff.source.readOnly": "Comparación del archivo de solo lectura",
-  "diff.source.description": "{mode, select, full {Instantáneas completas y verificadas de los archivos.} other {Solo bloques modificados, no archivos completos.}} El desplazamiento vertical está sincronizado; {lineMode, select, wrap {las líneas largas se ajustan dentro de cada panel.} other {cada panel de código se desplaza horizontalmente de forma independiente.}}"
+  "diff.source.description": "{mode, select, full {Instantáneas completas y verificadas de los archivos.} other {Solo bloques modificados, no archivos completos.}} El desplazamiento vertical está sincronizado; {lineMode, select, wrap {las líneas largas se ajustan dentro de cada panel.} other {cada panel de código se desplaza horizontalmente de forma independiente.}}",
+  "history.upstream.incoming": "Cambios entrantes · {count, plural, one {# commit} other {# commits}}",
+  "history.upstream.outgoing": "Cambios salientes · {count, plural, one {# commit} other {# commits}}",
+  "history.upstream.incomingHint": "Cambios de la rama upstream respecto al ancestro común. Aún no forman parte de la rama local.",
+  "history.upstream.outgoingHint": "Cambios locales desde el ancestro común que aún no se han enviado al upstream.",
+  "history.upstream.incomingFiles": "Archivos entrantes modificados",
+  "history.upstream.outgoingFiles": "Archivos salientes modificados",
+  "history.upstream.stale": "Fetch fallido. Se muestra el último estado conocido del upstream.",
+  "history.upstream.no_upstream": "Sin upstream configurado",
+  "history.upstream.detached": "HEAD separado — sin comparación upstream",
+  "history.upstream.unborn": "Aún no hay commits — sin comparación upstream",
+  "history.upstream.unavailable": "Comparación upstream no disponible",
+  "history.upstream.synchronized": "Al día con {upstream}",
+  "history.upstream.noBase": "Diff agregado no disponible: no se pudo verificar un ancestro común único.",
+  "diff.endpoint.mergeBase": "Ancestro común {oid}{absent, select, true { (ausente)} other {}}",
+  "diff.endpoint.incoming": "Entrante {oid}{absent, select, true { (ausente)} other {}}",
+  "diff.endpoint.outgoing": "Saliente {oid}{absent, select, true { (ausente)} other {}}"
 }

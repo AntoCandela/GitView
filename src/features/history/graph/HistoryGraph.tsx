@@ -1,4 +1,4 @@
-/** Presents read-only ancestry with inline committed paths and view-only branch navigation. */
+/** Presents pinned ancestry, upstream summaries and inline committed paths with view-only branch navigation. */
 
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
 import { defaultRangeExtractor, useVirtualizer } from "@tanstack/react-virtual";
@@ -12,6 +12,7 @@ import { colorHistory } from "./colors";
 import { useHistory } from "../useHistory";
 import { ContextSelector } from "../ContextSelector";
 import { CommitFiles } from "../CommitFiles";
+import { UpstreamNodes } from "./UpstreamNodes";
 import { HistoryRefs } from "./HistoryRefs";
 import { useTranslation } from "../../../i18n";
 import { historyErrorKeys } from "../historyMessages";
@@ -185,6 +186,10 @@ export function HistoryGraph({ client, entryId, selectionGeneration, onSelectWor
           {page?.head.state === "unresolved" && <p className="history-notice" role="status">{t("history.unresolvedHead")}</p>}
           {page?.completeness === "shallow_or_missing" && <p className="history-notice" role="status">{t("history.incompleteAncestry")}</p>}
           {page?.commits.length === 0 && <p className="history-notice" role="status">{t(page.head.state === "unborn" ? "history.noHeadCommits" : "history.noReachableCommits")}</p>}
+          {page && <UpstreamNodes client={client} entryId={entryId} selectionGeneration={selectionGeneration}
+            state={page.upstream} selected={selectedOid} comparison={comparison} virtualScrollRef={list}
+            onSelect={(oid) => { invalidateComparison?.(); setSelection(selectedOid === oid ? null : { scope, refs: page.refs, oid }); }} />}
+
         </div>
         {page && <>
           <div className="history-rows" role="group" aria-label={t("history.commits")} style={{ height: virtualizer.getTotalSize() }}>

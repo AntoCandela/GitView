@@ -31,10 +31,10 @@ export function useHistory(client: RepositoryClient, entryId: string, selectionG
   const current = useRef(state);
   current.current = state;
 
-  const request = useCallback((previous: HistoryPage | null) => {
+  const request = useCallback((previous: HistoryPage | null, refreshing = false) => {
     const operation = { scope };
     pending.current = operation;
-    const next: HistoryState = { scope, page: previous, loading: previous ? "more" : "initial", error: null };
+    const next: HistoryState = { scope, page: previous, loading: previous && !refreshing ? "more" : "initial", error: null };
     current.current = next;
     setState(next);
     void (async () => {
@@ -42,13 +42,13 @@ export function useHistory(client: RepositoryClient, entryId: string, selectionG
       let error: HistoryFailure | null = null;
       try {
         const result = branch === null
-          ? await client.historyPage(entryId, previous?.cursor ?? null)
-          : await client.historyPage(entryId, previous?.cursor ?? null, branch);
+          ? await client.historyPage(entryId, refreshing ? null : previous?.cursor ?? null)
+          : await client.historyPage(entryId, refreshing ? null : previous?.cursor ?? null, branch);
         if (result.kind !== "page") {
           error = { kind: result.kind, code: result.code };
         } else if (result.page.entryId !== entryId) {
           error = { kind: "error", code: "invalid_output" };
-        } else if (previous) {
+        } else if (previous && !refreshing) {
           const known = new Set(previous.commits.map((commit) => commit.oid));
           page = {
             ...previous,
@@ -83,7 +83,7 @@ export function useHistory(client: RepositoryClient, entryId: string, selectionG
   }, [scope, request]);
 
   const refresh = useCallback(() => {
-    if (desired.current === scope && mounted.current) request(null);
+    if (desired.current === scope && mounted.current) request(current.current?.scope === scope ? current.current.page : null, true);
   }, [scope, request]);
   const loadMore = useCallback(() => {
     const active = current.current;
