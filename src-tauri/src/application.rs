@@ -26,6 +26,7 @@ use crate::workspace::persistence::{self, PersistenceError};
 /// Application boundary for native picker paths and opaque workspace entry IDs.
 #[derive(Default)]
 pub struct RepositoryService {
+    pub(crate) pull_requests: crate::github::service::PullRequestService,
     probe: GitProbe,
     inspection_process: GitProcess,
     workspace: Arc<WorkspaceStore>,
@@ -212,6 +213,7 @@ impl RepositoryService {
 
     fn with_probe_and_diagnostics(probe: GitProbe, diagnostics: DiagnosticSink) -> Self {
         Self {
+            pull_requests: Default::default(),
             probe,
             inspection_process: GitProcess::default(),
             workspace: Arc::default(),
@@ -674,8 +676,11 @@ impl RepositoryService {
     async fn select_entry(&self, entry_id: &str, scope: Option<&SurfaceScope>) -> SelectOutcome {
         let outcome = {
             let _selection = self.selection.lock().await;
+            let previous = self.workspace.active_context_id().await;
             let outcome = self.workspace.select(entry_id, scope, false).await;
             if matches!(outcome, SelectOutcome::Selected { .. }) {
+                if let Some(previous) = previous { self.pull_requests.invalidate_entry(&previous); }
+                self.pull_requests.invalidate_entry(entry_id);
                 self.recovery.cancel();
                 if let Some(context) = self.workspace.selected_context(entry_id).await {
                     self.observation.select(context, self.workspace.review.context_epoch());
@@ -718,6 +723,7 @@ impl RepositoryService {
             let removed_active = self.workspace.active_context_id().await.as_deref() == Some(entry_id);
             let outcome = self.workspace.remove(entry_id).await;
             if matches!(outcome, MutationOutcome::Updated { .. }) {
+                self.pull_requests.invalidate_entry(entry_id);
                 self.observation.remove(entry_id);
                 if removed_active {
                     self.recovery.cancel();
@@ -854,6 +860,37 @@ impl RepositoryService {
         }).await
     }
 
+    /// Checks a local ref in the captured repository without replacing worktree-picker authority.
+    pub(crate) async fn validate_pull_request_branch(
+        &self, context: &crate::workspace::SelectedContext, branch: &str,
+    ) -> Result<(), crate::github::model::PrCode> {
+        use crate::github::model::PrCode;
+        let result = async {
+            let deadline = ProbeDeadline::new();
+            history::reader::verify_context(&self.inspection_process, context, deadline).await?;
+            let refs = history::reader::required(&self.inspection_process, &context.root,
+                &["for-each-ref", "--count=1025", "--format=%(refname)%00%(objectname)%00%(objecttype)%00", "refs/heads/"], None, deadline).await?;
+            let refs = history::reader::parse_refs(&refs)?;
+            history::reader::verify_context(&self.inspection_process, context, deadline).await?;
+            Ok::<_, HistoryErrorCode>(refs.iter().any(|reference| reference.kind == history::RefKind::LocalBranch && reference.name == branch))
+        }.await;
+        match result {
+            Ok(true) => Ok(()), Ok(false) => Err(PrCode::UnresolvedMapping),
+            Err(HistoryErrorCode::ResourceLimit) => Err(PrCode::ResourceLimit),
+            Err(_) => Err(PrCode::RepositoryUnavailable),
+        }
+    }
+
+    /// Captures selected native identity and generation atomically with a PR registry transition.
+    pub(crate) async fn with_pull_request_context<T>(
+        &self, entry_id: &str, transition: impl FnOnce(Option<(crate::workspace::SelectedContext, u64)>) -> T,
+    ) -> T {
+        let _selection = self.selection.lock().await;
+        let context = self.workspace.selected_context(entry_id).await;
+        let generation = self.observation.selection_generation(entry_id);
+        transition(context.zip(generation))
+    }
+
     async fn inspection_current(&self, context: &crate::workspace::SelectedContext, generation: u64) -> bool {
         self.workspace.selected_context(&context.entry_id).await.is_some_and(|current| {
             current.root == context.root && current.git_dir == context.git_dir && current.identity == context.identity
@@ -961,8 +998,11 @@ impl RepositoryService {
                 let admitted = self.workspace.admit(ticket, facts, identity).await;
                 match admitted {
                     OpenOutcome::Opened { entry_id, .. } | OpenOutcome::Reused { entry_id, .. } => {
+                        let previous = self.workspace.active_context_id().await;
                         let selected = self.workspace.select(&entry_id, None, true).await;
                         if matches!(selected, SelectOutcome::Selected { .. }) {
+                            if let Some(previous) = previous { self.pull_requests.invalidate_entry(&previous); }
+                            self.pull_requests.invalidate_entry(&entry_id);
                             self.recovery.cancel();
                             if let Some(context) = self.workspace.selected_context(&entry_id).await { self.observation.select(context, self.workspace.review.context_epoch()); }
                             MutationOutcome::Updated { snapshot: self.snapshot().await }

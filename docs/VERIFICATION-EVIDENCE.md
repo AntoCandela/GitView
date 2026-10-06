@@ -118,6 +118,8 @@ Follow [CODE-STYLE.md](../CODE-STYLE.md) for Rust/frontend headers, API document
 | `src/contracts/changes.ts` | Renderer-safe observation snapshots and backend-issued path identities. |
 | `src/contracts/diff.ts` and `src/contracts/history.ts` | Revision-bound comparisons and pinned history-page DTOs. |
 | `src/contracts/inspection.ts` | Read-only branch/worktree choices and parent-specific committed-file DTOs. |
+| `src/contracts/pullRequests.ts` and `src/platform/PullRequestClient.ts` | Closed PR DTOs and fixed main-window commands; opaque IDs carry native authority, and typed domain failures remain distinct from transport rejection. |
+| `src-tauri/src/github/` and `src-tauri/src/host/pull_requests.rs` | Ephemeral account/context/session/comparison authority, injected provider publication guards, and main-only host admission. The default provider reports `integration_unavailable`; live GitHub transport, normalization and PR UI are separate work. |
 | `src/contracts/Diagnostics.ts` | Closed renderer diagnostic vocabulary and capture-health DTOs. |
 | `src/features/changes/index.ts` | Curated observation, changed-list presentation and native-segment mapping API; no app or diff dependency. |
 | `src/app/workbench/Workbench.tsx` | Stable live/committed/repository review selection and graph/preview composition. |

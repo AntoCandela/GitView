@@ -28,7 +28,7 @@ export const MAX_RENDERER_DIAGNOSTIC_DURATION_MS = 86_400_000;
 export interface RendererDiagnostic {
   /** Lowercase canonical UUID v4, shared with the original invocation. */
   operationId: string;
-  command: RepositoryCommand;
+  command: RepositoryCommand | import("./pullRequests").PullRequestCommand;
   phase: RendererDiagnosticPhase;
   /** Monotonic elapsed milliseconds, floored and clamped to 0..86_400_000. */
   durationMs: number;
@@ -36,6 +36,7 @@ export interface RendererDiagnostic {
 
 /** Mirrors native safe codes; unknown error strings never enter this contract. */
 export type DiagnosticCode =
+  | "integration_unavailable" | "pr_unavailable" | "pr_stale_context"
   | "git_unavailable"
   | "not_repository"
   | "inaccessible"

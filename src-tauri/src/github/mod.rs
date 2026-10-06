@@ -3,3 +3,7 @@
 mod authority;
 
 pub use authority::{PrAuthority, PrAuthorityError, PrContext, PrIdentity, PrSession};
+
+pub mod model;
+pub(crate) mod service;
+mod publication;

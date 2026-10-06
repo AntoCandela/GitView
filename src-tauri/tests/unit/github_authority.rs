@@ -3,7 +3,7 @@
 use super::*;
 
 fn context() -> PrContext {
-    PrContext { entry_id: Uuid::new_v4(), repository_generation: 1, account_epoch: 1 }
+    PrContext { entry_id: Uuid::new_v4().to_string(), repository_generation: 1, account_epoch: 1 }
 }
 
 fn identity(number: u64) -> PrIdentity {
@@ -17,7 +17,7 @@ fn github_authority_rejects_cross_entry_account_and_generation_reads() {
     let session = registry.open(owner.clone(), identity(42)).unwrap();
     assert_eq!(registry.validate(&owner, &session), Ok(&identity(42)));
     let others = [
-        PrContext { entry_id: Uuid::new_v4(), ..owner.clone() },
+        PrContext { entry_id: Uuid::new_v4().to_string(), ..owner.clone() },
         PrContext { account_epoch: 2, ..owner.clone() },
         PrContext { repository_generation: 2, ..owner.clone() },
     ];
@@ -49,7 +49,7 @@ fn github_authority_invalidates_only_the_changed_entry() {
     let second = context();
     let first_session = registry.open(first.clone(), identity(42)).unwrap();
     let second_session = registry.open(second.clone(), identity(43)).unwrap();
-    registry.invalidate_entry(first.entry_id);
+    registry.invalidate_entry(&first.entry_id);
     assert_eq!(registry.validate(&first, &first_session), Err(PrAuthorityError::StaleContext));
     assert_eq!(registry.validate(&second, &second_session), Ok(&identity(43)));
     registry.invalidate_account();

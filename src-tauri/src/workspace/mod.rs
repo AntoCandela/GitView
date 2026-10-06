@@ -339,6 +339,7 @@ pub(crate) enum RefreshPublication {
 }
 
 /// Immutable scan facts captured only from an admitted, currently selected native context.
+#[derive(Clone)]
 pub(crate) struct SelectedContext {
     pub(crate) entry_id: String,
     pub(crate) root: PathBuf,

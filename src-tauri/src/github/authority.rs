@@ -6,7 +6,7 @@ use uuid::Uuid;
 /// Native-observed context. Neither account identity nor generation is renderer authority.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PrContext {
-    pub entry_id: Uuid,
+    pub entry_id: String,
     pub repository_generation: u64,
     pub account_epoch: u64,
 }
@@ -89,7 +89,7 @@ impl PrAuthority {
     }
 
     /// Removes authority when the entry is removed or its repository/configuration changes.
-    pub fn invalidate_entry(&mut self, entry_id: Uuid) {
+    pub fn invalidate_entry(&mut self, entry_id: &str) {
         self.reviews.retain(|_, review| review.context.entry_id != entry_id);
     }
 
