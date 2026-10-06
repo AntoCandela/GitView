@@ -16,7 +16,7 @@ fn seeded() -> (PullRequestService, crate::github::PrContext, String, String) {
     for number in [1, 2] {
         let session = registry.authority.open(context.clone(), crate::github::PrIdentity { host: "github.com".into(), base_repository_id: "fixture".into(), number }).unwrap();
         let id = session.id.to_string(); ids.push(id.clone());
-        registry.sessions.insert(id, Session { snapshot: SnapshotEvidence { base_oid:None,head_oid:None,lifecycle:Lifecycle::Open,updated_at:"fixture".into(),observed_at:0 }, comparison_cancel: watch::channel(false).0, comparison_epoch: 0, context: context.clone(), session, pr_id: "fixture-pr".into(), cancel: watch::channel(false).0 });
+        registry.sessions.insert(id, Session { snapshot: SnapshotEvidence { repository:fixture_authority::repository(), base_oid:None,head_oid:None,lifecycle:Lifecycle::Open,updated_at:"fixture".into(),observed_at:0 }, comparison_cancel: watch::channel(false).0, comparison_epoch: 0, context: context.clone(), session, pr_id: "fixture-pr".into(), cancel: watch::channel(false).0 });
     }
     drop(registry);
     (service, context, ids[0].clone(), ids[1].clone())
@@ -33,27 +33,27 @@ fn github_service_binds_files_cursors_and_anchors_to_their_session_and_compariso
     let comparison = issue(&service,&context,&first,Resource::Comparison);
     let other_comparison = issue(&service,&context,&second,Resource::Comparison);
     let file = issue(&service,&context,&first,Resource::File { comparison_id: comparison.clone(), key:"fixture-file".into() });
-    let cursor = issue(&service,&context,&first,Resource::Cursor { comparison_id:Some(comparison.clone()),collection:None,thread_id:None,key:"fixture-cursor".into() });
+    let cursor = issue(&service,&context,&first,Resource::Cursor { comparison_id:Some(comparison.clone()),collection:None,thread_id:None,target:CursorTarget::Comparison("fixture-cursor".into()) });
     assert_eq!(service.admit(&context,&PrRequest::File { comparison_id:comparison.clone(),file_id:file.clone() }),Ok(()));
     assert_eq!(service.admit(&context,&PrRequest::File { comparison_id:other_comparison.clone(),file_id:file }),Err(PrCode::StaleContext));
     assert_eq!(service.admit(&context,&PrRequest::FilesPage { comparison_id:comparison,cursor:cursor.clone() }),Ok(()));
     assert_eq!(service.admit(&context,&PrRequest::FilesPage { comparison_id:other_comparison,cursor }),Err(PrCode::StaleCursor));
-    let anchor = issue(&service,&context,&first,Resource::Anchor { key:"fixture-anchor".into() });
+    let anchor = issue(&service,&context,&first,Resource::Anchor { authority:fixture_authority::anchor() });
     assert_eq!(service.admit(&context,&PrRequest::ResolveAnchor { session_id:first,anchor_id:anchor.clone() }),Ok(()));
     assert_eq!(service.admit(&context,&PrRequest::ResolveAnchor { session_id:second,anchor_id:anchor }),Err(PrCode::StaleContext));
 }
 #[test]
 fn github_service_enforces_thread_cursors_commit_membership_and_parent_bounds() {
     let (service,context,first,second) = seeded();
-    let thread = issue(&service,&context,&first,Resource::Thread { key:"fixture-thread".into() });
-    let other_thread = issue(&service,&context,&first,Resource::Thread { key:"other-thread".into() });
-    let cursor = issue(&service,&context,&first,Resource::Cursor { comparison_id:None,collection:Some(CollectionKind::ThreadComments),thread_id:Some(thread.clone()),key:"cursor".into() });
+    let thread = issue(&service,&context,&first,Resource::Thread { authority:fixture_authority::thread("fixture-thread") });
+    let other_thread = issue(&service,&context,&first,Resource::Thread { authority:fixture_authority::thread("other-thread") });
+    let cursor = issue(&service,&context,&first,Resource::Cursor { comparison_id:None,collection:Some(CollectionKind::ThreadComments),thread_id:Some(thread.clone()),target:fixture_authority::cursor(CollectionKind::ThreadComments,Some(thread.clone())) });
     let page = |session: &str, thread_id: Option<String>| PrRequest::Page { session_id:session.into(),collection:CollectionKind::ThreadComments,cursor:Some(cursor.clone()),thread_id };
     assert_eq!(service.admit(&context,&page(&first,Some(thread.clone()))),Ok(()));
     assert_eq!(service.admit(&context,&page(&first,Some(other_thread))),Err(PrCode::StaleCursor));
     assert_eq!(service.admit(&context,&page(&first,None)),Err(PrCode::StaleCursor));
     assert!(service.admit(&context,&page(&second,Some(thread))).is_err());
-    let commit = issue(&service,&context,&first,Resource::Commit { key:"verified-object".into(),parent_count:2 });
+    let commit = issue(&service,&context,&first,Resource::Commit { authority:fixture_authority::commit(),parent_count:2 });
     let compare = |session: &str, parent_index| PrRequest::Compare { session_id:session.into(),selection:ComparisonSelection::Commit { commit_id:commit.clone(),parent_index } };
     assert_eq!(service.admit(&context,&compare(&first,Some(1))),Ok(()));
     assert_eq!(service.admit(&context,&compare(&first,Some(2))),Err(PrCode::StaleContext));

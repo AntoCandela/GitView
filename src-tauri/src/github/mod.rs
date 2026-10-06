@@ -11,3 +11,4 @@ pub(crate) mod transport;
 pub(crate) mod coordinator;
 pub(crate) mod association;
 pub(crate) mod provider;
+pub(crate) mod discussion;

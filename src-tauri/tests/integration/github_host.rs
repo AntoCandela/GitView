@@ -188,7 +188,7 @@ fn github_host_refresh_rejects_late_old_pages_and_release_cancels_owned_work() {
 #[test]
 fn github_host_failed_refresh_preserves_old_snapshot_authority_and_cursor_scope() {
     let provider = Provider::new(); let f = fixture(Some(provider.clone())); let opened = open_review(&f, &provider);
-    let cursor = Grant::new(Resource::Cursor { comparison_id: None, collection: Some(CollectionKind::Commits), thread_id: None, key: "opaque-provider-cursor".into() });
+    let cursor = Grant::new(Resource::Cursor { comparison_id: None, collection: Some(CollectionKind::Commits), thread_id: None, target: fixture_authority::cursor(CollectionKind::Commits,None) });
     let cursor_id = cursor.id().to_owned(); let mut page = collection(vec![]); page.next_cursor = Some(cursor_id.clone()); page.completeness = Completeness::More;
     provider.push(Publication { result: PrSuccess::Page { collection: page }.into(), grants: vec![cursor] });
     assert_eq!(response(&f.main,"pr_page",page_body(&f,&opened))["collection"]["observedRevision"],0);
@@ -204,7 +204,7 @@ fn github_host_failed_refresh_preserves_old_snapshot_authority_and_cursor_scope(
 fn comparison() -> (Publication, String, String, String) {
     let comparison = Grant::new(Resource::Comparison); let comparison_id = comparison.id().to_owned();
     let file = Grant::new(Resource::File { comparison_id: comparison_id.clone(), key: "native-file-key".into() }); let file_id = file.id().to_owned();
-    let cursor = Grant::new(Resource::Cursor { comparison_id: Some(comparison_id.clone()), collection: None, thread_id: None, key: "provider-files-cursor".into() }); let cursor_id = cursor.id().to_owned();
+    let cursor = Grant::new(Resource::Cursor { comparison_id: Some(comparison_id.clone()), collection: None, thread_id: None, target: CursorTarget::Comparison("provider-files-cursor".into()) }); let cursor_id = cursor.id().to_owned();
     let mut files = collection(vec![PrFile { file_id: file_id.clone(), display_path: "fixture.txt".into(), previous_display_path: None, kind: FileKind::Modified, additions: None, deletions: None, patch: None }]);
     files.next_cursor = Some(cursor_id.clone()); files.completeness = Completeness::More;
     (Publication { result: PrSuccess::Comparison { comparison: Comparison {
@@ -421,7 +421,7 @@ esac
         ("GH_TOKEN".into(), "fixture-token".into()),
     ]);
     let coordinator = Arc::new(crate::github::coordinator::PrDemandCoordinator::new(adapter));
-    let provider = crate::github::provider::AssociationProvider::new(coordinator.clone());
+    let provider = crate::github::provider::GithubProvider::new(coordinator.clone());
     let f = fixture_with_provider(Some(Arc::new(provider)), None);
     let root = tauri::async_runtime::block_on(f.app.state::<RepositoryService>().with_pull_request_context(&f.entry, |native| native.unwrap().0.root));
     test_support::git(&root, &["remote", "add", "origin", "git@work-alias:fork/project.git"]);
@@ -530,4 +530,38 @@ fn github_host_reused_branch_keeps_known_history_without_automatic_attachment() 
     assert!(refreshed["selectedCandidateId"].is_null());
     let chosen = response(&f.main, "pr_choose", json!({"entryId":f.entry,"associationId":refreshed["associationId"],"candidateId":refreshed["historical"][0]["candidateId"]}));
     assert_eq!(chosen["kind"], "chosen", "explicit history remains inspectable");
+}
+
+#[cfg(unix)]
+#[path = "github_review_host.rs"]
+mod review_host;
+
+#[test]
+fn github_host_large_native_anchor_retention_stops_before_handle_capacity() {
+    let provider=Provider::new();let f=fixture(Some(provider.clone()));let opened=open_review(&f,&provider);
+    let mut limited=false;
+    for _ in 0..80 {
+        let mut anchor=fixture_authority::anchor();
+        anchor.excerpt=Prose::Available {text:"x".repeat(256*1024)};
+        provider.push(Publication {result:PrSuccess::Page {collection:collection(vec![])}.into(),grants:vec![Grant::new(Resource::Anchor {authority:anchor})]});
+        let page=response(&f.main,"pr_page",json!({"entryId":f.entry,"sessionId":opened["sessionId"],"collection":"timeline","cursor":null}));
+        if page["code"]=="resource_limit" {limited=true;break;}
+        assert_eq!(page["kind"],"page","{page}");
+    }
+    assert!(limited,"native excerpts must be bounded even when public pages contain no prose");
+    assert_eq!(response(&f.main,"pr_release",json!({"entryId":f.entry,"sessionId":opened["sessionId"]}))["kind"],"released");
+}
+
+#[test]
+fn github_host_discussion_grants_must_match_the_published_pr_version() {
+    let provider=Provider::new();let f=fixture(Some(provider.clone()));let opened=open_review(&f,&provider);
+    for change_identity in [true,false] {
+        let mut authority=fixture_authority::commit();
+        if change_identity {authority.identity.number=43;} else {authority.version.head_oid=Some("c".repeat(40));}
+        let grant=Grant::new(Resource::Commit {authority,parent_count:2});let id=grant.id().to_owned();
+        let item=Item::Commit {commit_id:id.clone(),oid:"b".repeat(40),title:"Fixture".into(),parent_count:2,authored_at:None,committed_at:None};
+        provider.push(Publication {result:PrSuccess::Page {collection:collection(vec![item])}.into(),grants:vec![grant]});
+        assert_eq!(response(&f.main,"pr_page",page_body(&f,&opened))["code"],"invalid_output");
+        assert_eq!(response(&f.main,"pr_compare",json!({"entryId":f.entry,"sessionId":opened["sessionId"],"selection":{"kind":"commit","commitId":id,"parentIndex":0}}))["code"],"stale_context");
+    }
 }

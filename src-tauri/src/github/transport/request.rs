@@ -2,6 +2,9 @@
 use serde_json::json;
 use super::{PrCode, PAGE_SIZE};
 
+#[path = "queries.rs"]
+mod queries;
+
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Connection { Commits, Timeline, Threads, ThreadComments { thread_id: String }, Reviewers, Labels }
 
@@ -13,6 +16,7 @@ pub(crate) enum GhRead {
     ReadViewer,
     ReadRepository { owner: String, repository: String },
     ListPulls { owner: String, repository: String, head: Option<String>, page: u32 },
+    ReadOverview { owner: String, repository: String, number: u64 },
     ReadPull { owner: String, repository: String, number: u64 },
     ReadConnection { owner: String, repository: String, number: u64, connection: Connection, cursor: Option<String> },
     ReadCommit { owner: String, repository: String, oid: String, page: u32 },
@@ -30,7 +34,7 @@ pub(super) fn build(read: &GhRead) -> Result<CommandInput, PrCode> {
     }
     let (owner, repository) = match read {
         GhRead::ReadRepository { owner, repository } | GhRead::ListPulls { owner, repository, .. } |
-        GhRead::ReadPull { owner, repository, .. } | GhRead::ReadConnection { owner, repository, .. } |
+        GhRead::ReadOverview { owner, repository, .. } | GhRead::ReadPull { owner, repository, .. } | GhRead::ReadConnection { owner, repository, .. } |
         GhRead::ReadCommit { owner, repository, .. } | GhRead::ReadPullFiles { owner, repository, .. } => (owner, repository),
         _ => unreachable!(),
     };
@@ -44,6 +48,10 @@ pub(super) fn build(read: &GhRead) -> Result<CommandInput, PrCode> {
             let mut endpoint = format!("{base}/pulls?state=open&per_page={PAGE_SIZE}&page={page}");
             if let Some(head) = head { validate_variable(head, 1024)?; endpoint.push_str(&format!("&head={}", encode(head))); }
             endpoint
+        }
+        GhRead::ReadOverview { number, .. } => {
+            validate_number(*number)?;
+            return graphql(&queries::overview(), json!({"owner":owner,"repo":repository,"number":number}));
         }
         GhRead::ReadPull { number, .. } => { validate_number(*number)?; format!("{base}/pulls/{number}") }
         GhRead::ReadPullFiles { number, page, .. } => {
@@ -59,20 +67,11 @@ pub(super) fn build(read: &GhRead) -> Result<CommandInput, PrCode> {
             validate_number(*number)?;
             if let Some(cursor) = cursor { validate_variable(cursor, 4096)?; }
             let mut variables = json!({"owner":owner,"repo":repository,"number":number,"cursor":cursor,"count":PAGE_SIZE});
-            let field = match connection {
-                Connection::Commits => "commits(first:$count,after:$cursor){totalCount pageInfo{hasNextPage endCursor} nodes{commit{oid message committedDate parents(first:100){nodes{oid}}}}}",
-                Connection::Timeline => "timelineItems(first:$count,after:$cursor){totalCount pageInfo{hasNextPage endCursor} nodes{__typename ... on IssueComment{id body createdAt updatedAt url author{login}} ... on PullRequestReview{id body submittedAt state url author{login}}}}",
-                Connection::Threads => "reviewThreads(first:$count,after:$cursor){totalCount pageInfo{hasNextPage endCursor} nodes{id path line originalLine diffSide isResolved isOutdated}}",
-                Connection::Reviewers => "reviewRequests(first:$count,after:$cursor){totalCount pageInfo{hasNextPage endCursor} nodes{requestedReviewer{__typename ... on User{id login name} ... on Team{id name slug}}}}",
-                Connection::Labels => "labels(first:$count,after:$cursor){totalCount pageInfo{hasNextPage endCursor} nodes{id name color}}",
-                Connection::ThreadComments { thread_id } => {
-                    validate_variable(thread_id, 1024)?;
-                    variables = json!({"id":thread_id,"cursor":cursor,"count":PAGE_SIZE});
-                    return graphql("query GitViewThread($id:ID!,$cursor:String,$count:Int!){node(id:$id){... on PullRequestReviewThread{id comments(first:$count,after:$cursor){totalCount pageInfo{hasNextPage endCursor} nodes{id body createdAt updatedAt url diffHunk author{login}}}}}}", variables);
-                }
-            };
-            // Only a compile-time selected field is composed; all provider data is JSON variables.
-            return graphql(&format!("query GitViewConnection($owner:String!,$repo:String!,$number:Int!,$cursor:String,$count:Int!){{repository(owner:$owner,name:$repo){{pullRequest(number:$number){{{field}}}}}}}"), variables);
+            if let Connection::ThreadComments { thread_id } = connection {
+                validate_variable(thread_id, 1024)?;
+                variables = json!({"id":thread_id,"cursor":cursor,"count":PAGE_SIZE});
+            }
+            return graphql(&queries::connection(connection), variables);
         }
         _ => unreachable!(),
     };
@@ -102,3 +101,7 @@ fn validate_page(page: u32) -> Result<(), PrCode> { if page == 0 { Err(PrCode::I
 fn encode(value: &str) -> String {
     value.bytes().map(|b| if b.is_ascii_alphanumeric() || b"-_.~".contains(&b) { (b as char).to_string() } else { format!("%{b:02X}") }).collect()
 }
+
+#[cfg(test)]
+#[path = "../../../tests/unit/github_queries.rs"]
+mod unit_tests;

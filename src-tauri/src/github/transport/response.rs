@@ -38,7 +38,12 @@ pub(super) fn classify_auth(bytes: &[u8]) -> Result<(), PrCode> {
     }
 }
 
+#[cfg(test)]
 pub(super) fn parse_api(bytes: &[u8], success: bool, now_seconds: u64) -> Result<ApiResponse, Failure> {
+    parse_read_api(bytes, success, now_seconds, None)
+}
+
+pub(super) fn parse_read_api(bytes: &[u8], success: bool, now_seconds: u64, read: Option<&super::GhRead>) -> Result<ApiResponse, Failure> {
     if bytes.is_empty() && !success { return Err(PrCode::Network.failure()); }
     let text = std::str::from_utf8(bytes).map_err(|_| PrCode::InvalidOutput.failure())?;
     let (header, body) = text.split_once("\r\n\r\n").or_else(|| text.split_once("\n\r\n")).or_else(|| text.split_once("\n\n"))
@@ -86,19 +91,20 @@ pub(super) fn parse_api(bytes: &[u8], success: bool, now_seconds: u64) -> Result
         let mime = content_type.split(';').next().unwrap_or_default().trim();
         if mime != "application/json" && mime != "application/vnd.github+json" { return Err(PrCode::InvalidOutput.failure()); }
     }
-    let body = json(body.as_bytes()).map_err(PrCode::failure)?;
+    let mut body = json(body.as_bytes()).map_err(PrCode::failure)?;
+    let projected = super::partial::project(&mut body, read);
     if let Some(errors) = body.get("errors") {
         let errors = errors.as_array().filter(|v| !v.is_empty()).ok_or_else(|| PrCode::InvalidOutput.failure())?;
         // Authentication/access loss must invalidate private authority regardless of error order.
-        let code = errors.iter().map(|error| {
-            let kind = error.get("type").or_else(|| error.pointer("/extensions/type")).and_then(Value::as_str);
+        let code = errors.iter().flat_map(|error| [error.get("type"), error.pointer("/extensions/type"), error.pointer("/extensions/code")]).flatten().map(|kind| {
+            let kind = kind.as_str();
             match kind { Some("UNAUTHORIZED" | "UNAUTHENTICATED") => (5,PrCode::AuthRequired),
                 Some("FORBIDDEN") => (4,PrCode::AccessDenied), Some("NOT_FOUND") => (3,PrCode::RepositoryUnavailable),
                 Some("RATE_LIMITED") => (1,PrCode::RateLimited), _ => (2,PrCode::InvalidOutput) }
         }).max_by_key(|(priority,_)| *priority).map(|(_,code)|code).unwrap_or(PrCode::InvalidOutput);
         let mut failure = code.failure(); if code == PrCode::RateLimited { failure.retry_at = rate.retry_at; } return Err(failure);
     }
-    if !success { return Err(PrCode::InvalidOutput.failure()); }
+    if !success && !projected { return Err(PrCode::InvalidOutput.failure()); }
     let has_next = headers.get("link").map(|value| pagination(value)).transpose().map_err(PrCode::failure)?.unwrap_or(false);
     Ok(ApiResponse { status, rate, body, has_next })
 }

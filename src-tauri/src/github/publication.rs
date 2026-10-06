@@ -49,10 +49,9 @@ fn valid_comparison(comparison: &Comparison, lookup: &Lookup<'_>) -> bool {
 }
 fn valid_item(item: &Item, collection: CollectionKind, lookup: &Lookup<'_>) -> bool {
     match (collection, item) {
-        (CollectionKind::Commits, Item::Commit { commit_id, parent_count, .. }) => matches!(lookup(commit_id), Some(Resource::Commit { parent_count: count, .. }) if count == *parent_count),
+        (CollectionKind::Commits, Item::Commit { commit_id, oid, parent_count, .. }) => matches!(lookup(commit_id), Some(Resource::Commit { authority, parent_count: count }) if count == *parent_count && authority.oid == *oid),
         (CollectionKind::Timeline, Item::Timeline { event }) => link(event.link_id.as_deref(), lookup),
-        (CollectionKind::Threads, Item::Thread { thread }) => matches!(lookup(&thread.id), Some(Resource::Thread { .. }))
-            && thread.anchor_id.as_ref().is_none_or(|id| matches!(lookup(id), Some(Resource::Anchor { .. })))
+        (CollectionKind::Threads, Item::Thread { thread }) => valid_thread_anchor(thread, lookup)
             && cursor(thread.comments.next_cursor.as_deref(), None, Some(CollectionKind::ThreadComments), Some(&thread.id), lookup)
             && link(thread.link_id.as_deref(), lookup),
         (CollectionKind::ThreadComments, Item::Comment { .. }) | (CollectionKind::Reviewers, Item::Reviewer { .. }) | (CollectionKind::Labels, Item::Label { .. }) => true,
@@ -76,4 +75,20 @@ fn association(observation: &Association, lookup: &Lookup<'_>) -> bool {
                 && candidate.identity.number == public.number && candidate.identity.base_repository_id == public.base_repository.id
                 && candidate.base_ref == public.base_ref && candidate.head_ref == public.head_ref
                 && candidate.head_repository.as_ref().map(|r| &r.id) == public.head_repository.as_ref().map(|r| &r.id)))
+}
+
+// An anchor must describe this exact thread, not merely another grant in its PR session.
+fn valid_thread_anchor(thread: &Thread, lookup: &Lookup<'_>) -> bool {
+    let Some(Resource::Thread { authority: owner }) = lookup(&thread.id) else { return false; };
+    thread.anchor_id.as_ref().is_none_or(|id| {
+        let Some(Resource::Anchor { authority }) = lookup(id) else { return false; };
+        authority.thread_provider_id == owner.provider_id
+            && authority.current.iter().chain(&authority.original).all(|position|
+                thread.path.as_deref() == Some(position.path.as_str()) && thread.side == Some(position.side))
+            && authority.current.as_ref().is_none_or(|position|
+                thread.current_commit_oid.as_deref() == Some(position.commit_oid.as_str())
+                    && thread.line == Some(position.line) && thread.start_line == position.start_line)
+            && authority.original.as_ref().is_none_or(|position|
+                thread.original_commit_oid.as_deref() == Some(position.commit_oid.as_str()))
+    })
 }

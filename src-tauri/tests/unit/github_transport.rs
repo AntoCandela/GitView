@@ -143,3 +143,24 @@ fn github_pagination_preserves_next_page_even_for_an_empty_body() {
     assert!(!api(200,"","[]",true).unwrap_or_else(|_|panic!()).has_next);
     assert!(api(200,"Link: <https://api.github.com/repos/o/r/pulls?page=2>; rel=\"next\"\r\nLink: <https://api.github.com/repos/o/r/pulls?page=3>; rel=\"last\"\r\n","[]",true).is_err());
 }
+
+#[test]
+fn github_optional_projection_never_accepts_identity_access_or_wrong_read_errors() {
+    let overview = GhRead::ReadOverview { owner:"owner".into(), repository:"repo".into(), number:1 };
+    for (path, extension, expected) in [
+        (serde_json::json!(["repository","pullRequest","headRefOid"]), serde_json::json!({}), PrCode::InvalidOutput),
+        (serde_json::json!(["repository","pullRequest","body"]), serde_json::json!({"code":"UNAUTHENTICATED"}), PrCode::AuthRequired),
+        (serde_json::json!(["repository","pullRequest","body"]), serde_json::json!({"code":"FORBIDDEN"}), PrCode::AccessDenied),
+        (serde_json::json!(["repository","pullRequest","body"]), serde_json::json!({"code":"RATE_LIMITED"}), PrCode::RateLimited),
+    ] {
+        let body = serde_json::json!({"data":{"repository":{"pullRequest":{"body":"private","headRefOid":"untrusted"}}}, "errors":[{"path":path,"extensions":extension}]});
+        let framed = format!("HTTP/2.0 200 OK\n\n{body}");
+        assert_eq!(code(response::parse_read_api(framed.as_bytes(),false,100,Some(&overview))),expected);
+    }
+    let body = serde_json::json!({"data":{"repository":{"pullRequest":{"body":"untrusted"}}},"errors":[{"path":["repository","pullRequest","body"]}]});
+    let framed = format!("HTTP/2.0 200 OK\n\n{body}");
+    assert_eq!(code(response::parse_read_api(framed.as_bytes(),false,100,Some(&GhRead::ReadViewer))),PrCode::InvalidOutput);
+    let accepted = response::parse_read_api(framed.as_bytes(),false,100,Some(&overview)).unwrap_or_else(|_|panic!("optional failure should be isolated"));
+    assert!(accepted.body.pointer("/data/repository/pullRequest/body").unwrap().is_null());
+    assert!(accepted.body.get("errors").is_none());
+}

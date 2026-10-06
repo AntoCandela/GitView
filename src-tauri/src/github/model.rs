@@ -165,12 +165,17 @@ pub enum TimelineKind { Opened, DraftChanged, Commit, ForcePushed, BaseChanged, 
 #[serde(tag = "kind", rename_all = "snake_case", rename_all_fields = "camelCase")]
 pub enum TimelineDetails {
     Activity { body: Prose }, Entity { entity_id: String },
+    Comment { comment: Comment }, DraftChanged { draft: bool },
+    ForcePushed { is_base: bool, before_oid: Option<String>, after_oid: Option<String> },
+    BaseChanged { previous_ref: Option<String>, current_ref: Option<String> },
+    ReviewRequest { reviewer: Option<Reviewer>, removed: bool },
     Commit { commit_oid: String, authored_at: Option<String>, committed_at: Option<String> },
     Review { review_id: String, state: String, body: Prose, thread_ids: Vec<String> },
 }
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Thread {
+    pub review_id: Option<String>,
     pub id: String, pub anchor_id: Option<String>, pub resolved: Option<bool>, pub outdated: Option<bool>, pub path: Option<String>,
     pub original_commit_oid: Option<String>, pub current_commit_oid: Option<String>, pub side: Option<Side>,
     pub start_line: Option<u32>, pub line: Option<u32>, pub diff_excerpt: Prose, pub comments: Collection<Comment>, pub link_id: Option<String>,
@@ -205,7 +210,7 @@ pub struct PatchRow { pub kind: PatchRowKind, pub text: String, pub old_line: Op
 #[derive(Clone, Copy, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PatchRowKind { Context, Add, Remove }
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Side { Old, New }
 #[derive(Clone, Debug, Serialize)]

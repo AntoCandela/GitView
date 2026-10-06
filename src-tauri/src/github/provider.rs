@@ -1,5 +1,7 @@
-//! Composes verified branch association reads without enabling unfinished PR review operations.
+//! Composes verified GitHub association and review reads under native service authority.
 //! The service owns grants and choices; this provider retains no second authority registry.
+mod review;
+
 use std::{future::Future, pin::Pin, sync::Arc};
 use tokio::sync::watch;
 
@@ -20,13 +22,13 @@ use super::{
 };
 use crate::workspace::SelectedContext;
 
-/// Opt-in native composition. Application defaults remain unconfigured until review reads exist.
-pub(crate) struct AssociationProvider {
+/// Opt-in native composition. Application defaults remain unconfigured until workbench composition is connected.
+pub(crate) struct GithubProvider {
     coordinator: Arc<PrDemandCoordinator>,
     resolver: AssociationResolver,
 }
 
-impl AssociationProvider {
+impl GithubProvider {
     pub(crate) fn new(coordinator: Arc<PrDemandCoordinator>) -> Self {
         Self {
             resolver: AssociationResolver::new(coordinator.clone()),
@@ -114,7 +116,7 @@ impl AssociationProvider {
     }
 }
 
-impl PullRequestProvider for AssociationProvider {
+impl PullRequestProvider for GithubProvider {
     fn account(&self) -> Option<HostAccount> {
         self.coordinator.account()
     }
@@ -162,6 +164,7 @@ impl PullRequestProvider for AssociationProvider {
                         result: PrResult::Failure(failure),
                         grants: Vec::new(),
                     }),
+                PrRequest::Open { .. } | PrRequest::Refresh { .. } | PrRequest::Page { .. } => self.review(&request).await.unwrap_or_else(|failure| Publication { result:PrResult::Failure(failure),grants:Vec::new() }),
                 _ => PrCode::IntegrationUnavailable.into(),
             }
         })

@@ -11,6 +11,7 @@ use crate::{application::RepositoryService, workspace::SelectedContext};
 
 const MAX_HANDLES: usize = 512;
 const MAX_SESSIONS: usize = 32;
+const MAX_RESOURCE_BYTES: usize = 16 * 1024 * 1024;
 const MAX_PUBLICATION_BYTES: usize = 4 * 1024 * 1024;
 
 /// Native account observation; no credential material is retained or sent to the renderer.
@@ -19,14 +20,17 @@ pub struct HostAccount { pub host: GithubHost, pub provider_user_id: String, pub
 
 /// Native-only resource targets. Providers verify their meaning before issuing a grant.
 #[derive(Clone, Debug)]
+pub enum CursorTarget { Discussion(Box<super::discussion::CursorAuthority>), Comparison(String) }
+
+#[derive(Clone, Debug)]
 pub enum Resource {
     Association { binding: Box<AssociationBinding> },
     Candidate { association_id: String, candidate: super::association::VerifiedCandidate },
     Pr { identity: PrIdentity, repository: GithubRepository },
     Comparison,
     File { comparison_id: String, key: String },
-    Cursor { comparison_id: Option<String>, collection: Option<CollectionKind>, thread_id: Option<String>, key: String },
-    Thread { key: String }, Commit { key: String, parent_count: u32 }, Anchor { key: String }, Link { url: String },
+    Cursor { comparison_id: Option<String>, collection: Option<CollectionKind>, thread_id: Option<String>, target: CursorTarget },
+    Thread { authority: Box<super::discussion::ThreadAuthority> }, Commit { authority: Box<super::discussion::CommitAuthority>, parent_count: u32 }, Anchor { authority: Box<super::discussion::AnchorAuthority> }, Link { url: String },
 }
 
 /// Native association evidence and app-local choices; never deserialized from renderer input.
@@ -48,12 +52,13 @@ impl Grant {
 /// Version evidence captured from the published snapshot, not reconstructed from moving refs.
 #[derive(Clone, Debug)]
 pub struct SnapshotEvidence {
+    pub repository: GithubRepository,
     pub base_oid: Option<String>, pub head_oid: Option<String>, pub lifecycle: Lifecycle,
     pub updated_at: String, pub observed_at: u64,
 }
 impl SnapshotEvidence {
     fn capture(snapshot: &Snapshot) -> Self {
-        Self { base_oid: snapshot.overview.base_oid.clone(), head_oid: snapshot.overview.head_oid.clone(),
+        Self { repository: snapshot.overview.base_repository.clone(), base_oid: snapshot.overview.base_oid.clone(), head_oid: snapshot.overview.head_oid.clone(),
             lifecycle: snapshot.overview.lifecycle, updated_at: snapshot.overview.updated_at.clone(), observed_at: snapshot.observed_at }
     }
 }
@@ -76,6 +81,7 @@ impl From<PrCode> for Publication {
 /// Captured native repository and resolved resources, never a process-wide working directory.
 /// Providers must use fixed operations and honor cancellation by dropping/reaping owned work.
 pub struct ProviderRequest {
+    pub base_repository: Option<GithubRepository>,
     pub repository: SelectedContext, pub context: PrContext, pub request: PrRequest, pub resources: Vec<Grant>,
     pub identity: Option<PrIdentity>, pub review: Option<PublishedReview>, pub comparison: Option<PublishedComparison>,
 }
@@ -174,7 +180,8 @@ impl PullRequestService {
             Ok(Admission::Read(ticket)) => ticket,
             Err(code) => return code.into(),
         };
-        let provider_request = ProviderRequest { repository: ticket.repository.clone(), context: ticket.context.clone(), request: ticket.request.clone(), resources: ticket.resources.clone(), identity: ticket.identity.clone(), review: ticket.review.clone(), comparison: ticket.comparison.clone() };
+        let base_repository = ticket.review.as_ref().map(|review| review.snapshot.repository.clone()).or_else(|| ticket.resources.iter().find_map(|grant| match &grant.resource { Resource::Pr { repository, .. } => Some(repository.clone()), _ => None }));
+        let provider_request = ProviderRequest { base_repository, repository: ticket.repository.clone(), context: ticket.context.clone(), request: ticket.request.clone(), resources: ticket.resources.clone(), identity: ticket.identity.clone(), review: ticket.review.clone(), comparison: ticket.comparison.clone() };
         let mut cancellation = ticket.cancel.clone();
         let mut context_cancel = ticket.context_cancel.clone();
         let mut comparison_cancel = ticket.comparison_cancel.clone();
@@ -262,7 +269,7 @@ impl PullRequestService {
             }
             let grant = Grant::new(Resource::Pr { identity: candidate.identity, repository: candidate.base_repository });
             let id = grant.id.clone();
-            if registry.handles.len() >= MAX_HANDLES { return Err(PrCode::ResourceLimit); }
+            if registry.handles.len() >= MAX_HANDLES || registry.retained_bytes().saturating_add(resource_bytes(&grant.resource)) > MAX_RESOURCE_BYTES { return Err(PrCode::ResourceLimit); }
             registry.handles.insert(id.clone(), Handle { active: true, comparison: None, context, session: None, grant });
             return Ok(Admission::Immediate(PrSuccess::Chosen { pr_id: id }.into()));
         }
@@ -341,6 +348,7 @@ impl PullRequestService {
         }
         if !compatible(&ticket.request, &publication.result) { return PrCode::InvalidOutput.into(); }
         if publication.grants.len() + registry.handles.len() > MAX_HANDLES
+            || registry.retained_bytes().saturating_add(publication.grants.iter().map(|g| resource_bytes(&g.resource)).sum::<usize>()) > MAX_RESOURCE_BYTES
             || publication.grants.iter().any(|grant| registry.handles.contains_key(&grant.id) || !valid_resource(&grant.resource))
             || serde_json::to_vec(&publication.result).map_or(true, |bytes| bytes.len() > MAX_PUBLICATION_BYTES) {
             return PrCode::ResourceLimit.into();
@@ -393,6 +401,7 @@ impl PullRequestService {
 }
 
 impl Registry {
+    fn retained_bytes(&self) -> usize { self.handles.values().map(|h| resource_bytes(&h.grant.resource)).sum() }
     fn context_lifetime(&mut self, context: &PrContext) -> Result<watch::Receiver<bool>, PrCode> {
         if self.contexts.get(&context.entry_id).is_some_and(|current| current.context != *context) {
             self.invalidate_entry(&context.entry_id);
@@ -407,6 +416,27 @@ impl Registry {
     fn valid_publication(&self, ticket: &Ticket, publication: &Publication) -> bool {
         let mut ids = std::collections::HashSet::new();
         if !publication.grants.iter().all(|grant| ids.insert(grant.id.as_str())) { return false; }
+        let evidence = match &publication.result {
+            PrResult::Success(PrSuccess::Snapshot { snapshot }) => Some(SnapshotEvidence::capture(snapshot)),
+            _ => ticket.review.as_ref().map(|r| r.snapshot.clone()),
+        };
+        for grant in &publication.grants {
+            let binding = match &grant.resource {
+                Resource::Cursor { comparison_id, collection, thread_id, target: CursorTarget::Discussion(authority) } => {
+                    if comparison_id.is_some() || *collection != Some(authority.page.collection) || *thread_id != authority.page.thread_id { return false; }
+                    Some((&authority.page.identity, &authority.page.version))
+                },
+                Resource::Thread { authority } => Some((&authority.identity, &authority.version)),
+                Resource::Commit { authority, .. } => Some((&authority.identity, &authority.version)),
+                Resource::Anchor { authority } => Some((&authority.identity, &authority.version)),
+                _ => None,
+            };
+            if let Some((identity, version)) = binding {
+                let Some(evidence) = evidence.as_ref() else { return false; };
+                let expected = super::discussion::PrVersion { base_oid:evidence.base_oid.clone(),head_oid:evidence.head_oid.clone(),lifecycle:evidence.lifecycle,updated_at:evidence.updated_at.clone() };
+                if ticket.identity.as_ref() != Some(identity) || !super::discussion::same_version(version,&expected,true) { return false; }
+            }
+        }
         let lookup = |id: &str| {
             publication.grants.iter().find(|grant| grant.id == id).map(|grant| grant.resource.clone()).or_else(|| {
                 if matches!(ticket.request, PrRequest::Open { .. } | PrRequest::Refresh { .. }) { return None; }
@@ -486,7 +516,7 @@ impl Registry {
                 }
             },
             PrRequest::Compare { selection, .. } => if let ComparisonSelection::Commit { commit_id, parent_index } = selection {
-                resolve(commit_id, &|r| matches!(r, Resource::Commit { parent_count, .. } if parent_index.is_none_or(|i| i < *parent_count)))?;
+                resolve(commit_id, &|r| matches!(r, Resource::Commit { authority, parent_count } if authority.parents_complete && parent_index.is_none_or(|i| i < *parent_count)))?;
             },
             PrRequest::FilesPage { comparison_id, cursor } => {
                 resolve(comparison_id, &|r| matches!(r, Resource::Comparison))?;
@@ -527,7 +557,12 @@ fn valid_link(value: &str) -> bool {
 fn valid_identity(identity: &PrIdentity) -> bool { identity.host == "github.com" && !identity.base_repository_id.is_empty() && identity.base_repository_id.len() <= 256 && identity.number > 0 }
 fn valid_resource(resource: &Resource) -> bool {
     match resource {
-        Resource::File { key, .. } | Resource::Cursor { key, .. } | Resource::Thread { key } | Resource::Commit { key, .. } | Resource::Anchor { key } => key.len() <= 4096,
+        Resource::File { key, .. } => key.len() <= 4096,
+        Resource::Cursor { target: CursorTarget::Comparison(key), comparison_id, collection, thread_id } => key.len() <= 4096 && comparison_id.is_some() && collection.is_none() && thread_id.is_none(),
+        Resource::Cursor { target: CursorTarget::Discussion(authority), .. } => authority.validate(),
+        Resource::Thread { authority } => authority.validate(),
+        Resource::Commit { authority, parent_count } => authority.validate() && *parent_count as usize >= authority.parents.len() && (!authority.parents_complete || *parent_count as usize == authority.parents.len()),
+        Resource::Anchor { authority } => authority.validate(),
         Resource::Candidate { candidate, .. } => valid_identity(&candidate.identity) && candidate.identity.base_repository_id == candidate.base_repository.id,
         Resource::Pr { identity, repository } => valid_identity(identity) && identity.base_repository_id == repository.id,
         Resource::Association { binding } => binding.known.len() <= 32,
@@ -564,3 +599,20 @@ fn stamp_result(result: &mut PrResult, session: Option<&PrSession>) {
 #[cfg(test)]
 #[path = "../../tests/unit/github_service.rs"]
 mod unit_tests;
+
+#[cfg(test)]
+#[path = "../../tests/support/github_authority.rs"]
+pub(crate) mod fixture_authority;
+
+// Conservative native retention accounting complements the renderer publication byte bound.
+// Fixed allowances cover identity/version/routing and allocator metadata for bounded descriptors.
+fn resource_bytes(resource:&Resource)->usize {
+    match resource {
+        Resource::Association { .. } => 128*1024,
+        Resource::Candidate { .. } => 16*1024,
+        Resource::Cursor { target:CursorTarget::Discussion(c), .. } => 8192+c.seen_ids.capacity()*std::mem::size_of::<String>()+c.seen_ids.iter().map(String::capacity).sum::<usize>(),
+        Resource::Anchor { authority } => 16*1024+match &authority.excerpt {Prose::Available{text}|Prose::Limited{text}=>text.capacity(),_=>0},
+        Resource::Commit { authority, .. } => 4096+authority.parents.capacity()*std::mem::size_of::<String>()+authority.parents.iter().map(String::capacity).sum::<usize>(),
+        _ => 8192,
+    }
+}

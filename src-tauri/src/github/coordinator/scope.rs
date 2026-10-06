@@ -86,6 +86,7 @@ impl DemandScope {
         }
         let (owner, repo, extra) = match read {
             GhRead::ReadRepository { owner, repository }
+            | GhRead::ReadOverview { owner, repository, .. }
             | GhRead::ReadPull {
                 owner, repository, ..
             }

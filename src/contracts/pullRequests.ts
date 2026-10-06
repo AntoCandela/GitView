@@ -58,10 +58,15 @@ export interface PrTimelineItem {
     | 'review_submitted' | 'review_dismissed' | 'comment' | 'closed' | 'reopened' | 'merged' | 'unsupported';
   occurredAt: string | null; actor: PrPerson | null; providerOrder: number; linkId: string | null;
   details: { kind: 'activity'; body: PrProse } | { kind: 'entity'; entityId: string }
+    | { kind: 'comment'; comment: PrComment } | { kind: 'draft_changed'; draft: boolean }
+    | { kind: 'force_pushed'; isBase: boolean; beforeOid: string | null; afterOid: string | null }
+    | { kind: 'base_changed'; previousRef: string | null; currentRef: string | null }
+    | { kind: 'review_request'; reviewer: PrReviewer | null; removed: boolean }
     | { kind: 'commit'; commitOid: string; authoredAt: string | null; committedAt: string | null }
     | { kind: 'review'; reviewId: string; state: string; body: PrProse; threadIds: string[] };
 }
 export interface PrThread {
+  reviewId: string | null;
   id: string; anchorId: string | null; resolved: boolean | null; outdated: boolean | null; path: string | null;
   originalCommitOid: string | null; currentCommitOid: string | null; side: 'old' | 'new' | null;
   startLine: number | null; line: number | null; diffExcerpt: PrProse; comments: PrCollection<PrComment>; linkId: string | null;

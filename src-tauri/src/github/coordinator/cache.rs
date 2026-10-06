@@ -61,7 +61,7 @@ pub(super) fn decode(
                 .ok_or_else(|| PrCode::InvalidOutput.failure())?;
             (items, more)
         }
-        GhRead::ReadPull { .. } | GhRead::ReadRepository { .. } if body.is_object() => (1, false),
+        GhRead::ReadOverview { .. } | GhRead::ReadPull { .. } | GhRead::ReadRepository { .. } if body.is_object() => (1, false),
         _ => return Err(PrCode::InvalidOutput.failure()),
     };
     if items > 100 {

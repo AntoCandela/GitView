@@ -4,6 +4,7 @@
 mod process;
 mod request;
 mod response;
+mod partial;
 
 use std::ffi::OsString;
 use std::sync::{Arc, OnceLock};
@@ -12,7 +13,9 @@ use tokio::sync::Semaphore;
 use super::model::{Failure, PrCode};
 pub(crate) use request::{Connection, GhRead};
 pub(crate) use response::ApiResponse;
-use response::{classify_auth, classify_version, parse_api};
+use response::{classify_auth, classify_version, parse_read_api};
+#[cfg(test)]
+use response::parse_api;
 
 const STDOUT_LIMIT: usize = 4 * 1024 * 1024;
 const STDERR_LIMIT: usize = 1024 * 1024;
@@ -67,7 +70,7 @@ impl GhReadAdapter {
             }
             _ => {
                 let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
-                Ok(GhReply::Api(parse_api(&output.stdout, output.success, now)?))
+                Ok(GhReply::Api(parse_read_api(&output.stdout, output.success, now, Some(&read))?))
             }
         }
     }
