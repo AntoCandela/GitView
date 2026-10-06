@@ -193,7 +193,7 @@ pub(super) async fn upstream_files<R: tauri::Runtime>(
 ) -> Result<CommitFilesResult, &'static str> {
     require_main_window(&window)?;
     let context = ipc_context(&service, OperationKind::UpstreamFiles, operation_id.as_deref())?;
-    Ok(traced_ipc(context, service.upstream_files(&entry_id, &token)).await)
+    traced_ipc(&service, context, service.upstream_files(&entry_id, &token)).await
 }
 
 #[tauri::command]
