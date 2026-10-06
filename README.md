@@ -8,14 +8,14 @@ GitView is a local desktop workspace for inspecting Git repositories: live chang
 
 - Opens existing working trees, linked worktrees and bare repositories; saves repository order, app-only display names and selection locally.
 - Monitors working-tree changes and rereads the selected file approximately one second after each completed scan/read. Staged compares HEAD → index; unstaged compares index → working file; untracked has an absent old side. Switching categories never stages a file.
-- Browses locally known commit ancestry in 100-commit pages, with branch/tag labels, merge lanes and explicit shallow-history boundaries. **Refresh history** captures newer refs; browsing does not fetch.
+- Browses locally known commit ancestry in 100-commit pages, with branch/tag labels, merge lanes and explicit shallow-history boundaries. **Opening or refreshing history** fetches the selected local branch’s configured upstream, then captures pinned refs. Compact Incoming/Outgoing Changes nodes show nonzero reachability counts and open aggregate comparisons in the existing diff viewer. Pagination does not fetch.
 - Expands a commit's changed-file tree. Select a committed file for a parent → commit comparison; merges offer a parent selector, and verified root commits compare with the empty tree. Selecting a working-file row returns to live comparison.
 - Offers six workbench arrangements, pointer/keyboard resizing and **Classic**, **Material** and **Catppuccin Latte** file-icon themes.
 - Reads **Changes** or **Full file** with aligned side-by-side source, **Scroll / Wrap** long-line controls, inline change emphasis and locally bundled Shiki syntax styles.
 - Offers Brazilian Portuguese, European Portuguese, Italian, Spanish, US English and British English for app-owned controls and explanations, with a persistent **Language** selector and native **System** preference matching.
 - Offers an opt-in macOS menu-bar companion for the same admitted repositories and live comparisons, with acknowledged **Open in GitView** handoff.
 
-Git inspection does not checkout, stage, commit, fetch, push, delete repository files or change Git configuration. GitView **does mutate its own app state**: opening/selecting worktrees, renaming labels and removing sidebar entries update private workspace storage; diagnostics and presentation preferences also write local data. It does not install or bundle Git, and it preserves Git's safe-directory checks.
+History loading fetches only the configured remote-tracking branch; a failed fetch retains locally known history with stale/unavailable feedback. Other inspection remains read-only. GitView does not checkout, stage, commit, pull, merge, rebase, push, delete working files or change Git configuration. GitView **does mutate its own app state**: opening/selecting worktrees, renaming labels and removing sidebar entries update private workspace storage; diagnostics and presentation preferences also write local data. It does not install or bundle Git, and it preserves Git's safe-directory checks.
 
 ## Run from source
 

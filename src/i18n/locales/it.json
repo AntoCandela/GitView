@@ -396,5 +396,21 @@
   "diff.source.proportions": "{old, number}% precedente, {new, number}% nuovo",
   "diff.source.lastVerified": "Ultimo confronto del file verificato",
   "diff.source.readOnly": "Confronto del file in sola lettura",
-  "diff.source.description": "{mode, select, full {Istantanee complete e verificate dei file.} other {Solo blocchi modificati, non file completi.}} Lo scorrimento verticale è sincronizzato; {lineMode, select, wrap {le righe lunghe vanno a capo in ciascun riquadro.} other {ogni riquadro del codice scorre orizzontalmente in modo indipendente.}}"
+  "diff.source.description": "{mode, select, full {Istantanee complete e verificate dei file.} other {Solo blocchi modificati, non file completi.}} Lo scorrimento verticale è sincronizzato; {lineMode, select, wrap {le righe lunghe vanno a capo in ciascun riquadro.} other {ogni riquadro del codice scorre orizzontalmente in modo indipendente.}}",
+  "history.upstream.incoming": "Modifiche in arrivo · {count, plural, one {# commit} other {# commit}}",
+  "history.upstream.outgoing": "Modifiche in uscita · {count, plural, one {# commit} other {# commit}}",
+  "history.upstream.incomingHint": "Modifiche sul ramo upstream rispetto all’antenato comune. Non fanno ancora parte del ramo locale.",
+  "history.upstream.outgoingHint": "Modifiche locali dall’antenato comune non ancora inviate all’upstream.",
+  "history.upstream.incomingFiles": "File modificati in arrivo",
+  "history.upstream.outgoingFiles": "File modificati in uscita",
+  "history.upstream.stale": "Fetch non riuscito. È mostrato l’ultimo stato upstream noto.",
+  "history.upstream.no_upstream": "Nessun upstream configurato",
+  "history.upstream.detached": "HEAD scollegato — confronto upstream non disponibile",
+  "history.upstream.unborn": "Ancora nessun commit — confronto upstream non disponibile",
+  "history.upstream.unavailable": "Confronto upstream non disponibile",
+  "history.upstream.synchronized": "Aggiornato rispetto a {upstream}",
+  "history.upstream.noBase": "Diff aggregato non disponibile: impossibile verificare un antenato comune univoco.",
+  "diff.endpoint.mergeBase": "Antenato comune {oid}{absent, select, true { (assente)} other {}}",
+  "diff.endpoint.incoming": "In arrivo {oid}{absent, select, true { (assente)} other {}}",
+  "diff.endpoint.outgoing": "In uscita {oid}{absent, select, true { (assente)} other {}}"
 }

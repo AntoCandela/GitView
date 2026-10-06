@@ -396,5 +396,21 @@
   "diff.source.proportions": "{old, number}% old, {new, number}% new",
   "diff.source.lastVerified": "Last verified file comparison",
   "diff.source.readOnly": "Read-only file comparison",
-  "diff.source.description": "{mode, select, full {Complete verified file snapshots.} other {Changed hunks only, not complete files.}} Vertical scrolling is shared; {lineMode, select, wrap {long source lines wrap within each pane.} other {each source pane scrolls horizontally independently.}}"
+  "diff.source.description": "{mode, select, full {Complete verified file snapshots.} other {Changed hunks only, not complete files.}} Vertical scrolling is shared; {lineMode, select, wrap {long source lines wrap within each pane.} other {each source pane scrolls horizontally independently.}}",
+  "history.upstream.incoming": "Incoming Changes · {count, plural, one {# commit} other {# commits}}",
+  "history.upstream.outgoing": "Outgoing Changes · {count, plural, one {# commit} other {# commits}}",
+  "history.upstream.incomingHint": "Changes on the upstream branch, compared with the common ancestor. These are not yet part of the local branch.",
+  "history.upstream.outgoingHint": "Local changes since the common ancestor that have not been pushed upstream.",
+  "history.upstream.incomingFiles": "Incoming changed files",
+  "history.upstream.outgoingFiles": "Outgoing changed files",
+  "history.upstream.stale": "Fetch failed. Showing last-known upstream state.",
+  "history.upstream.no_upstream": "No upstream configured",
+  "history.upstream.detached": "Detached HEAD — no upstream comparison",
+  "history.upstream.unborn": "No commits yet — no upstream comparison",
+  "history.upstream.unavailable": "Upstream comparison unavailable",
+  "history.upstream.synchronized": "Up to date with {upstream}",
+  "history.upstream.noBase": "Aggregate diff unavailable: a unique common ancestor could not be verified.",
+  "diff.endpoint.mergeBase": "Common ancestor {oid}{absent, select, true { (absent)} other {}}",
+  "diff.endpoint.incoming": "Incoming {oid}{absent, select, true { (absent)} other {}}",
+  "diff.endpoint.outgoing": "Outgoing {oid}{absent, select, true { (absent)} other {}}"
 }

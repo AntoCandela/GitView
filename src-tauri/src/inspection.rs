@@ -173,8 +173,19 @@ fn parse_worktrees(bytes: &[u8]) -> Result<Vec<(PathBuf, Option<String>)>, Histo
 
 pub(crate) async fn read_commit_files(process: &GitProcess, context: &SelectedContext, commit_oid: &str, parent_oid: Option<&str>) -> CommitFilesResult {
     let mut trace = OperationContext::current().map(|context| OperationTrace::new(context, Component::Git));
-    let result = read_files(process, context, commit_oid, parent_oid).await;
+    let result = read_files(process, context, commit_oid, parent_oid, false).await;
     let result = match result {
+        Ok(result) => result,
+        Err(FileReadError::Code(code)) => CommitFilesResult::failure(code),
+        Err(FileReadError::Encoding) => CommitFilesResult::Error { code: HistoryErrorCode::InvalidOutput, message: ENCODING_MESSAGE },
+    };
+    if let Some(trace) = &mut trace { trace.outcome(&result); }
+    result
+}
+/// Called only with endpoints resolved from the current history snapshot's opaque range.
+pub(crate) async fn read_range_files(process: &GitProcess, context: &SelectedContext, range: &crate::history::UpstreamRange) -> CommitFilesResult {
+    let mut trace = OperationContext::current().map(|context| OperationTrace::new(context, Component::Git));
+    let result = match read_files(process, context, &range.tip_oid, Some(&range.base_oid), true).await {
         Ok(result) => result,
         Err(FileReadError::Code(code)) => CommitFilesResult::failure(code),
         Err(FileReadError::Encoding) => CommitFilesResult::Error { code: HistoryErrorCode::InvalidOutput, message: ENCODING_MESSAGE },
@@ -184,7 +195,7 @@ pub(crate) async fn read_commit_files(process: &GitProcess, context: &SelectedCo
 }
 enum FileReadError { Code(HistoryErrorCode), Encoding }
 impl From<HistoryErrorCode> for FileReadError { fn from(code: HistoryErrorCode) -> Self { Self::Code(code) } }
-async fn read_files(process: &GitProcess, context: &SelectedContext, commit_oid: &str, parent_oid: Option<&str>) -> Result<CommitFilesResult, FileReadError> {
+async fn read_files(process: &GitProcess, context: &SelectedContext, commit_oid: &str, parent_oid: Option<&str>, range: bool) -> Result<CommitFilesResult, FileReadError> {
     reader::oid(commit_oid.as_bytes())?;
     if let Some(parent) = parent_oid { reader::oid(parent.as_bytes())?; }
     let deadline = ProbeDeadline::new();
@@ -193,7 +204,7 @@ async fn read_files(process: &GitProcess, context: &SelectedContext, commit_oid:
     let input = format!("{commit_oid}\n");
     let raw = reader::required(process, &context.root, &["cat-file", "--batch"], Some(input.as_bytes()), deadline).await?;
     let commit = reader::parse_batch(&raw, &requested)?.remove(0);
-    let parents: Vec<_> = commit.parents.into_iter().map(|parent| parent.oid).collect();
+    let parents: Vec<_> = if range { parent_oid.into_iter().map(str::to_owned).collect() } else { commit.parents.into_iter().map(|parent| parent.oid).collect() };
     let parent = match parent_oid {
         Some(parent) if parents.iter().any(|known| known == parent) => Some(parent),
         Some(_) => return Err(HistoryErrorCode::InvalidOutput.into()),

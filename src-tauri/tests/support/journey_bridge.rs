@@ -172,6 +172,7 @@ impl Bridge {
             "history_page" => service_result!(self.service.history_page(text(args, "entryId")?, optional_text(args, "cursor")?, optional_text(args, "branch")?)),
             "list_contexts" => service_result!(self.service.list_contexts(text(args, "entryId")?)),
             "select_worktree" => service_result!(self.service.select_worktree(text(args, "entryId")?, text(args, "worktreeId")?)),
+            "upstream_files" => service_result!(self.service.upstream_files(text(args, "entryId")?, text(args, "token")?)),
             "commit_files" => service_result!(self.service.commit_files(text(args, "entryId")?, text(args, "commitOid")?, optional_text(args, "parentOid")?)),
             "review_commit_file" => service_result!(self.service.review_commit_file(text(args, "entryId")?, text(args, "commitOid")?, optional_text(args, "parentOid")?, text(args, "fileId")?)),
             "list_repository_files" => {
@@ -183,6 +184,7 @@ impl Bridge {
             "rename_repository" => service_result!(self.service.rename(text(args, "entryId")?, text(args, "displayName")?)),
             "remove_repository" => service_result!(self.service.remove(text(args, "entryId")?)),
             "record_renderer_diagnostic" | "diagnostic_health" => Err("Native host diagnostic scope unavailable in journey transport."),
+            "fixture_upstream" => self.fixture.upstream(),
             "fixture_info" => Ok(self.fixture.info()),
             "fixture_choose" => {
                 if self.choices.len() >= 16 { return Err("Fixture picker queue exceeds limit."); }

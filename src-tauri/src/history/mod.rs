@@ -14,6 +14,8 @@ use crate::git::process::GitProcess;
 use crate::workspace::SelectedContext;
 
 pub(crate) mod reader;
+mod upstream;
+pub use upstream::{UpstreamSummary, UpstreamRange, UpstreamState, UpstreamFreshness};
 
 const SNAPSHOT_IDLE_TTL: Duration = Duration::from_secs(300);
 pub(crate) const PAGE_SIZE: usize = 100;
@@ -59,6 +61,7 @@ pub struct HistoryPage {
     pub commits: Vec<HistoryCommit>,
     pub refs: Vec<HistoryRef>,
     pub head: HistoryHead,
+    pub upstream: UpstreamSummary,
     pub has_more: bool,
     pub completeness: Completeness,
 }
@@ -92,7 +95,7 @@ impl HistoryErrorCode {
     }
 }
 
-struct PinnedSnapshot { refs: Vec<HistoryRef>, head: HistoryHead, seeds: Vec<String>, shallow: bool }
+struct PinnedSnapshot { upstream: UpstreamSummary, refs: Vec<HistoryRef>, head: HistoryHead, seeds: Vec<String>, shallow: bool }
 struct Continuation { token: String, offset: usize }
 #[derive(Default)]
 struct HistoryState {
@@ -118,6 +121,14 @@ pub(crate) struct HistoryTicket {
 pub(crate) struct HistoryCandidate { snapshot: Arc<PinnedSnapshot>, page: HistoryPage }
 
 impl HistoryController {
+    /// Resolves only a live snapshot's issued range under the current selection generation.
+    pub(crate) fn resolve_range(&self, entry_id: &str, generation: u64, token: &str) -> Option<UpstreamRange> {
+        let state = self.state.lock();
+        if state.entry_id != entry_id || state.selection_generation != generation || token.len() != 36 { return None; }
+        let upstream = &state.snapshot.as_ref()?.upstream;
+        upstream.incoming.iter().chain(upstream.outgoing.iter()).find(|range| range.token == token).cloned()
+    }
+
     pub(crate) fn begin(&self, entry_id: &str, selection_generation: u64, cursor: Option<&str>, branch: Option<&str>) -> Result<HistoryTicket, HistoryErrorCode> {
         let mut state = self.state.lock();
         let offset = if let Some(cursor) = cursor {

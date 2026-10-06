@@ -1,4 +1,4 @@
-//! Reads pinned ref seeds and complete raw commit parent headers without network access.
+//! Reads pinned ref seeds and complete raw commit parent headers with bounded upstream fetches on first-page reads.
 
 use std::{collections::{HashMap, HashSet}, path::{Path, PathBuf}, sync::Arc};
 use super::*;
@@ -15,21 +15,29 @@ pub(crate) struct RawRef { pub(crate) kind: RefKind, pub(crate) name: String, oi
 const PREFIX: &[&str] = &["--no-optional-locks", "--no-replace-objects", "-c", "core.fsmonitor=false"];
 
 pub(super) async fn read_page(process: &GitProcess, context: &SelectedContext, ticket: &HistoryTicket) -> Result<HistoryCandidate, HistoryErrorCode> {
+    verify_context(process, context, ProbeDeadline::new()).await?;
+    let tracking = if ticket.snapshot.is_none() { upstream::fetch(process, context, ticket.branch.as_deref()).await } else { Ok(None) };
     let deadline = ProbeDeadline::new();
-    verify_context(process, context, deadline).await?;
     let snapshot = match &ticket.snapshot {
         Some(snapshot) => Arc::clone(snapshot),
-        None => Arc::new(capture(process, context, ticket.branch.as_deref(), deadline).await?),
+        None => {
+            let mut snapshot = capture(process, context, ticket.branch.as_deref(), deadline).await?;
+            snapshot.upstream = upstream::summarize(process, context, &snapshot, ticket.branch.as_deref(), tracking, deadline).await;
+            if ticket.branch.is_some() {
+                if let Some(range) = &snapshot.upstream.incoming { snapshot.seeds.push(range.tip_oid.clone()); }
+            }
+            Arc::new(snapshot)
+        },
     };
     let (commits, has_more, missing) = traverse(process, context, &snapshot, ticket.offset, deadline).await?;
     verify_context(process, context, deadline).await?;
     Ok(HistoryCandidate { page: HistoryPage {
-        entry_id: context.entry_id.clone(), cursor: None, commits, refs: snapshot.refs.clone(), head: snapshot.head.clone(), has_more,
+        entry_id: context.entry_id.clone(), cursor: None, commits, refs: snapshot.refs.clone(), head: snapshot.head.clone(), upstream: snapshot.upstream.clone(), has_more,
         completeness: if snapshot.shallow || missing { Completeness::ShallowOrMissing } else if has_more { Completeness::Paged } else { Completeness::Complete },
     }, snapshot })
 }
 
-async fn run(process: &GitProcess, root: &Path, arguments: &[&str], input: Option<&[u8]>, deadline: ProbeDeadline) -> Result<ProcessOutput, HistoryErrorCode> {
+pub(super) async fn run(process: &GitProcess, root: &Path, arguments: &[&str], input: Option<&[u8]>, deadline: ProbeDeadline) -> Result<ProcessOutput, HistoryErrorCode> {
     let mut fixed = Vec::with_capacity(PREFIX.len() + arguments.len());
     fixed.extend_from_slice(PREFIX);
     fixed.extend_from_slice(arguments);
@@ -138,7 +146,7 @@ async fn capture(process: &GitProcess, context: &SelectedContext, viewed_branch:
             if unique.insert(oid.as_str()) { seeds.push(oid.clone()); }
         }
     }
-    Ok(PinnedSnapshot { refs, head, seeds, shallow })
+    Ok(PinnedSnapshot { upstream: UpstreamSummary::empty(UpstreamState::NoUpstream, None), refs, head, seeds, shallow })
 }
 
 pub(crate) fn parse_refs(bytes: &[u8]) -> Result<Vec<RawRef>, HistoryErrorCode> {
@@ -175,7 +183,7 @@ pub(crate) fn valid_ref_name(name: &str) -> bool {
     !name.is_empty() && !name.bytes().any(|byte| byte.is_ascii_control() || matches!(byte, b' ' | b'~' | b'^' | b':' | b'?' | b'*' | b'[' | b'\\'))
         && !name.contains("..") && !name.contains("@{") && !name.split('/').any(|part| part.is_empty() || part.starts_with('.') || part.ends_with(".lock") || part.ends_with('.'))
 }
-fn output_oid(bytes: &[u8]) -> Result<&str, HistoryErrorCode> { oid(bytes.strip_suffix(b"\n").ok_or(HistoryErrorCode::InvalidOutput)?) }
+pub(super) fn output_oid(bytes: &[u8]) -> Result<&str, HistoryErrorCode> { oid(bytes.strip_suffix(b"\n").ok_or(HistoryErrorCode::InvalidOutput)?) }
 pub(crate) fn oid(bytes: &[u8]) -> Result<&str, HistoryErrorCode> {
     if !matches!(bytes.len(), 40 | 64) || !bytes.iter().all(|byte| byte.is_ascii_digit() || matches!(byte, b'a'..=b'f')) { return Err(HistoryErrorCode::InvalidOutput); }
     std::str::from_utf8(bytes).map_err(|_| HistoryErrorCode::InvalidOutput)

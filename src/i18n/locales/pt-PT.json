@@ -396,5 +396,21 @@
   "diff.source.proportions": "{old, number}% anterior, {new, number}% novo",
   "diff.source.lastVerified": "Última comparação de ficheiro verificada",
   "diff.source.readOnly": "Comparação de ficheiro só de leitura",
-  "diff.source.description": "{mode, select, full {Versões completas e verificadas dos ficheiros.} other {Apenas blocos alterados, não ficheiros completos.}} O deslocamento vertical é sincronizado; {lineMode, select, wrap {as linhas compridas são moldadas dentro de cada painel.} other {cada painel de código se desloca horizontalmente de forma independente.}}"
+  "diff.source.description": "{mode, select, full {Versões completas e verificadas dos ficheiros.} other {Apenas blocos alterados, não ficheiros completos.}} O deslocamento vertical é sincronizado; {lineMode, select, wrap {as linhas compridas são moldadas dentro de cada painel.} other {cada painel de código se desloca horizontalmente de forma independente.}}",
+  "history.upstream.incoming": "Alterações recebidas · {count, plural, one {# commit} other {# commits}}",
+  "history.upstream.outgoing": "Alterações a enviar · {count, plural, one {# commit} other {# commits}}",
+  "history.upstream.incomingHint": "Alterações no ramo upstream em relação ao antepassado comum. Ainda não fazem parte do ramo local.",
+  "history.upstream.outgoingHint": "Alterações locais desde o antepassado comum que ainda não foram enviadas para o upstream.",
+  "history.upstream.incomingFiles": "Ficheiros alterados recebidos",
+  "history.upstream.outgoingFiles": "Ficheiros alterados a enviar",
+  "history.upstream.stale": "Falha no fetch. A mostrar o último estado conhecido do upstream.",
+  "history.upstream.no_upstream": "Nenhum upstream configurado",
+  "history.upstream.detached": "HEAD destacado — sem comparação upstream",
+  "history.upstream.unborn": "Ainda não há commits — sem comparação upstream",
+  "history.upstream.unavailable": "Comparação upstream indisponível",
+  "history.upstream.synchronized": "Atualizado com {upstream}",
+  "history.upstream.noBase": "Diff agregado indisponível: não foi possível verificar um antepassado comum único.",
+  "diff.endpoint.mergeBase": "Antepassado comum {oid}{absent, select, true { (ausente)} other {}}",
+  "diff.endpoint.incoming": "Recebidas {oid}{absent, select, true { (ausente)} other {}}",
+  "diff.endpoint.outgoing": "A enviar {oid}{absent, select, true { (ausente)} other {}}"
 }

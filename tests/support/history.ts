@@ -14,6 +14,7 @@ export function historyCommit(oid: string, parents: HistoryCommit["parents"] = [
 
 export function historyPage(commits: HistoryCommit[] = [], overrides: Partial<HistoryPage> = {}): HistoryPage {
   return {
+    upstream: { state: "no_upstream", freshness: "unavailable", branch: "main", upstream: null, ahead: 0, behind: 0, incoming: null, outgoing: null },
     entryId: "one", cursor: null, commits, refs: [], hasMore: false, completeness: "complete",
     head: { scope: "worktree", state: "attached", branch: "main", oid: commits[0]?.oid ?? null },
     ...overrides,

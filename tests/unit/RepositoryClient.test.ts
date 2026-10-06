@@ -22,6 +22,7 @@ const operations: { command: RepositoryCommand; start: (client: RepositoryClient
   { command: "history_page", start: (client) => client.historyPage("entry", "opaque-cursor") },
   { command: "list_contexts", start: (client) => client.listContexts("entry") },
   { command: "select_worktree", start: (client) => client.selectWorktree("entry", "opaque-worktree") },
+  { command: "upstream_files", start: (client) => client.upstreamFiles("one", "range-token") },
   { command: "commit_files", start: (client) => client.commitFiles("entry", "a".repeat(40), "b".repeat(40)) },
   { command: "review_commit_file", start: (client) => client.reviewCommitFile("entry", "a".repeat(40), "b".repeat(40), "opaque-file") },
   { command: "list_repository_files", start: (client) => client.listRepositoryFiles("entry", { listingId: null, directoryId: null, cursor: null }) },

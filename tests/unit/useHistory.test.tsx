@@ -41,7 +41,7 @@ test("continuations append commits and retain pinned HEAD and refs until explici
   rerender(props);
   expect(read).toHaveBeenCalledTimes(2);
   act(() => result.current.refresh());
-  expect(result.current.page).toBeNull();
+  expect(result.current.page?.commits[0].oid).toBe(historyOids.first);
   await act(async () => { await Promise.resolve(); });
   expect(result.current.page).toEqual(moved);
   expect(read.mock.calls).toEqual([["one", null], ["one", "opaque:next"], ["one", null]]);
@@ -95,7 +95,7 @@ test("refresh invalidates a pending continuation and its late domain error", asy
   await act(async () => { await Promise.resolve(); });
   act(() => result.current.loadMore());
   act(() => result.current.refresh());
-  expect(result.current.page).toBeNull();
+  expect(result.current.page?.commits[0].oid).toBe(historyOids.first);
   await act(async () => refreshed.resolve({ kind: "page", page: historyPage([historyCommit(historyOids.root)]) }));
   await act(async () => continuation.resolve({ kind: "error", code: "stale_cursor", message: "The history snapshot expired." }));
   expect(result.current.page?.commits.map((commit) => commit.oid)).toEqual([historyOids.root]);
@@ -140,4 +140,19 @@ test("strict lifecycle replay does not strand the initial history request", asyn
   await act(async () => response.resolve({ kind: "page", page: historyPage([historyCommit(historyOids.root)]) }));
   expect(result.current.page?.commits[0].oid).toBe(historyOids.root);
   expect(read).toHaveBeenCalledTimes(1);
+});
+
+
+test("failed refresh retains the last known graph and upstream state", async () => {
+  const page = historyPage([historyCommit(historyOids.first)]);
+  const read = vi.fn<RepositoryClient["historyPage"]>()
+    .mockResolvedValueOnce({ kind: "page", page })
+    .mockRejectedValueOnce(new Error("network unavailable"));
+  const { result } = renderHook(readHistory, { initialProps: { client: historyClient(read), entryId: "one", generation: 0 } });
+  await act(async () => { await Promise.resolve(); });
+  act(() => result.current.refresh());
+  expect(result.current.page).toBe(page);
+  await act(async () => { await Promise.resolve(); });
+  expect(result.current.page).toBe(page);
+  expect(result.current.error).toEqual({ kind: "transport_unavailable" });
 });

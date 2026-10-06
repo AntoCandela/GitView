@@ -976,6 +976,34 @@ impl RepositoryService {
         }).await
     }
 
+    /// Lists aggregate changes only for a live native-issued upstream comparison token.
+    pub async fn upstream_files(&self, entry_id: &str, token: &str) -> CommitFilesResult {
+        self.trace_operation(OperationKind::UpstreamFiles, async {
+            let (context, generation, range) = {
+                let _selection = self.selection.lock().await;
+                let Some(context) = self.workspace.selected_context(entry_id).await else {
+                    return CommitFilesResult::failure(HistoryErrorCode::StaleSelection);
+                };
+                let Some(generation) = self.observation.selection_generation(entry_id) else {
+                    return CommitFilesResult::failure(HistoryErrorCode::StaleSelection);
+                };
+                let Some(range) = self.history.resolve_range(entry_id, generation, token) else {
+                    return CommitFilesResult::failure(HistoryErrorCode::StaleCursor);
+                };
+                (context, generation, range)
+            };
+            let result = Box::pin(inspection::read_range_files(&self.inspection_process, &context, &range)).await;
+            let _selection = self.selection.lock().await;
+            if !self.inspection_current(&context, generation).await {
+                return CommitFilesResult::failure(HistoryErrorCode::StaleSelection);
+            }
+            if self.history.resolve_range(entry_id, generation, token).as_ref() != Some(&range) {
+                return CommitFilesResult::failure(HistoryErrorCode::StaleCursor);
+            }
+            self.committed_reviews.publish(entry_id, generation, result)
+        }).await
+    }
+
     /// Reads actual changed files against a verified raw parent (first parent by default).
     pub async fn commit_files(&self, entry_id: &str, commit_oid: &str, parent_oid: Option<&str>) -> CommitFilesResult {
         self.trace_operation(OperationKind::CommitFiles, async {

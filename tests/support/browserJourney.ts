@@ -29,6 +29,7 @@ const commands: Record<string, readonly string[]> = {
   history_page: ["entryId", "cursor", "branch"],
   list_contexts: ["entryId"],
   select_worktree: ["entryId", "worktreeId"],
+  upstream_files: ["entryId", "token"],
   commit_files: ["entryId", "commitOid", "parentOid"],
   review_commit_file: ["entryId", "commitOid", "parentOid", "fileId"],
   list_repository_files: ["entryId", "request"],

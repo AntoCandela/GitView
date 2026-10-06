@@ -35,9 +35,11 @@ export function reviewClient(reviewFile: RepositoryClient["reviewFile"] = async 
     reviewRepositoryFile: async () => ({ kind: "stale_selection" }),
     listContexts: async () => ({ kind: "options", branches: [{ name: "main" }], worktrees: [] }),
     selectWorktree: async () => ({ kind: "not_found", snapshot }),
+    upstreamFiles: async () => ({ kind: "unavailable", code: "stale_selection", message: "Selection changed." }),
     commitFiles: async (_entryId, commitOid, parentOid) => ({ kind: "files", commitOid, parentOid, parents: [], files: [] }),
     historyPage: async (entryId) => ({
       kind: "page", page: {
+        upstream: { state: "unborn", freshness: "unavailable", branch: null, upstream: null, ahead: 0, behind: 0, incoming: null, outgoing: null },
         entryId, cursor: null, commits: [], refs: [], hasMore: false, completeness: "complete",
         head: { scope: "worktree", state: "unborn", branch: null, oid: null },
       },

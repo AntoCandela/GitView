@@ -25,6 +25,7 @@ fn main() {
             "list_contexts",
             "select_worktree",
             "commit_files",
+            "upstream_files",
             "review_commit_file",
             "list_repository_files",
             "review_repository_file",
