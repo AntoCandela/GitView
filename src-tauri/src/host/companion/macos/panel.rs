@@ -5,7 +5,7 @@ use std::cell::RefCell;
 use objc2::{define_class, msg_send, rc::Retained, runtime::AnyClass, MainThreadMarker, MainThreadOnly, Message};
 use objc2_app_kit::{
     NSAutoresizingMaskOptions, NSBackingStoreType, NSFloatingWindowLevel, NSPanel, NSView,
-    NSWindow, NSWindowCollectionBehavior, NSWindowStyleMask,
+    NSWindow, NSWindowButton, NSWindowCollectionBehavior, NSWindowStyleMask, NSWindowTitleVisibility,
 };
 use objc2_foundation::{ns_string, NSObjectProtocol, NSPoint, NSRect, NSSize};
 use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
@@ -35,7 +35,8 @@ impl CompanionPanel {
         let panel: Option<Retained<Self>> = unsafe {
             msg_send![super(allocated),
                 initWithContentRect: NSRect::new(NSPoint::new(0.0, 0.0), NSSize::new(760.0, 560.0)),
-                styleMask: NSWindowStyleMask::Borderless | NSWindowStyleMask::NonactivatingPanel,
+                styleMask: NSWindowStyleMask::Titled | NSWindowStyleMask::FullSizeContentView
+                    | NSWindowStyleMask::NonactivatingPanel,
                 backing: NSBackingStoreType::Buffered,
                 defer: false,
             ]
@@ -44,6 +45,13 @@ impl CompanionPanel {
         // Rust's retained owner releases the panel; close must not consume its retain count.
         unsafe { panel.setReleasedWhenClosed(false); }
         panel.setTitle(ns_string!("GitView"));
+        // Use the desktop window's system corner shape without adding visible title-bar chrome.
+        panel.setTitleVisibility(NSWindowTitleVisibility::Hidden);
+        panel.setTitlebarAppearsTransparent(true);
+        panel.setMovable(false);
+        for button in [NSWindowButton::CloseButton, NSWindowButton::MiniaturizeButton, NSWindowButton::ZoomButton] {
+            if let Some(button) = panel.standardWindowButton(button) { button.setHidden(true); }
+        }
         panel.setFloatingPanel(true);
         panel.setLevel(NSFloatingWindowLevel);
         panel.setBecomesKeyOnlyIfNeeded(false);
