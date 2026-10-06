@@ -1,20 +1,20 @@
-//! Main-thread AppKit adapter for one retained template tray and a lazy local NSWindow.
-//! Companion dismissal monitors live only while shown; main visibility observers live until Quit.
+//! Main-thread AppKit adapter for retained tray access and nonactivating companion presentation.
+//! The hidden Tauri host retains IPC identity; panel and monitor modules own native presentation.
+
+mod panel;
+mod monitors;
 
 use std::{cell::RefCell, ptr::NonNull};
 use block2::RcBlock;
-use objc2::{rc::Retained, runtime::{AnyClass, AnyObject, ProtocolObject}, MainThreadMarker, Message};
+use objc2::{rc::Retained, runtime::ProtocolObject, MainThreadMarker};
 use objc2_app_kit::{
-    NSApplication, NSApplicationDidChangeScreenParametersNotification, NSApplicationDidResignActiveNotification,
-    NSApplicationDidHideNotification, NSApplicationDidUnhideNotification,
-    NSEvent, NSEventMask, NSEventType, NSFloatingWindowLevel, NSScreen, NSView, NSWindow,
-    NSWindowCollectionBehavior, NSWindowDidResignKeyNotification,
-    NSWindowDidMiniaturizeNotification, NSWindowDidDeminiaturizeNotification,
+    NSApplication, NSApplicationDidHideNotification, NSApplicationDidUnhideNotification,
+    NSEvent, NSScreen, NSWindow, NSWindowDidMiniaturizeNotification, NSWindowDidDeminiaturizeNotification,
 };
 use objc2_foundation::{NSNotification, NSNotificationCenter, NSObjectProtocol, NSPoint, NSRect, NSSize};
 use tauri::{
     image::Image, menu::{Menu, MenuItem}, tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    AppHandle, Manager, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+    AppHandle, Manager, WebviewWindow,
 };
 use super::{CompanionController, MenuLabels, NativeError};
 
@@ -25,25 +25,6 @@ const QUIT_ID: &str = "companion-quit";
 #[derive(Clone, Copy)]
 pub(super) struct Anchor { pub x: f64, pub y: f64 }
 
-struct Monitors {
-    event: Retained<AnyObject>,
-    notifications: Vec<Retained<ProtocolObject<dyn NSObjectProtocol>>>,
-    anchor: Anchor,
-    generation: uuid::Uuid,
-}
-
-impl Drop for Monitors {
-    fn drop(&mut self) {
-        // Every owner and removal runs on the AppKit main thread.
-        unsafe {
-            NSEvent::removeMonitor(&self.event);
-            let center = NSNotificationCenter::defaultCenter();
-            for observer in &self.notifications { center.removeObserver(observer.as_ref()); }
-        }
-    }
-}
-
-thread_local! { static MONITORS: RefCell<Option<Monitors>> = const { RefCell::new(None) }; }
 thread_local! { static ACCESS_OBSERVERS: RefCell<Vec<Retained<ProtocolObject<dyn NSObjectProtocol>>>> = const { RefCell::new(Vec::new()) }; }
 
 fn clear_access_observers() {
@@ -111,6 +92,13 @@ fn menu(app: &AppHandle, labels: &MenuLabels) -> Result<Menu<tauri::Wry>, Native
 pub(super) fn has_tray(app: &AppHandle) -> bool { app.tray_by_id(TRAY_ID).is_some() }
 
 pub(super) fn create_tray(app: &AppHandle, controller: CompanionController, labels: &MenuLabels) -> Result<(), NativeError> {
+    // Wry activates its application during construction, so never construct on a fullscreen tray click.
+    let result = panel::prepare(app).and_then(|()| build_tray(app, controller, labels));
+    if result.is_err() { remove(app); }
+    result
+}
+
+fn build_tray(app: &AppHandle, controller: CompanionController, labels: &MenuLabels) -> Result<(), NativeError> {
     if has_tray(app) {
         // Explicit retry may follow a failed translated-menu update.
         return update_menu(app, labels);
@@ -135,13 +123,6 @@ pub(super) fn update_menu(app: &AppHandle, labels: &MenuLabels) -> Result<(), Na
     tray.set_menu(Some(menu(app, labels)?)).map_err(|_| NativeError::TrayFailed)
 }
 
-fn panel(app: &AppHandle) -> Result<WebviewWindow, NativeError> {
-    if let Some(window) = app.get_webview_window("companion") { return Ok(window); }
-    WebviewWindowBuilder::new(app, "companion", WebviewUrl::App("index.html".into()))
-        .title("GitView").inner_size(760.0, 560.0).decorations(false).resizable(false)
-        .visible(false).focused(false).focusable(true).skip_taskbar(true)
-        .build().map_err(|_| NativeError::PanelFailed)
-}
 
 fn native_window(window: &WebviewWindow) -> Result<Retained<NSWindow>, NativeError> {
     MainThreadMarker::new().ok_or(NativeError::PanelFailed)?;
@@ -150,57 +131,37 @@ fn native_window(window: &WebviewWindow) -> Result<Retained<NSWindow>, NativeErr
     unsafe { Retained::retain(pointer.cast::<NSWindow>()).ok_or(NativeError::PanelFailed) }
 }
 
-pub(super) fn show(app: &AppHandle, controller: CompanionController, anchor: Anchor) -> Result<(), NativeError> {
-    let window = panel(app)?;
-    let native = native_window(&window)?;
-    native.setLevel(NSFloatingWindowLevel);
-    let mut behavior = NSWindowCollectionBehavior::CanJoinAllSpaces | NSWindowCollectionBehavior::FullScreenAuxiliary;
-    // Joining desktop Spaces alone does not admit this floating window to another app's fullscreen Space.
-    if objc2::available!(macos = 13.0) {
-        behavior |= NSWindowCollectionBehavior::CanJoinAllApplications;
-    }
-    native.setCollectionBehavior(behavior);
+fn companion_window() -> Result<Retained<NSWindow>, NativeError> { panel::window() }
+
+pub(super) fn show(controller: CompanionController, anchor: Anchor) -> Result<(), NativeError> {
+    let native = companion_window()?;
     position(&native, anchor)?;
-    window.show().map_err(|_| NativeError::ShowFailed)?;
-    if let Err(error) = focus(app) {
+    if let Err(error) = focus() {
         native.orderOut(None);
         return Err(error);
     }
-    if let Err(error) = install_monitors(controller, &native, anchor) {
+    if let Err(error) = monitors::install(controller, &native, anchor) {
         native.orderOut(None);
         return Err(error);
     }
     Ok(())
 }
 
-pub(super) fn focus(app: &AppHandle) -> Result<(), NativeError> {
-    let window = app.get_webview_window("companion").ok_or(NativeError::PanelFailed)?;
-    window.show().map_err(|_| NativeError::ShowFailed)?;
-    window.set_focus().map_err(|_| NativeError::FocusFailed)?;
-    let native = native_window(&window)?;
-    let content = native.contentView().ok_or(NativeError::FocusFailed)?;
-    let class = AnyClass::get(c"WKWebView").ok_or(NativeError::FocusFailed)?;
-    let webview = find_webview(&content, class).ok_or(NativeError::FocusFailed)?;
-    if !native.makeFirstResponder(Some(&webview)) { return Err(NativeError::FocusFailed); }
-    Ok(())
+pub(super) fn focus() -> Result<(), NativeError> {
+    companion_window()?.orderFrontRegardless();
+    panel::focus()
 }
 
-fn find_webview(view: &NSView, class: &AnyClass) -> Option<Retained<NSView>> {
-    if view.isKindOfClass(class) { return Some(view.retain()); }
-    for child in view.subviews() {
-        if let Some(webview) = find_webview(&child, class) { return Some(webview); }
-    }
-    None
-}
 
-pub(super) fn clear_monitors() {
-    MONITORS.with(|slot| { slot.borrow_mut().take(); });
+pub(super) fn destroy_surface() {
+    monitors::clear();
+    panel::destroy();
 }
 
 pub(super) fn hide(app: &AppHandle) -> Result<(), NativeError> {
-    clear_monitors();
-    if let Some(window) = app.get_webview_window("companion") {
-        let native = native_window(&window)?;
+    monitors::clear();
+    if app.get_webview_window("companion").is_some() {
+        let native = companion_window()?;
         native.orderOut(None);
         if native.isVisible() { return Err(NativeError::ShowFailed); }
     }
@@ -210,6 +171,7 @@ pub(super) fn hide(app: &AppHandle) -> Result<(), NativeError> {
 pub(super) fn remove(app: &AppHandle) {
     // Destruction follows even when ordering out is refused; main was revealed before disable.
     let _ = hide(app);
+    destroy_surface();
     app.remove_tray_by_id(TRAY_ID);
     if let Some(window) = app.get_webview_window("companion") { let _ = window.destroy(); }
 }
@@ -245,103 +207,6 @@ fn distance_to_frame(anchor: Anchor, frame: NSRect) -> f64 {
     let x = anchor.x.clamp(frame.origin.x, frame.origin.x + frame.size.width);
     let y = anchor.y.clamp(frame.origin.y, frame.origin.y + frame.size.height);
     (anchor.x - x).powi(2) + (anchor.y - y).powi(2)
-}
-
-fn is_owned_window(window: &NSWindow, panel: usize) -> bool {
-    if std::ptr::from_ref(window) as usize == panel { return true; }
-    if let Some(parent) = window.parentWindow() { return is_owned_window(&parent, panel); }
-    if let Some(parent) = window.sheetParent() { return is_owned_window(&parent, panel); }
-    false
-}
-
-fn enqueue_focus_loss(controller: CompanionController, panel: usize, generation: uuid::Uuid) {
-    // The resign notification precedes AppKit's new key-window assignment. Reconcile afterward,
-    // including popup ownership, rather than dismissing during that partial transition.
-    tauri::async_runtime::spawn(async move {
-        let _ = controller.on_main(move |controller| {
-            if !current_monitor(generation) { return; }
-            let Some(marker) = MainThreadMarker::new() else { return; };
-            let application = NSApplication::sharedApplication(marker);
-            let key = application.keyWindow();
-            if application.isActive() && key.as_ref().is_some_and(|window| is_owned_window(window, panel)) { return; }
-            let main_focused = application.isActive() && controller.app.get_webview_window("main")
-                .and_then(|window| native_window(&window).ok())
-                .is_some_and(|main| key.as_ref().is_some_and(|key| is_owned_window(key, std::ptr::from_ref(&*main) as usize)));
-            controller.focus_lost_now(main_focused);
-        }).await;
-    });
-}
-
-fn current_monitor(generation: uuid::Uuid) -> bool {
-    MONITORS.with(|slot| slot.borrow().as_ref().is_some_and(|monitors| monitors.generation == generation))
-}
-
-fn install_monitors(controller: CompanionController, panel: &NSWindow, anchor: Anchor) -> Result<(), NativeError> {
-    clear_monitors();
-    let generation = uuid::Uuid::new_v4();
-    let tray = controller.app.tray_by_id(TRAY_ID).ok_or(NativeError::TrayFailed)?;
-    let tray_window = tray.with_inner_tray_icon(|tray| {
-        let marker = MainThreadMarker::new()?;
-        tray.ns_status_item()?.button(marker)?.window()
-            .map(|window| std::ptr::from_ref(&*window) as usize)
-    }).map_err(|_| NativeError::TrayFailed)?.ok_or(NativeError::TrayFailed)?;
-    let panel_id = std::ptr::from_ref(panel) as usize;
-    let events = controller.clone();
-    let block = RcBlock::new(move |event: NonNull<NSEvent>| -> *mut NSEvent {
-        // AppKit invokes local monitors on the main thread with a live NSEvent.
-        let event_ref = unsafe { event.as_ref() };
-        let Some(marker) = MainThreadMarker::new() else { return event.as_ptr(); };
-        let event_window = event_ref.window(marker);
-        let owned = event_window.as_ref().is_some_and(|window| is_owned_window(window, panel_id));
-        let tray_event = event_window.as_ref().is_some_and(|window| std::ptr::from_ref(&**window) as usize == tray_window);
-        if event_ref.r#type() == NSEventType::KeyDown {
-            if event_ref.keyCode() == 53 {
-                if let Err(error) = events.dismiss_now() { events.native_failure(error); }
-                if owned { return std::ptr::null_mut(); }
-            }
-        } else if !owned && !tray_event {
-            if let Err(error) = events.dismiss_now() { events.native_failure(error); }
-        }
-        event.as_ptr()
-    });
-    let event = unsafe {
-        NSEvent::addLocalMonitorForEventsMatchingMask_handler(
-            NSEventMask::KeyDown | NSEventMask::LeftMouseDown | NSEventMask::RightMouseDown | NSEventMask::OtherMouseDown,
-            &block,
-        )
-    }.ok_or(NativeError::PanelFailed)?;
-    let center = NSNotificationCenter::defaultCenter();
-    let deactivation = controller.clone();
-    let deactivate_block = RcBlock::new(move |_: NonNull<NSNotification>| {
-        enqueue_focus_loss(deactivation.clone(), panel_id, generation);
-    });
-    let key_loss = controller.clone();
-    let key_block = RcBlock::new(move |_: NonNull<NSNotification>| {
-        enqueue_focus_loss(key_loss.clone(), panel_id, generation);
-    });
-    let displays = controller;
-    let display_block = RcBlock::new(move |_: NonNull<NSNotification>| {
-        let controller = displays.clone();
-        tauri::async_runtime::spawn(async move {
-            let _ = controller.on_main(move |controller| {
-                if !current_monitor(generation) { return; }
-                let anchor = MONITORS.with(|slot| slot.borrow().as_ref().map(|monitors| monitors.anchor));
-                if let Some(anchor) = anchor {
-                    let result = controller.app.get_webview_window("companion").ok_or(NativeError::PanelFailed)
-                        .and_then(|window| native_window(&window)).and_then(|window| position(&window, anchor));
-                    if let Err(error) = result { controller.native_failure(error); }
-                }
-            }).await;
-        });
-    });
-    // nil queue uses the posting thread; these AppKit notifications are delivered on main.
-    let notifications = unsafe { vec![
-        center.addObserverForName_object_queue_usingBlock(Some(NSApplicationDidResignActiveNotification), None, None, &deactivate_block),
-        center.addObserverForName_object_queue_usingBlock(Some(NSWindowDidResignKeyNotification), Some(panel), None, &key_block),
-        center.addObserverForName_object_queue_usingBlock(Some(NSApplicationDidChangeScreenParametersNotification), None, None, &display_block),
-    ] };
-    MONITORS.with(|slot| *slot.borrow_mut() = Some(Monitors { event, notifications, anchor, generation }));
-    Ok(())
 }
 
 /// Rasterizes the checked-in favicon's rounded frame, branch and three nodes in template alpha.

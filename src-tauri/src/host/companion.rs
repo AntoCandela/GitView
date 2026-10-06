@@ -148,6 +148,13 @@ impl Lifecycle {
         self.state.revision += 1;
     }
 
+    fn native_destroyed(&mut self) -> bool {
+        self.hidden();
+        let lost_access = self.state.enabled && self.state.available && !self.quitting;
+        if lost_access { self.native_failed(NativeError::PanelFailed); }
+        lost_access
+    }
+
     fn begin_focus_transfer(&mut self, request_id: String, source_open_epoch: String) -> bool {
         if !self.state.visible || self.open_epoch != source_open_epoch || self.quitting { return false; }
         self.transfer = Some(FocusTransfer { request_id, source_open_epoch });
@@ -296,7 +303,7 @@ impl CompanionController {
             if !controller.lifecycle.lock().finish_focus_transfer(&request_id, &source_open_epoch) { return Ok(()); }
             if acknowledged { return controller.dismiss_now(); }
             #[cfg(target_os = "macos")]
-            if let Err(error) = macos::focus(&controller.app) {
+            if let Err(error) = macos::focus() {
                 controller.native_failure(error);
                 return Err(error);
             }
@@ -343,8 +350,14 @@ impl CompanionController {
     /// Called by the host's destruction hook before disposing the surface subscription.
     pub fn handle_companion_destroyed(&self) {
         (self.callbacks.hide)();
+        #[cfg(target_os = "macos")]
+        macos::destroy_surface();
         if let Some(mut lifecycle) = self.lifecycle.try_lock() {
-            lifecycle.hidden();
+            let lost_access = lifecycle.native_destroyed();
+            if lost_access { (self.callbacks.access_changed)(true, false); }
+            drop(lifecycle);
+            #[cfg(target_os = "macos")]
+            if lost_access && self.reveal_main_now().is_err() { self.main_reveal_failed(); }
         } else {
             // Native destruction may synchronously reenter its owning enable/disable transition.
             // Its authority is already revoked above; never hide a newly created replacement.
@@ -352,13 +365,11 @@ impl CompanionController {
             tauri::async_runtime::spawn(async move {
                 let _ = controller.on_main(|controller| {
                     if controller.app.get_webview_window("companion").is_none() {
-                        controller.lifecycle.lock().hidden();
+                        controller.handle_companion_destroyed();
                     }
                 }).await;
             });
         }
-        #[cfg(target_os = "macos")]
-        macos::clear_monitors();
     }
 
     pub fn handle_companion_close(&self) -> bool {
@@ -403,7 +414,7 @@ impl CompanionController {
         }
         // No untranslated renderer is exposed before the authoritative main publisher is ready.
         if lifecycle.labels.is_none() { return; }
-        match macos::show(&self.app, self.clone(), anchor) {
+        match macos::show(self.clone(), anchor) {
             Ok(()) => {
                 if let Some(epoch) = (self.callbacks.open)() {
                     lifecycle.opened(epoch);

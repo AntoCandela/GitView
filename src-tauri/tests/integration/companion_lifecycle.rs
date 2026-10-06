@@ -196,3 +196,44 @@ fn panel_failure_revokes_availability_but_preserves_explicit_enabled_intent() {
     assert_eq!(lifecycle.state.native_error, Some(NativeError::PanelFailed));
     assert_eq!(native.tray_count, 1);
 }
+
+#[test]
+fn unexpected_destruction_revokes_access_and_stale_handoff_until_explicit_retry() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("companion.json");
+    let mut lifecycle = lifecycle(path.clone());
+    let mut native = NativeFixture::default();
+    lifecycle.set_enabled(true, &mut native);
+    lifecycle.opened("lost-panel".into());
+    assert!(lifecycle.begin_focus_transfer("pending".into(), "lost-panel".into()));
+
+    assert!(lifecycle.native_destroyed());
+    assert!(lifecycle.state.enabled);
+    assert!(!lifecycle.state.available);
+    assert!(!lifecycle.state.visible);
+    assert_eq!(lifecycle.state.native_error, Some(NativeError::PanelFailed));
+    assert!(!lifecycle.finish_focus_transfer("pending", "lost-panel"));
+    assert!(Preferences::load(Some(path)).enabled);
+
+    let recovered = lifecycle.set_enabled(true, &mut native);
+    assert_eq!(recovered.kind, EnableKind::Applied);
+    assert!(recovered.state.available);
+    assert!(!recovered.state.visible);
+    assert_eq!(recovered.state.native_error, None);
+}
+
+#[test]
+fn destruction_after_disable_does_not_restore_access_or_report_native_failure() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("companion.json");
+    let mut lifecycle = lifecycle(path.clone());
+    let mut native = NativeFixture::default();
+    lifecycle.set_enabled(true, &mut native);
+    lifecycle.set_enabled(false, &mut native);
+
+    assert!(!lifecycle.native_destroyed());
+    assert!(!lifecycle.state.enabled);
+    assert!(!lifecycle.state.available);
+    assert_eq!(lifecycle.state.native_error, None);
+    assert!(!Preferences::load(Some(path)).enabled);
+}
