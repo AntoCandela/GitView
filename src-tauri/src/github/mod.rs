@@ -8,3 +8,4 @@ pub mod model;
 pub(crate) mod service;
 mod publication;
 pub(crate) mod transport;
+pub(crate) mod coordinator;

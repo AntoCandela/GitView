@@ -2,9 +2,11 @@
 use serde_json::json;
 use super::{PrCode, PAGE_SIZE};
 
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub(crate) enum Connection { Commits, Timeline, Threads, ThreadComments { thread_id: String }, Reviewers, Labels }
 
 /// Native-only inputs. Repository routing is literal github.com owner/name, never a URL.
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub(crate) enum GhRead {
     ProbeVersion,
     ProbeAuth,

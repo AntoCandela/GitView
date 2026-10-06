@@ -48,6 +48,11 @@ impl Default for GhReadAdapter {
 }
 
 impl GhReadAdapter {
+    #[cfg(test)]
+    pub(super) fn fixture(executable: &std::path::Path, environment: Vec<(OsString, OsString)>) -> Self {
+        Self { executable: executable.as_os_str().to_owned(), permits: Arc::new(Semaphore::new(MAX_ACTIVE)), deadline: CHILD_DEADLINE, environment }
+    }
+
     /// Resolves `gh` through PATH at each spawn. Dropping a read kills and reaps its child,
     /// retaining the global concurrency and NativeWork permits until cleanup completes.
     pub(crate) async fn read(&self, read: GhRead) -> Result<GhReply, Failure> {
