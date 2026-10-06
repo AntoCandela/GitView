@@ -94,6 +94,14 @@ Both `npm run smoke:browser -- --scenario baseline` and `npm run smoke:browser -
 
 The accompanying legal inventory contains 265 npm entries, 445 Cargo packages and 1,078 retained notice references with no integrity drift. Strict publication clearance remains blocked by the existing `@napi-rs/lzma-linux-x64-gnu`, `stackback` and original GLSL grammar grant gaps.
 
+## GitHub branch association evidence
+
+The association resolver uses effective fetch/push URLs and tracking/push refs, verifies GitHub repository IDs, and matches PRs by exact head repository/ref within verified base repositories and fork parents. It does not fetch, check out, or write Git configuration. Explicit alias mappings remain app-local. Automatic discovery reads one bounded page per query and keeps incomplete results distinct from confirmed absence.
+
+Disposable real-Git repositories and scripted `gh` processes exercise triangular forks, renamed local branches, multiple bases, push URLs and wildcard refspecs, URL rewrites, SSH aliases, local-dot upstreams, detached/unborn/bare repositories, deleted/reused branches, and malformed/incomplete provider replies. Native host fixtures exercise mapping/choice authority, configuration/account/context replacement, cancellation during account preparation, retention across commits and branch browsing, and separately selectable merged history without automatic attachment to reused branch names. Controlled files, index, refs and configuration remain unchanged by discovery/mapping.
+
+The focused native GitHub suite passed 87 tests, followed by the final affected inactive-binding regression. Full shared verification passed all 17 required checks and 1,136 tests, including strict publication-license verification. Independent review found no unresolved blocking findings after the historical-selection and retained-binding authority corrections. These are resolver, process and host-boundary observations with fixture credentials, not live GitHub or packaged-native UI evidence. The production provider remains unconfigured and the PR view is not yet mounted.
+
 ## Operational and implementation reference
 
 The sections below retain useful workflow details and implementation limits moved from README. They describe contracts, not independent runtime certification.
@@ -120,6 +128,7 @@ Follow [CODE-STYLE.md](../CODE-STYLE.md) for Rust/frontend headers, API document
 | `src/contracts/inspection.ts` | Read-only branch/worktree choices and parent-specific committed-file DTOs. |
 | `src/contracts/pullRequests.ts` and `src/platform/PullRequestClient.ts` | Closed PR DTOs and fixed main-window commands; opaque IDs carry native authority, and typed domain failures remain distinct from transport rejection. |
 | `src-tauri/src/github/` and `src-tauri/src/host/pull_requests.rs` | Ephemeral account/context/session/comparison authority, injected provider publication guards, main-only host admission and bounded fixed-operation `gh` transport. The default provider reports `integration_unavailable`; provider composition, normalization and PR UI remain separate work. |
+| `src-tauri/src/github/association.rs`, `association/` and `provider.rs` | Read-only effective Git mapping capture, verified fork/head/base identities, bounded candidate discovery and explicit known history. The opt-in provider uses service-issued authority; inactive branch mapping hints cannot authorize renderer requests. Overview composition and production activation remain pending. |
 | `src-tauri/src/github/coordinator.rs` and `coordinator/` | Account-scoped shared read demand, cancellable leases/retries, cooldowns and bounded in-memory provider pages. Provider composition must discover the account before service admission, forward account revocations to the service, and normalize cached pages before publishing fresh session-specific grants. Cache entries never grant renderer authority. |
 | `src/features/pull-requests/` | Mounted review lifecycle over the typed PR client: coherent refresh, identified stale presentation, private-content clearing and native session release. The hook is not yet mounted in the workbench; it owns neither native cache authority nor GitHub authentication. |
 | `src/contracts/Diagnostics.ts` | Closed renderer diagnostic vocabulary and capture-health DTOs. |

@@ -25,7 +25,7 @@ fn issue(service: &PullRequestService, context: &PrContext, session: &str, resou
     let mut registry = service.registry.lock();
     let session = registry.sessions.get(session).unwrap().session.clone();
     let grant = Grant::new(resource); let id = grant.id().to_owned();
-    registry.handles.insert(id.clone(), Handle { comparison: None, context: context.clone(), session: Some(session), grant }); id
+    registry.handles.insert(id.clone(), Handle { active: true, comparison: None, context: context.clone(), session: Some(session), grant }); id
 }
 #[test]
 fn github_service_binds_files_cursors_and_anchors_to_their_session_and_comparison() {

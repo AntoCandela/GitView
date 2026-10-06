@@ -5,7 +5,7 @@ use super::{Failure, PrCode, MAX_JSON_COLLECTION, MAX_JSON_DEPTH, MAX_JSON_NODES
 /// Only allowlisted numeric rate facts leave the framing parser. Times are Unix milliseconds.
 #[derive(Default, Debug)]
 pub(crate) struct RateHeaders { pub remaining: Option<u64>, pub retry_at: Option<u64> }
-pub(crate) struct ApiResponse { pub status: u16, pub rate: RateHeaders, pub body: Value }
+pub(crate) struct ApiResponse { pub status: u16, pub rate: RateHeaders, pub body: Value, pub has_next: bool }
 
 pub(super) fn classify_version(bytes: &[u8], success: bool) -> Result<(), PrCode> {
     let text = std::str::from_utf8(bytes).map_err(|_| PrCode::GhUnsupported)?;
@@ -57,7 +57,7 @@ pub(super) fn parse_api(bytes: &[u8], success: bool, now_seconds: u64) -> Result
         let (name, value) = line.split_once(':').ok_or_else(|| PrCode::InvalidOutput.failure())?;
         if name.is_empty() || !name.bytes().all(|b| b.is_ascii_alphanumeric() || b"!#$%&'*+-.^_`|~".contains(&b)) || value.bytes().any(|b| (b < 32 && b != b'\t') || b == 127) { return Err(PrCode::InvalidOutput.failure()); }
         let name = name.to_ascii_lowercase();
-        if matches!(name.as_str(), "retry-after" | "x-ratelimit-reset" | "x-ratelimit-remaining" | "content-type") && headers.insert(name, value.trim()).is_some() { return Err(PrCode::InvalidOutput.failure()); }
+        if matches!(name.as_str(), "retry-after" | "x-ratelimit-reset" | "x-ratelimit-remaining" | "content-type" | "link") && headers.insert(name, value.trim()).is_some() { return Err(PrCode::InvalidOutput.failure()); }
     }
     let number = |key: &str| -> Result<Option<u64>, Failure> {
         headers.get(key).map(|value| value.parse::<u64>().map_err(|_| PrCode::InvalidOutput.failure())).transpose()
@@ -99,7 +99,27 @@ pub(super) fn parse_api(bytes: &[u8], success: bool, now_seconds: u64) -> Result
         let mut failure = code.failure(); if code == PrCode::RateLimited { failure.retry_at = rate.retry_at; } return Err(failure);
     }
     if !success { return Err(PrCode::InvalidOutput.failure()); }
-    Ok(ApiResponse { status, rate, body })
+    let has_next = headers.get("link").map(|value| pagination(value)).transpose().map_err(PrCode::failure)?.unwrap_or(false);
+    Ok(ApiResponse { status, rate, body, has_next })
+}
+
+/// Links supply exhaustion evidence only. Callers construct their next fixed page request;
+/// no provider URL is ever followed as request authority.
+fn pagination(mut remaining: &str) -> Result<bool, PrCode> {
+    if remaining.is_empty() || remaining.len() > 16 * 1024 { return Err(PrCode::InvalidOutput); }
+    let mut relations = std::collections::HashSet::new();
+    loop {
+        let (destination, tail) = remaining.trim_start().strip_prefix('<').and_then(|s| s.split_once('>')).ok_or(PrCode::InvalidOutput)?;
+        let url = url::Url::parse(destination).map_err(|_| PrCode::InvalidOutput)?;
+        if url.scheme() != "https" || url.host_str() != Some("api.github.com") || !url.username().is_empty()
+            || url.password().is_some() || url.fragment().is_some() || url.port().is_some()
+            || !url.path().starts_with("/repos/") { return Err(PrCode::InvalidOutput); }
+        let (attributes, rest) = tail.split_once(',').map_or((tail, None), |(a, b)| (a, Some(b)));
+        let relation = attributes.trim().strip_prefix("; rel=\"").and_then(|s| s.strip_suffix('"')).ok_or(PrCode::InvalidOutput)?;
+        if !matches!(relation, "next" | "prev" | "first" | "last") || !relations.insert(relation.to_owned()) { return Err(PrCode::InvalidOutput); }
+        match rest { Some(rest) if !rest.trim().is_empty() => remaining = rest, Some(_) => return Err(PrCode::InvalidOutput), None => break }
+    }
+    Ok(relations.contains("next"))
 }
 
 fn json(bytes: &[u8]) -> Result<Value, PrCode> {

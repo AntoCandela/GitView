@@ -125,3 +125,21 @@ fn github_graphql_variables_cannot_change_bundled_documents() {
         assert!(body["query"].as_str().unwrap().starts_with("query "));
     }
 }
+
+#[test]
+fn github_malformed_pagination_cannot_certify_exhausted_lookup() {
+    for link in ["not a link", "<https://elsewhere.invalid/repos/o/r/pulls?page=2>; rel=\"next\"",
+        "<https://user:secret@api.github.com/repos/o/r/pulls?page=2>; rel=\"next\"",
+        "<https://api.github.com/repos/o/r/pulls?page=2>; rel=\"next\", <https://api.github.com/repos/o/r/pulls?page=3>; rel=\"next\""] {
+        assert_eq!(code(api(200,&format!("Link: {link}\r\n"),"[]",true)),PrCode::InvalidOutput);
+    }
+}
+
+#[test]
+fn github_pagination_preserves_next_page_even_for_an_empty_body() {
+    let response = api(200,"Link: <https://api.github.com/repos/o/r/pulls?head=o%3Atopic&page=2>; rel=\"next\", <https://api.github.com/repos/o/r/pulls?page=3>; rel=\"last\"\r\n","[]",true).unwrap_or_else(|_|panic!());
+    assert!(response.has_next);
+    assert!(!api(200,"Link: <https://api.github.com/repos/o/r/pulls?page=1>; rel=\"prev\"\r\n","[]",true).unwrap_or_else(|_|panic!()).has_next);
+    assert!(!api(200,"","[]",true).unwrap_or_else(|_|panic!()).has_next);
+    assert!(api(200,"Link: <https://api.github.com/repos/o/r/pulls?page=2>; rel=\"next\"\r\nLink: <https://api.github.com/repos/o/r/pulls?page=3>; rel=\"last\"\r\n","[]",true).is_err());
+}

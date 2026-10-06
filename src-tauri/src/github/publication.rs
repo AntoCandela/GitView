@@ -8,10 +8,7 @@ pub(super) fn valid(request: &PrRequest, result: &PrResult, lookup: &Lookup<'_>)
         PrResult::Failure(_) => true,
         PrResult::Success(success) => match success {
             PrSuccess::Ready | PrSuccess::Opened | PrSuccess::Blocked => true,
-            PrSuccess::Association { observation } => matches!(lookup(&observation.association_id), Some(Resource::Association))
-                && observation.candidates.iter().all(|candidate| matches!(lookup(&candidate.candidate_id),
-                    Some(Resource::Candidate { association_id, identity }) if association_id == observation.association_id
-                    && identity.number == candidate.number && identity.base_repository_id == candidate.base_repository.id)),
+            PrSuccess::Association { observation } => association(observation, lookup),
             PrSuccess::Snapshot { snapshot } => cursor(snapshot.overview.reviewers.next_cursor.as_deref(), None, Some(CollectionKind::Reviewers), None, lookup)
                 && cursor(snapshot.overview.labels.next_cursor.as_deref(), None, Some(CollectionKind::Labels), None, lookup),
             PrSuccess::Comparison { comparison } => valid_comparison(comparison, lookup),
@@ -61,4 +58,22 @@ fn valid_item(item: &Item, collection: CollectionKind, lookup: &Lookup<'_>) -> b
         (CollectionKind::ThreadComments, Item::Comment { .. }) | (CollectionKind::Reviewers, Item::Reviewer { .. }) | (CollectionKind::Labels, Item::Label { .. }) => true,
         _ => false,
     }
+}
+
+fn association(observation: &Association, lookup: &Lookup<'_>) -> bool {
+    if !matches!(lookup(&observation.association_id), Some(Resource::Association { .. })) { return false; }
+    let candidates: Vec<_> = observation.candidates.iter().chain(&observation.historical).collect();
+    let unique: std::collections::HashSet<_> = candidates.iter().map(|c| &c.candidate_id).collect();
+    unique.len() == candidates.len()
+        && observation.selected_candidate_id.as_ref().is_none_or(|id| unique.contains(id))
+        && match observation.state {
+            AssociationState::Single => observation.complete && observation.failure.is_none() && observation.candidates.len() == 1,
+            AssociationState::None => observation.complete && observation.failure.is_none() && observation.candidates.is_empty(),
+            _ => true,
+        }
+        && candidates.iter().all(|public| matches!(lookup(&public.candidate_id),
+            Some(Resource::Candidate { association_id, candidate }) if association_id == observation.association_id
+                && candidate.identity.number == public.number && candidate.identity.base_repository_id == public.base_repository.id
+                && candidate.base_ref == public.base_ref && candidate.head_ref == public.head_ref
+                && candidate.head_repository.as_ref().map(|r| &r.id) == public.head_repository.as_ref().map(|r| &r.id)))
 }

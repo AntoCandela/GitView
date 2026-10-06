@@ -115,13 +115,16 @@ pub struct Snapshot {
 }
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Candidate { pub candidate_id: String, pub number: u64, pub title: String, pub base_repository: GithubRepository }
+pub struct Candidate { pub candidate_id: String, pub number: u64, pub title: String, pub base_repository: GithubRepository, pub base_ref: String, pub head_repository: Option<GithubRepository>, pub head_ref: Option<String>, pub lifecycle: Lifecycle }
 #[derive(Clone, Copy, Debug, Serialize)]
 #[serde(rename_all = "snake_case")]
-pub enum AssociationState { Candidates, None, Ambiguous }
+pub enum AssociationState { Single, None, Ambiguous, Unresolved, Unavailable }
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Association { pub association_id: String, pub state: AssociationState, pub candidates: Vec<Candidate> }
+pub struct Association { pub association_id: String, pub branch_label: Option<String>, pub state: AssociationState, pub candidates: Vec<Candidate>, pub historical: Vec<Candidate>, pub selected_candidate_id: Option<String>, pub complete: bool, pub base_repositories: Vec<GithubRepository>, pub head_mappings: Vec<AssociationHead>, pub failure: Option<Failure>, pub observed_at: u64, pub freshness: Freshness }
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AssociationHead { pub repository: GithubRepository, pub head_ref: String }
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PrFile { pub file_id: String, pub display_path: String, pub previous_display_path: Option<String>, pub kind: FileKind, pub additions: Option<u64>, pub deletions: Option<u64>, pub patch: Option<ProviderPatch> }

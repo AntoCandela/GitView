@@ -38,6 +38,9 @@ impl PullRequestProvider for Provider {
 struct Fixture { app: tauri::App<MockRuntime>, main: WebviewWindow<MockRuntime>, entry: String, _temp: tempfile::TempDir }
 fn fixture(provider: Option<Arc<Provider>>) -> Fixture { fixture_with_inspection(provider,None) }
 fn fixture_with_inspection(provider: Option<Arc<Provider>>, executable: Option<&std::path::Path>) -> Fixture {
+    fixture_with_provider(provider.map(|provider| provider as Arc<dyn PullRequestProvider>), executable)
+}
+fn fixture_with_provider(provider: Option<Arc<dyn PullRequestProvider>>, executable: Option<&std::path::Path>) -> Fixture {
     let (temp, root) = test_support::working_tree();
     let mut service = RepositoryService::new();
     if let Some(provider) = provider { service.pull_requests = PullRequestService::new(provider); }
@@ -75,9 +78,25 @@ fn snapshot() -> Publication {
 }
 fn open_review(fixture: &Fixture, provider: &Provider) -> Value { open_review_number(fixture,provider,42) }
 fn choose_pr(fixture: &Fixture, provider: &Provider, number: u64) -> Value {
-    let association = Grant::new(Resource::Association);
-    let candidate = Grant::new(Resource::Candidate { association_id: association.id().into(), identity: PrIdentity { host: "github.com".into(), base_repository_id: "fixture-base".into(), number } });
-    provider.push(Publication { result: PrSuccess::Association { observation: Association { association_id: association.id().into(), state: AssociationState::Candidates, candidates: vec![Candidate { candidate_id: candidate.id().into(), number, title: "Fixture PR".into(), base_repository: repository() }] }}.into(), grants: vec![association, candidate] });
+    let capture = tauri::async_runtime::block_on(async {
+        let service = fixture.app.state::<RepositoryService>();
+        let native = service.with_pull_request_context(&fixture.entry, |native| native.unwrap().0).await;
+        let resolver = crate::github::association::AssociationResolver::new(Arc::new(crate::github::coordinator::PrDemandCoordinator::new(crate::github::transport::GhReadAdapter::default())));
+        resolver.capture(&native, None).await.unwrap()
+    });
+    let association = Grant::new(Resource::Association { binding: Box::new(AssociationBinding {
+        capture, viewed_branch: None, mapping: None, known: vec![], selected: None,
+    }) });
+    let verified = crate::github::association::VerifiedCandidate {
+        identity: PrIdentity { host: "github.com".into(), base_repository_id: "fixture-base".into(), number },
+        base_repository: repository(), base_ref: "main".into(), head_repository: Some(repository()), head_ref: Some("topic".into()), lifecycle: Lifecycle::Open, title: "Fixture PR".into(),
+    };
+    let candidate = Grant::new(Resource::Candidate { association_id: association.id().into(), candidate: verified });
+    provider.push(Publication { result: PrSuccess::Association { observation: Association {
+        association_id: association.id().into(), branch_label: Some("main".into()), state: AssociationState::Single,
+        candidates: vec![Candidate { candidate_id: candidate.id().into(), number, title: "Fixture PR".into(), base_repository: repository(), base_ref: "main".into(), head_repository: Some(repository()), head_ref: Some("topic".into()), lifecycle: Lifecycle::Open }],
+        historical: vec![], selected_candidate_id: None, complete: true, base_repositories: vec![repository()], head_mappings: vec![], failure: None, observed_at: 7, freshness: Freshness::Fresh,
+    }}.into(), grants: vec![association, candidate] });
     let result = response(&fixture.main, "pr_associations", json!({"entryId": fixture.entry, "branch": null}));
     let chosen = response(&fixture.main, "pr_choose", json!({"entryId": fixture.entry, "associationId": result["associationId"], "candidateId": result["candidates"][0]["candidateId"]}));
     chosen
@@ -368,4 +387,147 @@ fn github_host_deleted_head_preserves_null_repository_and_ref() {
     provider.push(observation);
     let opened=response(&f.main,"pr_open",json!({"entryId":f.entry,"prId":chosen["prId"]}));
     assert_eq!(opened["kind"],"snapshot"); assert!(opened["overview"]["headRef"].is_null()); assert!(opened["overview"]["headRepository"].is_null());
+}
+
+#[cfg(unix)]
+fn association_fixture() -> (Fixture, tempfile::TempDir, std::path::PathBuf, Arc<crate::github::coordinator::PrDemandCoordinator>) {
+    let gh = tempfile::tempdir().unwrap();
+    std::fs::write(gh.path().join("viewer"), "viewer-one").unwrap();
+    let executable = test_support::executable(gh.path(), r#"
+case "$1" in
+ version) printf '%s' 'gh version 2.81.0';;
+ auth) printf '%s' '{"hosts":{"github.com":[{"host":"github.com","active":true,"state":"success"}]}}';;
+ api)
+ case "$2" in
+ graphql) cat >/dev/null; viewer=$(cat "$FIXTURE_ROOT/viewer"); body="{\"data\":{\"viewer\":{\"id\":\"$viewer\"}}}";;
+ repos/fork/project) body='{"id":2,"name":"project","owner":{"login":"fork"},"fork":false}';;
+ repos/fork/project/pulls/7) body='{"number":7,"title":"Read-only PR","state":"open","merged_at":null,"base":{"ref":"main","repo":{"id":2,"name":"project","owner":{"login":"fork"}}},"head":{"ref":"published","repo":{"id":2,"name":"project","owner":{"login":"fork"}}}}';;
+ repos/fork/project/pulls*) body='[{"number":7,"title":"Read-only PR","state":"open","merged_at":null,"base":{"ref":"main","repo":{"id":2,"name":"project","owner":{"login":"fork"}}},"head":{"ref":"published","repo":{"id":2,"name":"project","owner":{"login":"fork"}}}}]';;
+ *) exit 9;;
+ esac
+ if [ -f "$FIXTURE_ROOT/merged" ]; then
+ case "$2" in
+ repos/fork/project/pulls/7) body='{"number":7,"title":"Read-only PR","state":"closed","merged_at":"2026-01-01T00:00:00Z","base":{"ref":"main","repo":{"id":2,"name":"project","owner":{"login":"fork"}}},"head":{"ref":null,"repo":null}}';;
+ repos/fork/project/pulls*) body='[]';;
+ esac
+ fi
+ printf 'HTTP/2.0 200 OK\r\nContent-Type: application/json\r\n\r\n%s' "$body";;
+ *) exit 9;;
+esac
+"#);
+    let adapter = crate::github::transport::GhReadAdapter::fixture(&executable, vec![
+        ("FIXTURE_ROOT".into(), gh.path().as_os_str().into()),
+        ("GH_CONFIG_DIR".into(), gh.path().join("config").into_os_string()),
+        ("GH_TOKEN".into(), "fixture-token".into()),
+    ]);
+    let coordinator = Arc::new(crate::github::coordinator::PrDemandCoordinator::new(adapter));
+    let provider = crate::github::provider::AssociationProvider::new(coordinator.clone());
+    let f = fixture_with_provider(Some(Arc::new(provider)), None);
+    let root = tauri::async_runtime::block_on(f.app.state::<RepositoryService>().with_pull_request_context(&f.entry, |native| native.unwrap().0.root));
+    test_support::git(&root, &["remote", "add", "origin", "git@work-alias:fork/project.git"]);
+    (f, gh, root, coordinator)
+}
+#[cfg(unix)]
+fn mapped_association(f: &Fixture) -> Value {
+    let unresolved = response(&f.main, "pr_associations", json!({"entryId":f.entry,"branch":null}));
+    assert_eq!(unresolved["state"], "unresolved", "{unresolved}");
+    let mapped = response(&f.main, "pr_map_head", json!({"entryId":f.entry,"associationId":unresolved["associationId"],"owner":"fork","repository":"project","headRef":"published"}));
+    assert_eq!(mapped["state"], "single", "{mapped}");
+    assert_eq!(mapped["candidates"][0]["number"], 7);
+    mapped
+}
+#[cfg(unix)]
+#[test]
+fn github_host_concrete_mapping_survives_commit_but_revokes_old_choices() {
+    let (f, _gh, root, _coordinator) = association_fixture();
+    let config = std::fs::read(root.join(".git/config")).unwrap();
+    let index = std::fs::read(root.join(".git/index")).unwrap();
+    let refs = test_support::git_output(&root, &["show-ref"]).stdout;
+    let mapped = mapped_association(&f);
+    assert_eq!(std::fs::read(root.join(".git/config")).unwrap(), config);
+    assert_eq!(std::fs::read(root.join(".git/index")).unwrap(), index);
+    assert_eq!(test_support::git_output(&root, &["show-ref"]).stdout, refs);
+    let choose = json!({"entryId":f.entry,"associationId":mapped["associationId"],"candidateId":mapped["candidates"][0]["candidateId"]});
+    assert_eq!(response(&f.main, "pr_choose", choose.clone())["kind"], "chosen");
+    test_support::commit(&root);
+    assert_eq!(response(&f.main, "pr_choose", choose)["code"], "stale_context");
+    let refreshed = response(&f.main, "pr_associations", json!({"entryId":f.entry,"branch":null}));
+    assert_eq!(refreshed["state"], "single", "{refreshed}");
+    test_support::git(&root, &["branch", "other"]);
+    let other = response(&f.main, "pr_associations", json!({"entryId":f.entry,"branch":"other"}));
+    assert_eq!(other["state"], "unresolved");
+    let stale_map = response(&f.main, "pr_map_head", json!({"entryId":f.entry,"associationId":refreshed["associationId"],"owner":"fork","repository":"project","headRef":"other"}));
+    assert_eq!(stale_map["code"], "stale_context", "retained mapping hints cannot confer renderer authority");
+    let refreshed = response(&f.main, "pr_associations", json!({"entryId":f.entry,"branch":null}));
+    assert_eq!(refreshed["state"], "single", "mapping must survive branch browsing: {refreshed}");
+    let choice = json!({"entryId":f.entry,"associationId":refreshed["associationId"],"candidateId":refreshed["candidates"][0]["candidateId"]});
+    let remapped = response(&f.main, "pr_map_head", json!({"entryId":f.entry,"associationId":refreshed["associationId"],"owner":"fork","repository":"project","headRef":"other"}));
+    assert_eq!(remapped["state"], "none", "{remapped}");
+    assert_eq!(response(&f.main, "pr_choose", choice)["code"], "stale_context");
+}
+#[cfg(unix)]
+#[test]
+fn github_host_concrete_choices_reject_config_account_and_context_replacement() {
+    for change in ["config", "account", "context"] {
+        let (f, gh, root, _coordinator) = association_fixture();
+        let mapped = mapped_association(&f);
+        match change {
+            "config" => test_support::git(&root, &["remote", "set-url", "origin", "git@another-alias:fork/project.git"]),
+            "account" => std::fs::write(gh.path().join("viewer"), "viewer-two").unwrap(),
+            _ => { tauri::async_runtime::block_on(f.app.state::<RepositoryService>().select(&f.entry)); },
+        }
+        let chosen = response(&f.main, "pr_choose", json!({"entryId":f.entry,"associationId":mapped["associationId"],"candidateId":mapped["candidates"][0]["candidateId"]}));
+        assert_eq!(chosen["code"], "stale_context", "{change}: {chosen}");
+    }
+}
+
+#[test]
+fn github_host_reselection_cancels_account_preparation_before_provider_read() {
+    struct Preparing {
+        entered: std::sync::mpsc::Sender<()>,
+        finish: Mutex<Option<oneshot::Receiver<()>>>,
+    }
+    impl PullRequestProvider for Preparing {
+        fn account(&self) -> Option<HostAccount> { None }
+        fn prepare<'a>(&'a self, _: &'a crate::workspace::SelectedContext, _: &'a PrRequest, _: &'a [Grant])
+            -> Pin<Box<dyn Future<Output = Result<(), Failure>> + Send + 'a>> {
+            let finish = self.finish.lock().take().unwrap();
+            Box::pin(async move { self.entered.send(()).unwrap(); let _ = finish.await; Ok(()) })
+        }
+        fn read(&self, _: ProviderRequest) -> Pin<Box<dyn Future<Output = Publication> + Send + '_>> {
+            panic!("reselected preparation cannot reach provider read")
+        }
+    }
+    let (entered, receive) = std::sync::mpsc::channel();
+    let (finish, receiver) = oneshot::channel();
+    let f = fixture_with_provider(Some(Arc::new(Preparing { entered, finish: Mutex::new(Some(receiver)) })), None);
+    let main = f.main.clone(); let entry = f.entry.clone();
+    let pending = std::thread::spawn(move || response(&main, "pr_status", json!({"entryId":entry})));
+    receive.recv_timeout(Duration::from_secs(5)).unwrap();
+    tauri::async_runtime::block_on(f.app.state::<RepositoryService>().select(&f.entry));
+    assert_eq!(pending.join().unwrap()["code"], "stale_context");
+    assert!(finish.send(()).is_err(), "preparation future must be dropped on reselection");
+}
+
+#[cfg(unix)]
+#[test]
+fn github_host_reused_branch_keeps_known_history_without_automatic_attachment() {
+    let (f, gh, root, coordinator) = association_fixture();
+    let mapped = mapped_association(&f);
+    assert!(!mapped["selectedCandidateId"].is_null());
+    std::fs::write(gh.path().join("merged"), "merged").unwrap();
+    // Move the old name to a different object, retaining the explicit mapping configuration.
+    test_support::git(&root, &["checkout", "-b", "replacement"]);
+    test_support::git(&root, &["branch", "-D", "main"]);
+    test_support::commit(&root);
+    test_support::git(&root, &["branch", "main"]);
+    test_support::git(&root, &["checkout", "main"]);
+    coordinator.invalidate(crate::github::coordinator::Invalidation::Repository(root.join(".git").canonicalize().unwrap()));
+    let refreshed = response(&f.main, "pr_associations", json!({"entryId":f.entry,"branch":null}));
+    assert_eq!(refreshed["state"], "none", "{refreshed}");
+    assert_eq!(refreshed["historical"][0]["number"], 7);
+    assert_eq!(refreshed["historical"][0]["lifecycle"], "merged");
+    assert!(refreshed["selectedCandidateId"].is_null());
+    let chosen = response(&f.main, "pr_choose", json!({"entryId":f.entry,"associationId":refreshed["associationId"],"candidateId":refreshed["historical"][0]["candidateId"]}));
+    assert_eq!(chosen["kind"], "chosen", "explicit history remains inspectable");
 }

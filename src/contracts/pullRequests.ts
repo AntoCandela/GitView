@@ -28,9 +28,11 @@ export interface PrSnapshot {
   freshness: 'fresh' | 'stale'; availability: PrFailure | null;
   sections: Record<'commits' | 'timeline' | 'threads' | 'threadComments' | 'reviewers' | 'labels', 'available' | 'unavailable' | 'not_loaded'>;
 }
-export interface PrCandidate { candidateId: string; number: number; title: string; baseRepository: GithubRepository }
+export interface PrCandidate { candidateId: string; number: number; title: string; baseRepository: GithubRepository; baseRef: string; headRepository: GithubRepository | null; headRef: string | null; lifecycle: PrOverview["lifecycle"] }
 export interface PrAssociation {
-  associationId: string; state: 'candidates' | 'none' | 'ambiguous'; candidates: PrCandidate[];
+  associationId: string; branchLabel: string | null; state: 'single' | 'none' | 'ambiguous' | 'unresolved' | 'unavailable'; candidates: PrCandidate[];
+  historical: PrCandidate[]; selectedCandidateId: string | null; complete: boolean; baseRepositories: GithubRepository[];
+  headMappings: Array<{ repository: GithubRepository; headRef: string }>; failure: PrFailure | null; observedAt: number; freshness: 'fresh' | 'stale';
 }
 export type PrComparisonSelection = { kind: 'aggregate' } | { kind: 'commit'; commitId: string; parentIndex: number | null };
 export interface PrFile {

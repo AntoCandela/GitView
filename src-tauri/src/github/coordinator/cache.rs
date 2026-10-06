@@ -23,7 +23,7 @@ pub(super) fn decode(
                 .as_array()
                 .ok_or_else(|| PrCode::InvalidOutput.failure())?
                 .len();
-            (items, items >= 100)
+            (items, response.has_next)
         }
         GhRead::ReadCommit { .. } => {
             let items = body
@@ -31,7 +31,7 @@ pub(super) fn decode(
                 .and_then(Value::as_array)
                 .ok_or_else(|| PrCode::InvalidOutput.failure())?
                 .len();
-            (items, items >= 100)
+            (items, response.has_next)
         }
         GhRead::ReadConnection { connection, .. } => {
             let name = match connection {
@@ -67,17 +67,9 @@ pub(super) fn decode(
     if items > 100 {
         return Err(PrCode::ResourceLimit.failure());
     }
-    let confirmed_negative = matches!(read, GhRead::ListPulls { page: 1, .. }) && items == 0;
-    // Transport does not retain REST Link headers. Short nonempty REST pages cannot certify
-    // exhaustion; a successful empty first pull-list page only confirms this one lookup.
-    let rest_collection = matches!(
-        read,
-        GhRead::ListPulls { .. } | GhRead::ReadPullFiles { .. } | GhRead::ReadCommit { .. }
-    );
+    let confirmed_negative = matches!(read, GhRead::ListPulls { page: 1, .. }) && items == 0 && !more;
     let completeness = if more {
         Completeness::More
-    } else if rest_collection && !confirmed_negative {
-        Completeness::Limited
     } else {
         Completeness::Complete
     };

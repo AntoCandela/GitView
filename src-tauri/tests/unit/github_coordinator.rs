@@ -74,7 +74,7 @@ impl ReadTransport for Fake {
                 .pop_front()
                 .unwrap_or_else(|| Ok(json!({"private":"body"})))?;
             let mut response = ApiResponse {
-                status: 200,
+                status: 200, has_next: false,
                 rate: Default::default(),
                 body,
             };
@@ -318,7 +318,7 @@ async fn github_coordinator_only_confirmed_first_empty_pull_lookup_gets_longer_t
     complete(&mut third).await;
     assert_eq!(fake.calls.load(Ordering::SeqCst), 2);
     let response = ApiResponse {
-        status: 200,
+        status: 200, has_next: false,
         rate: Default::default(),
         body: json!([]),
     };
@@ -336,7 +336,7 @@ async fn github_coordinator_only_confirmed_first_empty_pull_lookup_gets_longer_t
     assert!(!continuation.confirmed_negative);
     assert!(matches!(
         continuation.completeness,
-        crate::github::model::Completeness::Limited
+        crate::github::model::Completeness::Complete
     ));
 }
 

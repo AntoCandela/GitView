@@ -41,7 +41,7 @@ pub(super) fn build(read: &GhRead) -> Result<CommandInput, PrCode> {
         GhRead::ReadRepository { .. } => base,
         GhRead::ListPulls { head, page, .. } => {
             validate_page(*page)?;
-            let mut endpoint = format!("{base}/pulls?state=all&per_page={PAGE_SIZE}&page={page}");
+            let mut endpoint = format!("{base}/pulls?state=open&per_page={PAGE_SIZE}&page={page}");
             if let Some(head) = head { validate_variable(head, 1024)?; endpoint.push_str(&format!("&head={}", encode(head))); }
             endpoint
         }

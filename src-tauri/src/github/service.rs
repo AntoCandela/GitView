@@ -20,13 +20,21 @@ pub struct HostAccount { pub host: GithubHost, pub provider_user_id: String, pub
 /// Native-only resource targets. Providers verify their meaning before issuing a grant.
 #[derive(Clone, Debug)]
 pub enum Resource {
-    Association,
-    Candidate { association_id: String, identity: PrIdentity },
-    Pr { identity: PrIdentity },
+    Association { binding: Box<AssociationBinding> },
+    Candidate { association_id: String, candidate: super::association::VerifiedCandidate },
+    Pr { identity: PrIdentity, repository: GithubRepository },
     Comparison,
     File { comparison_id: String, key: String },
     Cursor { comparison_id: Option<String>, collection: Option<CollectionKind>, thread_id: Option<String>, key: String },
     Thread { key: String }, Commit { key: String, parent_count: u32 }, Anchor { key: String }, Link { url: String },
+}
+
+/// Native association evidence and app-local choices; never deserialized from renderer input.
+#[derive(Clone, Debug)]
+pub struct AssociationBinding {
+    pub capture: super::association::LocalCapture, pub viewed_branch: Option<String>,
+    pub mapping: Option<super::association::HeadMappingInput>, pub known: Vec<super::association::KnownPull>,
+    pub selected: Option<PrIdentity>,
 }
 
 /// A grant can only be created by native provider code; publication binds it to the request scope.
@@ -75,6 +83,11 @@ pub struct ProviderRequest {
 /// Account reads are in-memory observations. Authentication/network discovery belongs to bounded provider work.
 pub trait PullRequestProvider: Send + Sync {
     fn account(&self) -> Option<HostAccount>;
+    fn account_changes(&self) -> Option<watch::Receiver<super::coordinator::AccountNotice>> { None }
+    /// Called only after native context/resource admission, outside workspace locks.
+    /// Discovery may change the account; admission is repeated afterward under that observation.
+    fn prepare<'a>(&'a self, _: &'a SelectedContext, _: &'a PrRequest, _: &'a [Grant])
+        -> Pin<Box<dyn Future<Output = Result<(), Failure>> + Send + 'a>> { Box::pin(async { Ok(()) }) }
     fn read(&self, request: ProviderRequest) -> Pin<Box<dyn Future<Output = Publication> + Send + '_>>;
 }
 struct UnconfiguredProvider;
@@ -84,7 +97,7 @@ impl PullRequestProvider for UnconfiguredProvider {
         Box::pin(async { PrCode::IntegrationUnavailable.into() })
     }
 }
-struct Handle { comparison: Option<PublishedComparison>, context: PrContext, session: Option<PrSession>, grant: Grant }
+struct Handle { active: bool, comparison: Option<PublishedComparison>, context: PrContext, session: Option<PrSession>, grant: Grant }
 struct ContextLifetime { context: PrContext, cancel: watch::Sender<bool> }
 struct Session { snapshot: SnapshotEvidence, comparison_cancel: watch::Sender<bool>, comparison_epoch: u64, context: PrContext, session: PrSession, pr_id: String, cancel: watch::Sender<bool> }
 struct Registry {
@@ -128,8 +141,32 @@ impl PullRequestService {
     }
 
     pub async fn execute(&self, repository: &RepositoryService, entry_id: &str, request: PrRequest) -> PrResult {
-        let admission = repository.with_pull_request_context(entry_id, |native| {
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(30);
+        let preflight = repository.with_pull_request_context(entry_id, |native| {
             let Some((native, generation)) = native else { return Err(PrCode::StaleContext); };
+            let account = self.provider.account();
+            let context = PrContext { entry_id: entry_id.into(), repository_generation: generation, account_epoch: account.as_ref().map_or(0, |a| a.account_epoch) };
+            let mut registry = self.registry.lock();
+            registry.reconcile_account(account);
+            let already_released = matches!(&request, PrRequest::Release { session_id }
+                if registry.released.iter().any(|(owner, id)| owner == &context && id == session_id));
+            let resources = if already_released { vec![] } else { registry.resolve(&context, &request)? };
+            let cancel = registry.context_lifetime(&context)?;
+            Ok((native, generation, resources, cancel))
+        }).await;
+        let (captured, generation, resources, mut prepare_cancel) = match preflight { Ok(value) => value, Err(code) => return code.into() };
+        let prepared = tokio::select! {
+            biased;
+            _ = prepare_cancel.changed() => return PrCode::StaleContext.into(),
+            result = tokio::time::timeout_at(deadline, self.provider.prepare(&captured, &request, &resources)) => result,
+        };
+        self.reconcile_account();
+        match prepared { Ok(Ok(())) => {}, Ok(Err(failure)) => return PrResult::Failure(failure), Err(_) => return PrCode::Timeout.into() }
+        let admission = repository.with_pull_request_context(entry_id, |native| {
+            let Some((native, current_generation)) = native else { return Err(PrCode::StaleContext); };
+            if current_generation != generation || native.root != captured.root || native.git_dir != captured.git_dir || native.identity != captured.identity {
+                return Err(PrCode::StaleContext);
+            }
             self.begin(native, generation, request)
         }).await;
         let ticket = match admission {
@@ -141,6 +178,16 @@ impl PullRequestService {
         let mut cancellation = ticket.cancel.clone();
         let mut context_cancel = ticket.context_cancel.clone();
         let mut comparison_cancel = ticket.comparison_cancel.clone();
+        let mut account_changes = self.provider.account_changes();
+        let account_changed = async {
+            if let Some(receiver) = account_changes.as_mut() {
+                loop {
+                    if self.provider.account() != ticket.account { self.reconcile_account(); return; }
+                    if receiver.changed().await.is_err() { std::future::pending::<()>().await; }
+                }
+            }
+            std::future::pending::<()>().await;
+        };
         let cancelled = async {
             if let Some(receiver) = cancellation.as_mut() { let _ = receiver.changed().await; }
             else { std::future::pending::<()>().await; }
@@ -151,10 +198,11 @@ impl PullRequestService {
         };
         let publication = tokio::select! {
             biased;
+            _ = account_changed => return PrCode::StaleContext.into(),
             _ = context_cancel.changed() => return PrCode::StaleContext.into(),
             _ = comparison_cancelled => return PrCode::StaleContext.into(),
             _ = cancelled => return PrCode::StaleContext.into(),
-            result = tokio::time::timeout(Duration::from_secs(30), async {
+            result = tokio::time::timeout_at(deadline, async {
                 if let PrRequest::Associations { branch: Some(branch) } = &ticket.request {
                     if branch.is_empty() || branch.len() > 1024 { return PrCode::UnresolvedMapping.into(); }
                     if let Err(code) = repository.validate_pull_request_branch(&ticket.repository, branch).await { return code.into(); }
@@ -187,27 +235,35 @@ impl PullRequestService {
         let context = PrContext { entry_id: repository.entry_id.clone(), repository_generation: generation, account_epoch: account.as_ref().map_or(0, |a| a.account_epoch) };
         let mut registry = self.registry.lock();
         registry.reconcile_account(account.clone());
-        if registry.contexts.get(&context.entry_id).is_some_and(|current| current.context != context) {
-            registry.invalidate_entry(&context.entry_id);
-        }
-        if !registry.contexts.contains_key(&context.entry_id) {
-            if registry.contexts.len() >= MAX_SESSIONS { return Err(PrCode::ResourceLimit); }
-            registry.contexts.insert(context.entry_id.clone(), ContextLifetime { context: context.clone(), cancel: watch::channel(false).0 });
-        }
-        let context_cancel = registry.contexts.get(&context.entry_id).ok_or(PrCode::StaleContext)?.cancel.subscribe();
+        let context_cancel = registry.context_lifetime(&context)?;
         if matches!(request, PrRequest::Open { .. }) && registry.sessions.len() >= MAX_SESSIONS { return Err(PrCode::ResourceLimit); }
         if let PrRequest::Release { session_id } = &request {
             if registry.released.iter().any(|(owner, id)| owner == &context && id == session_id) {
                 return Ok(Admission::Immediate(PrSuccess::Released.into()));
             }
         }
-        let resources = registry.resolve(&context, &request)?;
-        if let PrRequest::Choose { candidate_id, .. } = &request {
-            let Resource::Candidate { identity, .. } = &registry.handle(&context, candidate_id)?.grant.resource else { return Err(PrCode::StaleContext); };
-            let grant = Grant::new(Resource::Pr { identity: identity.clone() });
+        let mut resources = registry.resolve(&context, &request)?;
+        if let PrRequest::Associations { branch } = &request {
+            if let Some(previous) = registry.handles.values().find(|handle| handle.context == context
+                && matches!(&handle.grant.resource, Resource::Association { binding } if binding.viewed_branch == *branch)) {
+                resources.push(previous.grant.clone());
+            }
+        }
+        if let PrRequest::Choose { association_id, candidate_id } = &request {
+            let Resource::Candidate { candidate, .. } = &registry.handle(&context, candidate_id)?.grant.resource else { return Err(PrCode::StaleContext); };
+            let candidate = candidate.clone();
+            if registry.handles.len() >= MAX_HANDLES { return Err(PrCode::ResourceLimit); }
+            if let Some(Handle { grant: Grant { resource: Resource::Association { binding }, .. }, .. }) = registry.handles.get_mut(association_id) {
+                binding.selected = Some(candidate.identity.clone());
+                if !binding.known.iter().any(|known| known.identity == candidate.identity) {
+                    if binding.known.len() >= 32 { binding.known.remove(0); }
+                    binding.known.push(super::association::KnownPull { identity: candidate.identity.clone(), base_repository: candidate.base_repository.clone() });
+                }
+            }
+            let grant = Grant::new(Resource::Pr { identity: candidate.identity, repository: candidate.base_repository });
             let id = grant.id.clone();
             if registry.handles.len() >= MAX_HANDLES { return Err(PrCode::ResourceLimit); }
-            registry.handles.insert(id.clone(), Handle { comparison: None, context, session: None, grant });
+            registry.handles.insert(id.clone(), Handle { active: true, comparison: None, context, session: None, grant });
             return Ok(Admission::Immediate(PrSuccess::Chosen { pr_id: id }.into()));
         }
         let session_id = registry.request_session(&context, &request)?;
@@ -216,7 +272,7 @@ impl PullRequestService {
         let identity = if let Some(session) = &session {
             Some(registry.authority.validate(&context, session).map_err(|_| PrCode::StaleContext)?.clone())
         } else if let PrRequest::Open { pr_id } = &request {
-            match &registry.handle(&context, pr_id)?.grant.resource { Resource::Pr { identity } => Some(identity.clone()), _ => return Err(PrCode::StaleContext) }
+            match &registry.handle(&context, pr_id)?.grant.resource { Resource::Pr { identity, .. } => Some(identity.clone()), _ => return Err(PrCode::StaleContext) }
         } else { None };
         let comparison = match &request {
             PrRequest::File { comparison_id, .. } | PrRequest::FilesPage { comparison_id, .. } => {
@@ -243,8 +299,17 @@ impl PullRequestService {
         }
         let association_epoch = if matches!(request, PrRequest::Associations { .. } | PrRequest::MapHead { .. }) {
             registry.association_epoch = registry.association_epoch.checked_add(1).ok_or(PrCode::ResourceLimit)?;
-            if matches!(request, PrRequest::Associations { .. }) {
-                registry.handles.retain(|_, handle| handle.context != context || !matches!(handle.grant.resource, Resource::Association | Resource::Candidate { .. }));
+            let replaced: Vec<_> = resources.iter().filter(|grant| matches!(grant.resource, Resource::Association { .. })).map(|grant| grant.id.clone()).collect();
+            // Keep other branches' bounded app-local mapping bindings, but revoke their old
+            // candidate choices when the visible association changes.
+            registry.handles.retain(|id, handle| handle.context != context || (!replaced.contains(id) && !matches!(handle.grant.resource, Resource::Candidate { .. })));
+            for handle in registry.handles.values_mut().filter(|handle| handle.context == context && matches!(handle.grant.resource, Resource::Association { .. })) {
+                handle.active = false;
+            }
+            if registry.handles.values().filter(|handle| handle.context == context && matches!(handle.grant.resource, Resource::Association { .. })).count() >= 32 {
+                if let Some(id) = registry.handles.iter().find(|(_, handle)| handle.context == context && matches!(handle.grant.resource, Resource::Association { .. })).map(|(id, _)| id.clone()) {
+                    registry.handles.remove(&id);
+                }
             }
             Some(registry.association_epoch)
         } else { None };
@@ -263,7 +328,9 @@ impl PullRequestService {
         if let Some(session) = &ticket.session {
             if registry.authority.validate(&ticket.context, session).is_err() { return PrCode::ChangedSnapshot.into(); }
         }
-        if registry.resolve(&ticket.context, &ticket.request).is_err() { return PrCode::StaleContext.into(); }
+        // MapHead replaces its admitted association handles at dispatch; its captured resources
+        // remain valid only under the context/account and association epoch checked above.
+        if !matches!(ticket.request, PrRequest::MapHead { .. }) && registry.resolve(&ticket.context, &ticket.request).is_err() { return PrCode::StaleContext.into(); }
         if let PrResult::Failure(_) = publication.result { return publication.result; }
         if let PrResult::Success(PrSuccess::Snapshot { snapshot }) = &publication.result {
             if ticket.identity.as_ref().is_none_or(|identity| identity.host != "github.com"
@@ -283,7 +350,7 @@ impl PullRequestService {
         if let PrResult::Success(PrSuccess::Snapshot { snapshot }) = &mut publication.result {
             match &ticket.request {
                 PrRequest::Open { pr_id } => {
-                    let Some(Handle { grant: Grant { resource: Resource::Pr { identity }, .. }, .. }) = registry.handles.get(pr_id) else { return PrCode::StaleContext.into(); };
+                    let Some(Handle { grant: Grant { resource: Resource::Pr { identity, .. }, .. }, .. }) = registry.handles.get(pr_id) else { return PrCode::StaleContext.into(); };
                     let identity = identity.clone();
                     let Ok(issued) = registry.authority.open(ticket.context.clone(), identity) else { return PrCode::ResourceLimit.into(); };
                     let (cancel, _) = watch::channel(false);
@@ -319,13 +386,24 @@ impl PullRequestService {
         };
         for grant in publication.grants {
             let comparison = captured_comparison.as_ref().filter(|comparison| comparison.comparison_id == grant.id).cloned();
-            registry.handles.insert(grant.id.clone(), Handle { comparison, context: ticket.context.clone(), session: session.clone(), grant });
+            registry.handles.insert(grant.id.clone(), Handle { active: true, comparison, context: ticket.context.clone(), session: session.clone(), grant });
         }
         publication.result
     }
 }
 
 impl Registry {
+    fn context_lifetime(&mut self, context: &PrContext) -> Result<watch::Receiver<bool>, PrCode> {
+        if self.contexts.get(&context.entry_id).is_some_and(|current| current.context != *context) {
+            self.invalidate_entry(&context.entry_id);
+        }
+        if !self.contexts.contains_key(&context.entry_id) {
+            if self.contexts.len() >= MAX_SESSIONS { return Err(PrCode::ResourceLimit); }
+            self.contexts.insert(context.entry_id.clone(), ContextLifetime { context: context.clone(), cancel: watch::channel(false).0 });
+        }
+        Ok(self.contexts.get(&context.entry_id).ok_or(PrCode::StaleContext)?.cancel.subscribe())
+    }
+
     fn valid_publication(&self, ticket: &Ticket, publication: &Publication) -> bool {
         let mut ids = std::collections::HashSet::new();
         if !publication.grants.iter().all(|grant| ids.insert(grant.id.as_str())) { return false; }
@@ -386,17 +464,17 @@ impl Registry {
         let mut resolved = vec![];
         let mut resolve = |id: &str, predicate: &dyn Fn(&Resource) -> bool| -> Result<(), PrCode> {
             let handle = self.handle(context, id)?;
-            if !predicate(&handle.grant.resource) || handle.session.as_ref().map(|s| s.id.to_string()) != session_id { return Err(PrCode::StaleContext); }
+            if !handle.active || !predicate(&handle.grant.resource) || handle.session.as_ref().map(|s| s.id.to_string()) != session_id { return Err(PrCode::StaleContext); }
             resolved.push(handle.grant.clone()); Ok(())
         };
         match request {
             PrRequest::Status | PrRequest::Associations { .. } | PrRequest::Refresh { .. } | PrRequest::Release { .. } => {},
             PrRequest::MapHead { association_id, owner, repository, head_ref } => {
                 if !mapping_name(owner, 39) || !mapping_name(repository, 100) || !valid_head_ref(head_ref) { return Err(PrCode::UnresolvedMapping); }
-                resolve(association_id, &|r| matches!(r, Resource::Association))?;
+                resolve(association_id, &|r| matches!(r, Resource::Association { .. }))?;
             },
             PrRequest::Choose { association_id, candidate_id } => {
-                resolve(association_id, &|r| matches!(r, Resource::Association))?;
+                resolve(association_id, &|r| matches!(r, Resource::Association { .. }))?;
                 resolve(candidate_id, &|r| matches!(r, Resource::Candidate { association_id: id, .. } if id == association_id))?;
             },
             PrRequest::Open { pr_id } => resolve(pr_id, &|r| matches!(r, Resource::Pr { .. }))?,
@@ -446,10 +524,13 @@ fn valid_link(value: &str) -> bool {
     value.len() <= 4096 && url::Url::parse(value).is_ok_and(|url| url.scheme() == "https" && url.host_str() == Some("github.com")
         && url.username().is_empty() && url.password().is_none() && url.port().is_none())
 }
+fn valid_identity(identity: &PrIdentity) -> bool { identity.host == "github.com" && !identity.base_repository_id.is_empty() && identity.base_repository_id.len() <= 256 && identity.number > 0 }
 fn valid_resource(resource: &Resource) -> bool {
     match resource {
         Resource::File { key, .. } | Resource::Cursor { key, .. } | Resource::Thread { key } | Resource::Commit { key, .. } | Resource::Anchor { key } => key.len() <= 4096,
-        Resource::Candidate { identity, .. } | Resource::Pr { identity } => identity.host == "github.com" && !identity.base_repository_id.is_empty() && identity.base_repository_id.len() <= 256 && identity.number > 0,
+        Resource::Candidate { candidate, .. } => valid_identity(&candidate.identity) && candidate.identity.base_repository_id == candidate.base_repository.id,
+        Resource::Pr { identity, repository } => valid_identity(identity) && identity.base_repository_id == repository.id,
+        Resource::Association { binding } => binding.known.len() <= 32,
         Resource::Link { url } => valid_link(url),
         _ => true,
     }

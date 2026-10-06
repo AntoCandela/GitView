@@ -49,7 +49,7 @@ impl Default for GhReadAdapter {
 
 impl GhReadAdapter {
     #[cfg(test)]
-    pub(super) fn fixture(executable: &std::path::Path, environment: Vec<(OsString, OsString)>) -> Self {
+    pub(crate) fn fixture(executable: &std::path::Path, environment: Vec<(OsString, OsString)>) -> Self {
         Self { executable: executable.as_os_str().to_owned(), permits: Arc::new(Semaphore::new(MAX_ACTIVE)), deadline: CHILD_DEADLINE, environment }
     }
 
