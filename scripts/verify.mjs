@@ -183,7 +183,8 @@ function extractEvidence(output, reporter, allowed, root, sources) {
 function testEnvironment() {
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (key.toUpperCase().startsWith('GIT_')) delete env[key];
-  const empty = platform() === 'win32' ? 'NUL' : '/dev/null';
+  // Git recognizes /dev/null on Windows too; recent Git rejects the NUL device path.
+  const empty = '/dev/null';
   return { ...env, GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_SYSTEM: empty, GIT_CONFIG_GLOBAL: empty };
 }
 
