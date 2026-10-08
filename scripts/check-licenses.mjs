@@ -12,6 +12,8 @@ import { verifyVendorPatch } from './vendor-patches.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const inventoryPath = join(root, 'licenses/inventory.json');
 const canonicalGplSha256 = '3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986';
+const canonicalGplSource = 'https://www.gnu.org/licenses/gpl-3.0.txt';
+const gplMirrorSource = 'https://raw.githubusercontent.com/coreutils/coreutils/5b9d747261590ffde5f47fcf8cef06ee5bb5df63/COPYING';
 const legalName = /^(?!.*\.(?:svg|png|jpe?g|ico|icns|woff2?|ttf|otf|[cm]?js|map)$)(?:(?:licen[cs]es?|copying|copyright|notices?|authors|third[._ -]?party[._ -]?(?:notices?|licen[cs]es?))(?:[._-].*)?|.+\.licen[cs]e(?:[._-].*)?)$/i;
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const json = path => readFile(join(root, path), 'utf8').then(JSON.parse);
@@ -25,6 +27,18 @@ function command(name, args) {
 function download(url) {
   if (!/^https:\/\//.test(url)) throw new Error('non_https_source');
   return command('curl', ['--fail', '--silent', '--show-error', '--location', '--retry', '2', '--max-time', '180', url]);
+}
+/** Verify the unchanged canonical license bytes before recording fresh source evidence. */
+export function verifyCanonicalGpl(local, fetchSource = url => command('curl', ['--fail', '--silent', '--show-error', '--location', '--connect-timeout', '10', '--max-time', '30', url])) {
+  if (sha256(local) !== canonicalGplSha256) throw new Error('authoritative_gpl_text_mismatch');
+  for (const source of [canonicalGplSource, gplMirrorSource]) {
+    let bytes;
+    try { bytes = fetchSource(source); }
+    catch { continue; } // A transport failure may use the pinned GNU mirror; mismatched bytes may not.
+    if (!local.equals(bytes)) throw new Error('authoritative_gpl_text_mismatch');
+    return source;
+  }
+  throw new Error('authoritative_gpl_source_unavailable');
 }
 async function files(directory) {
   const result = [];
@@ -497,8 +511,8 @@ async function refresh() {
     for (const pkg of [...npm, ...cargo]) pkg.selectedLicense = selectedLicense(pkg);
     const assets = await json('licenses/asset-provenance.json');
     await verifyAssetOrigins(assets, [...npm, ...cargo], temporary);
-    if (sha256(await readFile(join(root, 'LICENSE'))) !== canonicalGplSha256 || !(await readFile(join(root, 'LICENSE'))).equals(download('https://www.gnu.org/licenses/gpl-3.0.txt'))) throw new Error('authoritative_gpl_text_mismatch');
-    const inventory = { schemaVersion: 1, projectLicense: 'GPL-3.0-only', gplSource: 'https://www.gnu.org/licenses/gpl-3.0.txt', gplSha256: sha256(await readFile(join(root, 'LICENSE'))), sourceHashes: await sourceHashes(), legalTextHashes: await legalTextHashes(), assets, packages: [...npm, ...cargo] };
+    const gplVerifiedSource = verifyCanonicalGpl(await readFile(join(root, 'LICENSE')));
+    const inventory = { schemaVersion: 1, projectLicense: 'GPL-3.0-only', gplSource: canonicalGplSource, gplVerifiedSource, gplSha256: sha256(await readFile(join(root, 'LICENSE'))), sourceHashes: await sourceHashes(), legalTextHashes: await legalTextHashes(), assets, packages: [...npm, ...cargo] };
     await mkdir(dirname(inventoryPath), { recursive: true });
     await writeFile(inventoryPath, `${JSON.stringify(inventory, null, 2)}\n`);
     console.log(JSON.stringify({ inventoryRefreshed: true, npm: npm.length, cargo: cargo.length }));
@@ -512,6 +526,7 @@ async function check(integrityOnly) {
   const current = await sourceHashes();
   if (JSON.stringify(current) !== JSON.stringify(inventory.sourceHashes)) drift.push('source_or_lock_drift');
   if (inventory.gplSha256 !== canonicalGplSha256 || sha256(await readFile(join(root, 'LICENSE'))) !== canonicalGplSha256) drift.push('gpl_text_drift');
+  if (inventory.gplSource !== canonicalGplSource || ![canonicalGplSource, gplMirrorSource].includes(inventory.gplVerifiedSource)) drift.push('gpl_source_evidence');
   if (JSON.stringify(await json('licenses/asset-provenance.json')) !== JSON.stringify(inventory.assets)) drift.push('asset_evidence_drift');
   if (JSON.stringify(await legalTextHashes()) !== JSON.stringify(inventory.legalTextHashes)) drift.push('retained_legal_text_drift');
   const npm = await json('package-lock.json');

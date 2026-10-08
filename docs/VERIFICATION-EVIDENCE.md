@@ -94,6 +94,26 @@ Both `npm run smoke:browser -- --scenario baseline` and `npm run smoke:browser -
 
 The accompanying legal inventory contains 265 npm entries, 445 Cargo packages and 1,078 retained notice references with no integrity drift. Strict publication clearance remains blocked by the existing `@napi-rs/lzma-linux-x64-gnu`, `stackback` and original GLSL grammar grant gaps.
 
+## GitHub branch association evidence
+
+The association resolver uses effective fetch/push URLs and tracking/push refs, verifies GitHub repository IDs, and matches PRs by exact head repository/ref within verified base repositories and fork parents. It does not fetch, check out, or write Git configuration. Explicit alias mappings remain app-local. Automatic discovery reads one bounded page per query and keeps incomplete results distinct from confirmed absence.
+
+Disposable real-Git repositories and scripted `gh` processes exercise triangular forks, renamed local branches, multiple bases, push URLs and wildcard refspecs, URL rewrites, SSH aliases, local-dot upstreams, detached/unborn/bare repositories, deleted/reused branches, and malformed/incomplete provider replies. Native host fixtures exercise mapping/choice authority, configuration/account/context replacement, cancellation during account preparation, retention across commits and branch browsing, and separately selectable merged history without automatic attachment to reused branch names. Controlled files, index, refs and configuration remain unchanged by discovery/mapping.
+
+The focused native GitHub suite passed 87 tests, followed by the final affected inactive-binding regression. Full shared verification passed all 17 required checks and 1,136 tests, including strict publication-license verification. Independent review found no unresolved blocking findings after the historical-selection and retained-binding authority corrections. These are resolver, process and host-boundary observations with fixture credentials, not live GitHub or packaged-native UI evidence. The production provider remains unconfigured and the PR view is not yet mounted.
+
+## GitHub overview and discussion boundary
+
+The opt-in `GithubProvider` now composes fixed GraphQL reads with the existing account-scoped coordinator and native service. `github/discussion/` normalizes overview metadata, description, requested reviewers, labels, current commits, curated timeline and independently paged review-thread replies. Submitted review bodies and states belong to timeline review records; the requested-reviewer collection does not claim to enumerate all past reviewers. Commit author/committer dates remain metadata, not inferred push times. Pending reviews are not presented as submitted reviews.
+
+Optional description and nested-comment GraphQL failures preserve independently readable metadata while marking the affected content unavailable or limited. Authentication, access, identity and version failures still fail closed. Unknown events preserve limited coverage across continuation, and stable source IDs suppress duplicates without inventing lost pre-force-push history. Commit pages require a fresh trailing version observation before publishing membership grants. Historical anchors retain their original context; no fuzzy navigation is implemented.
+
+Typed cursors, thread/commit/anchor grants remain native and session/version-bound. Separate page/item/prose limits and a bounded native grant budget complement the shared cache limit. Disposable real Git and scripted `gh` processes exercise the host/service/coordinator/transport path, including independent section failure, nested pagination, partial GraphQL output, identity mismatch and force-push during/between commit pages. These checks do not use live credentials or prove the authenticated GitHub schema, Windows subprocess behavior or packaged-platform readiness. Production composition and the visible PR view remain pending.
+
+The focused native GitHub suite passed 116 tests with no failures, ignored cases or compiler warnings. Full shared verification passed all 17 required checks and 1,165 tests, including strict publication-license verification. Independent review reported no unresolved blocking findings after the optional-field correction.
+
+The accompanying dependency maintenance updates the locked build dependency `source-map-js` to 1.2.2 and refreshes its BSD license provenance through the standard inventory tool. No new dependency is introduced.
+
 ## Operational and implementation reference
 
 The sections below retain useful workflow details and implementation limits moved from README. They describe contracts, not independent runtime certification.
@@ -118,6 +138,12 @@ Follow [CODE-STYLE.md](../CODE-STYLE.md) for Rust/frontend headers, API document
 | `src/contracts/changes.ts` | Renderer-safe observation snapshots and backend-issued path identities. |
 | `src/contracts/diff.ts` and `src/contracts/history.ts` | Revision-bound comparisons and pinned history-page DTOs. |
 | `src/contracts/inspection.ts` | Read-only branch/worktree choices and parent-specific committed-file DTOs. |
+| `src/contracts/pullRequests.ts` and `src/platform/PullRequestClient.ts` | Closed PR DTOs and fixed main-window commands; opaque IDs carry native authority, and typed domain failures remain distinct from transport rejection. |
+| `src-tauri/src/github/` and `src-tauri/src/host/pull_requests.rs` | Ephemeral account/context/session/comparison authority, injected provider publication guards, main-only host admission and bounded fixed-operation `gh` transport. The default provider reports `integration_unavailable`; production workbench composition and PR UI remain separate work. |
+| `src-tauri/src/github/association.rs`, `association/` and `provider.rs` | Read-only effective Git mapping capture, verified fork/head/base identities, bounded candidate discovery and explicit known history. The opt-in provider uses service-issued authority; inactive branch mapping hints cannot authorize renderer requests. Overview composition and production activation remain pending. |
+| `src-tauri/src/github/coordinator.rs` and `coordinator/` | Account-scoped shared read demand, cancellable leases/retries, cooldowns and bounded in-memory provider pages. Provider composition must discover the account before service admission, forward account revocations to the service, and normalize cached pages before publishing fresh session-specific grants. Cache entries never grant renderer authority. |
+| `src-tauri/src/github/discussion/` and `src-tauri/src/github/provider/review.rs` | Bounded provider-content normalization, independent collection paging and captured review authority; read composition uses the existing coordinator and service registry. No renderer presentation or Git comparison execution. |
+| `src/features/pull-requests/` | Mounted review lifecycle over the typed PR client: coherent refresh, identified stale presentation, private-content clearing and native session release. The hook is not yet mounted in the workbench; it owns neither native cache authority nor GitHub authentication. |
 | `src/contracts/Diagnostics.ts` | Closed renderer diagnostic vocabulary and capture-health DTOs. |
 | `src/features/changes/index.ts` | Curated observation, changed-list presentation and native-segment mapping API; no app or diff dependency. |
 | `src/app/workbench/Workbench.tsx` | Stable live/committed/repository review selection and graph/preview composition. |

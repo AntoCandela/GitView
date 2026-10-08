@@ -7,6 +7,7 @@ pub mod companion;
 pub mod diagnostics;
 pub mod diff;
 pub mod git;
+pub mod github;
 pub mod history;
 pub mod locale;
 mod host;

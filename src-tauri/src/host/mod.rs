@@ -3,6 +3,7 @@
 //! Only the picker and Git discovery supply paths; renderer commands use opaque IDs.
 
 mod commands;
+mod pull_requests;
 mod languages;
 mod renderer_diagnostics;
 mod companion;
@@ -219,6 +220,19 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            pull_requests::pr_status,
+            pull_requests::pr_associations,
+            pull_requests::pr_map_head,
+            pull_requests::pr_choose,
+            pull_requests::pr_open,
+            pull_requests::pr_page,
+            pull_requests::pr_refresh,
+            pull_requests::pr_compare,
+            pull_requests::pr_files_page,
+            pull_requests::pr_resolve_anchor,
+            pull_requests::pr_file,
+            pull_requests::pr_release,
+            pull_requests::pr_open_link,
             commands::workspace_snapshot,
             commands::preferred_languages,
             commands::open_chosen_repository,

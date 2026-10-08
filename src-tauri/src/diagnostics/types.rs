@@ -38,6 +38,8 @@ vocabulary!(Event {
     CleanupCompleted => "cleanup_completed", CleanupFailed => "cleanup_failed"
 });
 vocabulary!(Code {
+    IntegrationUnavailable => "integration_unavailable",
+    PrUnavailable => "pr_unavailable", PrStaleContext => "pr_stale_context",
     GitUnavailable => "git_unavailable", NotRepository => "not_repository",
     Inaccessible => "inaccessible", UnsafeRepository => "unsafe_repository",
     ProbeTimeout => "probe_timeout", RepositoryChanged => "repository_changed",
@@ -85,6 +87,20 @@ impl DiagnosticDetails {
 }
 
 vocabulary!(OperationKind {
+    PrStatus => "pr_status",
+    PrAssociations => "pr_associations",
+    PrMapHead => "pr_map_head",
+    PrChoose => "pr_choose",
+    PrOpen => "pr_open",
+    PrPage => "pr_page",
+    PrRefresh => "pr_refresh",
+    PrCompare => "pr_compare",
+    PrFilesPage => "pr_files_page",
+    PrResolveAnchor => "pr_resolve_anchor",
+    PrFile => "pr_file",
+    PrRelease => "pr_release",
+    PrOpenLink => "pr_open_link",
+
     WorkspaceSnapshot => "workspace_snapshot", OpenRepository => "open_repository",
     SelectContext => "select_context", RefreshAvailability => "refresh_availability",
     ObserveContext => "observe_context", RenameRepository => "rename_repository",

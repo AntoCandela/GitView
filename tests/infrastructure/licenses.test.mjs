@@ -6,7 +6,46 @@ import { createHash } from 'node:crypto';
 import { mkdtemp, mkdir, readFile, writeFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { collectArchiveNotices, deriveDiagnosticCommonJs, inspectMplSource, npmPackageEntries, verifyGlslGrammar, verifyVendoredSource } from '../../scripts/check-licenses.mjs';
+import { collectArchiveNotices, deriveDiagnosticCommonJs, inspectMplSource, npmPackageEntries, verifyCanonicalGpl, verifyGlslGrammar, verifyVendoredSource } from '../../scripts/check-licenses.mjs';
+
+test('canonical GPL verification uses the pinned identical GNU mirror when the primary source is unavailable', async () => {
+  const license = await readFile(new URL('../../LICENSE', import.meta.url));
+  const requested = [];
+  const source = verifyCanonicalGpl(license, url => {
+    requested.push(url);
+    if (url === 'https://www.gnu.org/licenses/gpl-3.0.txt') throw new Error('fixture network unavailable');
+    return license;
+  });
+  assert.equal(source, 'https://raw.githubusercontent.com/coreutils/coreutils/5b9d747261590ffde5f47fcf8cef06ee5bb5df63/COPYING');
+  assert.equal(requested.length, 2);
+});
+
+test('canonical GPL verification rejects altered bytes without trying another source', async () => {
+  const license = await readFile(new URL('../../LICENSE', import.meta.url));
+  const requested = [];
+  assert.throws(() => verifyCanonicalGpl(license, url => {
+    requested.push(url);
+    return Buffer.from('altered license');
+  }), /authoritative_gpl_text_mismatch/);
+  assert.equal(requested.length, 1);
+});
+
+test('canonical GPL verification rejects an altered mirror and unavailable sources', async () => {
+  const license = await readFile(new URL('../../LICENSE', import.meta.url));
+  assert.throws(() => verifyCanonicalGpl(license, url => {
+    if (url === 'https://www.gnu.org/licenses/gpl-3.0.txt') throw new Error('unavailable');
+    return Buffer.from('altered mirror');
+  }), /authoritative_gpl_text_mismatch/);
+  assert.throws(() => verifyCanonicalGpl(license, () => { throw new Error('unavailable'); }), /authoritative_gpl_source_unavailable/);
+  assert.throws(() => verifyCanonicalGpl(Buffer.from('altered local'), () => {
+    assert.fail('must validate local bytes before downloading');
+  }), /authoritative_gpl_text_mismatch/);
+});
+
+test('canonical GPL verification records the primary source when it matches', async () => {
+  const license = await readFile(new URL('../../LICENSE', import.meta.url));
+  assert.equal(verifyCanonicalGpl(license, () => license), 'https://www.gnu.org/licenses/gpl-3.0.txt');
+});
 
 async function fixture(t, entries) {
   const root = await mkdtemp(join(tmpdir(), 'gitview-licenses-'));

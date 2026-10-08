@@ -10,6 +10,20 @@ const MAX_RENDERER_DURATION_MS: u64 = 86_400_000;
 #[derive(Deserialize)]
 #[serde(rename_all = "snake_case")]
 enum RendererCommand {
+    PrStatus,
+    PrAssociations,
+    PrMapHead,
+    PrChoose,
+    PrOpen,
+    PrPage,
+    PrRefresh,
+    PrCompare,
+    PrFilesPage,
+    PrResolveAnchor,
+    PrFile,
+    PrRelease,
+    PrOpenLink,
+
     WorkspaceSnapshot,
     OpenChosenRepository,
     SelectContext,
@@ -31,6 +45,20 @@ enum RendererCommand {
 impl RendererCommand {
     fn kind(&self) -> OperationKind {
         match self {
+            Self::PrStatus => OperationKind::PrStatus,
+            Self::PrAssociations => OperationKind::PrAssociations,
+            Self::PrMapHead => OperationKind::PrMapHead,
+            Self::PrChoose => OperationKind::PrChoose,
+            Self::PrOpen => OperationKind::PrOpen,
+            Self::PrPage => OperationKind::PrPage,
+            Self::PrRefresh => OperationKind::PrRefresh,
+            Self::PrCompare => OperationKind::PrCompare,
+            Self::PrFilesPage => OperationKind::PrFilesPage,
+            Self::PrResolveAnchor => OperationKind::PrResolveAnchor,
+            Self::PrFile => OperationKind::PrFile,
+            Self::PrRelease => OperationKind::PrRelease,
+            Self::PrOpenLink => OperationKind::PrOpenLink,
+
             Self::WorkspaceSnapshot => OperationKind::WorkspaceSnapshot,
             Self::OpenChosenRepository => OperationKind::OpenRepository,
             Self::SelectContext => OperationKind::SelectContext,

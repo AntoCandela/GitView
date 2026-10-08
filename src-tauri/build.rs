@@ -12,6 +12,19 @@ fn main() {
     };
     tauri_build::try_build(tauri_build::Attributes::new().windows_attributes(windows).app_manifest(
         tauri_build::AppManifest::new().commands(&[
+            "pr_status",
+            "pr_associations",
+            "pr_map_head",
+            "pr_choose",
+            "pr_open",
+            "pr_page",
+            "pr_refresh",
+            "pr_compare",
+            "pr_files_page",
+            "pr_resolve_anchor",
+            "pr_file",
+            "pr_release",
+            "pr_open_link",
             "workspace_snapshot",
             "preferred_languages",
             "open_chosen_repository",
