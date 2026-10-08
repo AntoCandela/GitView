@@ -210,7 +210,8 @@ impl GitProcess {
         command.env("GIT_NO_LAZY_FETCH", "1");
         if isolated {
             // The private metadata contains the complete comparison configuration.
-            let null = if cfg!(windows) { "NUL" } else { "/dev/null" };
+            // Git recognizes /dev/null on Windows too; recent Git rejects NUL here.
+            let null = "/dev/null";
             command.env("GIT_CONFIG_NOSYSTEM", "1");
             command.env("GIT_CONFIG_SYSTEM", null);
             command.env("GIT_CONFIG_GLOBAL", null);

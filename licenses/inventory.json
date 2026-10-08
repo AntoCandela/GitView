@@ -15,7 +15,7 @@
     "CODE_OF_CONDUCT.md": "5d955fd2bed345f78cc377f046b293f7a88686bbaef9bed26908692c31b9e064",
     "THIRD_PARTY_NOTICES.md": "31191a4041d14c5c177323ac0026c6db2dcab367c673cd9badc8a4bf304b360e",
     "licenses/supplemental-sources.json": "645455d3db7941c109d78afb67be07632c5b5d63a9386cc424f875398b6204ba",
-    "package-lock.json": "961f5531cfbfae6df415dc9b69f06f85b131a8a82c66ba75de3a14119989cf27",
+    "package-lock.json": "623b02e18859b8b945927a39c1812796d3f8389ed4308a225d6c834b4019bcb9",
     "package.json": "e392af216e5c12cf801347c12d087593861e5b0eec0269e31644e8885817fc44",
     "public/favicon.svg": "8a3a2a8cf0c6358aeee5edd83559bab768088b9a9f3522a292e8fa23ed55f99e",
     "scripts/check-licenses.mjs": "c08b144de0acf63d84cc99a9d53e5cbdce963801810e4387939e01cbd69724d3",
@@ -1895,6 +1895,7 @@
     "licenses/texts/npm/scheduler/0.28.0/LICENSE": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
     "licenses/texts/npm/shiki/4.4.3/LICENSE": "7a9d8d01038aeacf9e5bcdabbddf2a7815200dce9fc1118468cc553e00ae3eee",
     "licenses/texts/npm/source-map-js/1.2.1/LICENSE": "6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd",
+    "licenses/texts/npm/source-map-js/1.2.2/LICENSE": "6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd",
     "licenses/texts/npm/space-separated-tokens/2.0.2/license": "ca4662cb5d1b738fbe5350c0d5485ba11773b4b7208974082ae6e129a52d631d",
     "licenses/texts/npm/std-env/4.3.0/LICENCE": "a6f36438e46fb911859f3b9c4cad045ba64e1af3d8f4512c60258fa2d7552d28",
     "licenses/texts/npm/stringify-entities/4.0.4/license": "9f084fac69d8cf1e6ce983ba5a3499c7695ed74a26ec625c38f0fd19fddd5e10",
@@ -9400,11 +9401,11 @@
     {
       "ecosystem": "npm",
       "name": "source-map-js",
-      "version": "1.2.1",
+      "version": "1.2.2",
       "lockPath": "node_modules/source-map-js",
-      "source": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.1.tgz",
-      "integrity": "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==",
-      "archiveSha256": "f126a6f9fca487a43219d8cb8c3a955279187a966119d548eb5cd47e999d4853",
+      "source": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.2.tgz",
+      "integrity": "sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw==",
+      "archiveSha256": "05c8cf8e7c3a6b56cada7668fe9342b10f4b625efc92aba9ba05b9e8fe4d71a3",
       "repository": "7rulnik/source-map-js",
       "scope": [
         "development/build/test"
@@ -9417,9 +9418,9 @@
       "selectedLicense": "BSD-3-Clause",
       "notices": [
         {
-          "path": "licenses/texts/npm/source-map-js/1.2.1/LICENSE",
+          "path": "licenses/texts/npm/source-map-js/1.2.2/LICENSE",
           "sourcePath": "LICENSE",
-          "sourceUrl": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.1.tgz#package/LICENSE",
+          "sourceUrl": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.2.tgz#package/LICENSE",
           "sha256": "6cb0631f71c7749763fd3dd1d5bee52dd1070ec17f2edc1710079ad070bd2fbd"
         }
       ]
