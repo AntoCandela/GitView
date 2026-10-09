@@ -127,6 +127,38 @@ The full verifier's `publication_licenses` check validates the committed invento
 
 Private Rust scenarios remain registered through their owning module's test-only `#[path]` declarations; external integration targets are registered in Cargo. Do not expose production internals merely to move tests. Reuse isolated temporary fixtures, never a user's repositories, workspace data or diagnostic store.
 
+### Performance evidence
+
+Validate an owned journey report without launching GitView or claiming that the supplied observations were independently verified:
+
+```sh
+node scripts/performance-evidence.mjs --report path/to/owned-report.json --output .verification/performance
+node --test tests/infrastructure/performance-evidence.test.mjs
+```
+
+The CLI uses the existing bounded evidence I/O and writes `performance-evidence.json`. Exit `0` means all supplied attempts have measured, successful behavior and successful cleanup; `1` preserves valid but incomplete/failed observations; `2` rejects invalid/unreadable input or arguments. These are evidence-processing outcomes, not native certification or a performance-budget pass. Invalid input is never copied into the output. Raw samples and unavailable metrics remain in valid reports, including failures and warmups.
+
+`scripts/performance-evidence.mjs` owns the strict schema and import-safe `assessPerformance(report)` and `comparePerformance(baseline, candidate)` APIs. Version 1 requires exactly these fields; unknown fields are rejected at every object boundary:
+
+| Record | Required fields and meaning |
+| --- | --- |
+| Run | `schemaVersion: 1`, opaque UUID `runId`, canonical UTC `observedAt` with milliseconds, `scenario`, `source`, `fixture`, `runtime`, `protocol`, `samples`, `cleanup`. |
+| Scenario | Stable `id` (`W-01`–`W-05`, `F-01`–`F-06`, `H-01`–`H-04`, or `baseline`), positive `version`, distinct `stories: [{key, version}]`, and `eligibility` (`implemented`, `proposed`, `contradicted`, `unverified`, `unsupported`). Story keys use the synthetic `US-N` shape; real private planning identifiers belong only in authorized local evidence, never public reports. |
+| Source | Full Git `revision`, boolean `dirty`, SHA-256 `artifactHash`, and `build` (`optimized`, `profiling`, `debug`). Hash the actual complete artifact, including dirty-source builds; the validator cannot establish artifact provenance from a supplied hash. |
+| Fixture | SHA-256 `generatorHash`, nonnegative integer `seed`, `files`, `commits`, `tags`, and fixed `variant` (`empty`, `clean`, `few_changes`, `mixed`, `near_limit`, `unavailable`, `corrupt`). Include all fixture configuration in the generator identity. Preparation is outside the measured interval. |
+| Runtime | `platform` (`macos-arm64`, `windows-x64`, `ubuntu-24.04-x64`), numeric dotted `osVersion`, `engineVersion`, `gitVersion`, `harnessVersion`; fixed `engine` (`Chromium`, `WKWebView`, `WebView2`, `WebKitGTK`, `none`); opaque SHA-256 `hardwareHash`; positive `cpuCount`, `memoryBytes`, `viewportWidth`, `viewportHeight`, `scale`; `power` (`ac`, `battery`, `unknown`); positive or unavailable/null `refreshHz`. Service-only runs use engine `none` and null engine version. The hardware identity describes the reproducible reference configuration, not a username, serial number or private hostname. |
+| Protocol | `boundary` (`service`, `browser-real-service`, `packaged-native`, `profiling-native`), `process` (`warm`, `fresh`), `cache` (`uncontrolled`, `warm`, `verified_cold`), `profile` (`fresh`, `reused`), `clock: single-origin-monotonic`, `presentation` (`service-result`, `dom-raf-proxy`, `observed-frame`, `unavailable`), SHA-256 `collectorHash`, integer `warmups` and positive `attempts`, boolean `independent`, `budget` (`none`, `provisional`). Collector identity covers versions, capabilities, collection settings and process aggregation; changing it invalidates a comparison. |
+| Sample | Consecutive one-based `index`, `phase` (`warmup`, then `measurement`), `behavior` (`pass`, `fail`, `not_run`, `blocked`), `timing` (`measured`, `unavailable`), `threshold: not_evaluated`, fixed `reason`, `elapsedMs`, `firstUsefulMs`, `completedMs`, optional-result/null `styledMs`, `checks`, and `metrics`. All four durations are null when timing is unavailable. Otherwise durations start at the same scenario action on one monotonic clock; useful/complete/styled milestones cannot exceed final elapsed time. A failed attempt can retain elapsed time with null completion. Never subtract unrelated process clocks. |
+| Checks | `exactResult`, `readOnly`, `continuity`: `pass`, `fail`, `not_run`, or `not_applicable`. Behavioral success requires an implemented scenario, exact result and read-only passes, and passed or inapplicable continuity. Planned unsupported input can be an implemented error-behavior scenario; it is not a successful unsupported read. |
+| Metric | `name`, `scope`, `collector`, `atMs`, `value`, `reason`. Use the module's fixed metric/scope/collector vocabulary; names encode units (`rss_bytes`, `cpu_ms`, `anchor_shift_px`, etc.). Resource series repeat records at monotonic sample offsets. A missing value is null with `unsupported`, `not_collected`, or `collector_failed`; a measured nonnegative value uses `none`. Missing resource data is not zero. Report only collectors actually attempted; an empty metrics array means no resource evidence. |
+| Cleanup | `processes`, `fixtures`, `appState`, each `pass`, `fail`, or `not_run`. Incomplete cleanup prevents a successful assessment. |
+
+Fixed sample reasons are `none`, `collector_unavailable`, `timeout`, `cancelled`, `resource_limit`, `unsupported`, `incorrect_result`, `fixture_failed`, `interrupted`, and `not_run`. No arbitrary error messages, paths, source, Git output, arguments or environment data are allowed. Inputs are bounded by the shared 2 MiB limit, 10,000 total attempts/warmups and 10,000 metric records per sample. This is a supplied-report contract, not a collector; it cannot detect observations that a producer never submitted.
+
+Summaries count every measurement outcome. Latency distributions use successful measured attempts only, explicitly separate from failure counts; warmups stay in the raw record but not the distribution. An empirical p95 requires at least 50 independent successful samples; otherwise it is null with a fixed uncertainty reason. Even with sufficient samples, an empirical percentile is not a confidence bound.
+
+Comparison requires matching scenario/story versions and eligibility, fixture, runtime, protocol and build mode. Artifact hashes and revisions may differ for before/after work. Incomplete evidence produces no delta; mismatched conditions are incomparable. DOM plus animation-frame scheduling remains a rendering proxy, and fresh-process does not mean cold filesystem cache. Ordinary native baselines require the platform's actual WebView and optimized build; profiling stays separate. This first slice exposes comparison through the module API only: no CLI baseline flag, CI gate or approved numerical threshold is introduced.
+
 ## 3. Diagnose a runtime failure
 
 1. Obtain explicit authorization for the local diagnostic store you will read. Agent access to the repository does not authorize reading every application-data directory.
